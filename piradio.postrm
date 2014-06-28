@@ -1,0 +1,24 @@
+#!/bin/bash
+# Radio daemon post remove script
+# $Id: piradio.postrm,v 1.3 2014/05/23 09:14:17 bob Exp $
+
+BOOTCMD=/boot/cmdline.txt
+INITTAB=/etc/inittab
+DIR=/home/pi/radio
+
+rm -f ${DIR}/*.pyc
+echo "Executing post remove script ${0}"
+update-rc.d radiod remove
+rm -f /etc/logrotate.d/radiod
+
+# Restore serial interface
+if [[ -f  ${INITTAB}.orig ]]; then
+	echo "Restoring ${INITTAB}"
+	sudo mv -f ${INITTAB}.orig ${INITTAB}
+fi
+if [[ -f  ${BOOTCMD}.orig ]]; then
+	echo "Restoring ${BOOTCMD}"
+	sudo mv -f ${BOOTCMD}.orig ${BOOTCMD}
+fi
+
+

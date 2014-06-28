@@ -1,0 +1,21 @@
+#!/bin/bash 
+# Radio daemon post install script
+# $Id: radioweb.postinst,v 1.3 2014/06/04 08:31:12 bob Exp $
+
+# File locations
+DIR=/home/pi/radio
+TARFILE=${DIR}/pi_radio_web.tar.gz
+SNOOPY=/var/www/snoopy
+
+if [[ -d ${SNOOPY} ]]; then
+	echo "The web pages appear to be already installed"
+	echo "Updating web pages and CGI scripts in Apache"
+else 
+	echo "Installing web pages and CGI scripts in Apache"
+fi
+
+# Change to root
+cd /
+sudo tar -xvf ${TARFILE} > /dev/null
+
+# End of post-installation script
