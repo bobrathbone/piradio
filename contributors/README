@@ -1,0 +1,12 @@
+This directory contains software contributed by other constructors.
+
+The code in these sub-directories is provided "as is" and without any warranties.
+Neither can any guarantees be given that the software in these sub-diorectories
+will be compatable with future releases of the main-stream software.
+As Bob Rathbone is unable to test these programs absolutely no support is provided 
+so please don't ask for it as the answer will always be the same - no support.
+A useful README file is however included each sub-directory.
+
+Directory	Description
+=========	===========
+LCD4x40-PCF854	Version supporting a 4 line 40 character display from Christian Heise 
