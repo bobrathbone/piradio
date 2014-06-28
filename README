@@ -1,0 +1,64 @@
+Raspberry Pi Internet Radio 
+---------------------------
+Author : Bob Rathbone
+Site   : http://www.bobrathbone.com
+Email  : bob@bobrathbone.com
+
+This program uses  Music Player Daemon 'mpd', its client 'mpc' and the python-mpd library
+See http://www.musicpd.org/
+Use "apt-get install mpd mpc python-mpd" to install the library
+Modified to use python-mpd library. See https://pypi.python.org/pypi/python-mpd/
+
+Upgrade notes version 3.3 onwards
+---------------------------------
+From version 3.3 onwards it is necessary to install python-mpd library
+To upgrade from earlier versions as root or sudo carry out the following command:
+apt-get install python-mpd
+
+Version 3.3 changes
+-------------------
+Most mpc calls via the operating system replaced with calls directly to the  python-mpd library
+Streaming on off now remembered between restart of the program
+Visual streaming indicator '*' added to LCD display 
+
+Version 3.4 changes
+-------------------
+Problems with loading music library from a NAS over the network cured
+Auto restart MPD if client connection fails
+
+Version 3.5 changes
+-------------------
+Problem with displaying "Check playlist" cured.
+The format of the stationlist file has changed. It now allows a group of stations to be listed in one playlist.
+The create_playlist program includes 3 new options: --help, --delete_old, --no_delete
+The (stream) pparameter in the stationlist file is no longer applicable
+
+Version 3.6 changes
+-------------------
+Source tar file replaced with an installable Debian package radiod_3.6_armhf.deb installed using dpkg.  
+
+Version 3.7 changes
+-------------------
+All versions fully integrated with MPD clients such as mpc, mPod and MPDroid
+Improved volume display on rotary switch versions
+
+Version 3.8 changes
+-------------------
+Contributors section added
+Display board revision script added - display_model.py
+Revision 1 boards now supported with the Adafruit plate (i2c_class.py)
+
+Manual
+------
+Download from http://www.bobrathbone.com/raspberrypi/Raspberry%20PI%20Radio.pdf
+
+License
+-------
+GNU V3, See https://www.gnu.org/copyleft/gpl.html
+
+Disclaimer 
+----------
+Software is provided as is and absolutly no warranties are implied or given.
+The authors shall not be liable for any loss or damage however caused.
+
+

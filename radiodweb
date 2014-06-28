@@ -1,0 +1,40 @@
+### Commented entries have reasonable defaults.
+### Uncomment to edit them.
+# $Id: radiodweb,v 1.2 2014/06/01 12:12:25 bob Exp $
+# Source: <source package name; defaults to package name>
+Section: misc
+Priority: optional
+Homepage: http://www.bobrathbone.com
+Standards-Version: 3.9.2
+
+Package: radiodweb
+Version: 1.0
+Maintainer: Bob Rathbone <bob@bobrathbone.com>
+# Pre-Depends: <comma-separated list of packages>
+# Depends: <comma-separated list of packages>
+Depends: apache2,php5,libapache2-mod-php5
+# Recommends: <comma-separated list of packages>
+# Suggests: <comma-separated list of packages>
+# Provides: <comma-separated list of packages>
+# Replaces: <comma-separated list of packages>
+# Architecture: all
+Architecture: armhf
+
+# Copyright: <defaults to GPL2>
+# Changelog: <changelog file; defaults to a generic changelog>
+# Readme: <README.Debian file; defaults to a generic one>
+# Extra-Files: <comma-separated list of additional files for the doc directory>
+Extra-Files: README
+
+# Files: <pair of space-separated paths; First is file to include, second is destination>
+Files:  pi_radio_web.tar.gz /home/pi/radio/
+	piradio_web_build.tar.gz /home/pi/radio/
+
+postinst: radioweb.postinst
+#postrm: piradio.postrm
+#  <more pairs, if there's more than one file to include. Notice the starting space>
+Description: Raspberry PI radio web interface
+ This package provides a radio daemon web interface
+ .
+ It requires apache2 php5 libapache2-mod-php5 run (Install separately)
+
