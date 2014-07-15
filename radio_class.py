@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.116 2014/06/22 12:10:15 bob Exp $
+# $Id: radio_class.py,v 1.119 2014/07/12 08:38:58 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -115,6 +115,7 @@ class Radio:
 	timer = False	  # Timer on
 	timerValue = 30   # Timer value in minutes
 	timeTimer = 0  	  # The time when the Timer was activated in seconds 
+	volumetime = 0	  # Last volume check time
 
 	alarmType = ALARM_OFF	# Alarm on
 	alarmTime = "0:7:00"    # Alarm time default type,hours,minutes
@@ -124,7 +125,7 @@ class Radio:
 	search_index = 0        # The current search index
 	loadnew = False         # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.8"		# Version number
+	VERSION	= "3.9"		# Version number
 
 	def __init__(self):
 		log.init('radio')
@@ -320,11 +321,17 @@ class Radio:
 		return
 
 	# Get volume and check if it has been changed by any MPD external client
+	# Slug MPD calls to no more than  per 0.5 second
 	def getVolume(self):
 		volume = 0
 		try:
-			stats = self.getStats()
-			volume = int(stats.get("volume"))
+			now = time.time()	
+			if now > self.volumetime + 0.5:
+				stats = self.getStats()
+				volume = int(stats.get("volume"))
+				self.volumetime = time.time()
+			else:
+				volume = self.volume
 		except:
 			log.message("radio.getVolume failed", log.ERROR)
 			volume = 0
@@ -821,7 +828,8 @@ class Radio:
 			self.errorStr = str(status.get("error"))
 			if  self.errorStr != "None":
 				if not self.error:
-					self.errorStr = self.errorStr + " (Station " + str(self.current_id) + ")"
+					self.errorStr = (self.errorStr 
+						+ " (Station " + str(self.current_id) + ")")
 					log.message(self.errorStr, log.DEBUG)
 				self.error = True
 			else:
@@ -879,13 +887,16 @@ class Radio:
 		return stats
 
 	# Get current state (play or pause) 
+	# Slug this to only allow one per second
 	def getState(self):
-		state = ""
+		state = "play"
 		try:
 			stats = self.getStats()
 			state = str(stats.get("state"))
 		except:
+			log.message("radio.getState failed", log.ERROR)
 			state = "unknown"
+
 		if state == "pause":
 			self.pause = True
 		else:

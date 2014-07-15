@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_playlists.py,v 1.19 2014/06/18 05:54:11 bob Exp $
+# $Id: create_playlists.py,v 1.21 2014/07/12 10:35:53 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -19,7 +19,7 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+#	     The authors shall not be liable for any loss or damage however caused.
 #
 
 import os
@@ -32,11 +32,13 @@ stderr = sys.stderr.write;
 
 # File locations
 PlsDirectory = '/var/lib/mpd/playlists/'
+RadioDir = '/home/pi/radio/'
 RadioLibDir = '/var/lib/radiod/'
 StationList = RadioLibDir + 'stationlist'
 DistFile = '/home/pi/radio/station.urls'
 TempDir = '/tmp/radio_stream_files/'
 PlaylistsDir = '/home/pi/radio/playlists/'
+PodcastsFile = '/var/lib/radiod/podcasts'
 
 duplicateCount = 0
 
@@ -88,7 +90,10 @@ def createPlsFile(filename,output,nlines):
 		outfile.writelines("[playlist]\n")
 		outfile.writelines("NumberOfEntries=%s\n"% nlines)
 		outfile.writelines("Version=2\n")
-		outfile.writelines("%s\n"% item for item in output)
+		for item in output:
+			outstr = item.encode('utf8', 'replace')
+			outfile.write(outstr + "\n")
+
 		outfile.close()
 	except:
 		print "Failed to create",outfile
@@ -96,30 +101,30 @@ def createPlsFile(filename,output,nlines):
 
 # Beautify HTML convert tags to lower case
 def parseHTML(data):
-        lcdata = ''
-        for line in data:
-                lcline = ''
-                line = line.rstrip()
-                line = line.lstrip()
+	lcdata = ''
+	for line in data:
+		lcline = ''
+		line = line.rstrip()
+		line = line.lstrip()
 		line.replace('href =', 'href=')
-                length = len(line)
+		length = len(line)
 
-                if length < 1:
-                        continue
-                tag1right = line.find('>')
+		if length < 1:
+			continue
+		tag1right = line.find('>')
 
-                if tag1right > 1:
-                        start_tag = line[0:tag1right+1]
-                        lcline = lcline + start_tag.lower()
+		if tag1right > 1:
+			start_tag = line[0:tag1right+1]
+			lcline = lcline + start_tag.lower()
 
-                tag2left = line.find('<', tag1right+1)
+		tag2left = line.find('<', tag1right+1)
 
-                if tag2left > 1:
-                        end_tag = line[tag2left:length]
-                        parameter = line[tag1right+1:tag2left]
-                        lcline = lcline + parameter + end_tag.lower()
-                lcdata = lcdata + lcline
-        return lcdata
+		if tag2left > 1:
+			end_tag = line[tag2left:length]
+			parameter = line[tag1right+1:tag2left]
+			lcline = lcline + parameter + end_tag.lower()
+		lcdata = lcdata + lcline
+	return lcdata
 
 # Get XML/HTML parameter
 def getParameter(line):
@@ -271,7 +276,7 @@ def usage():
 	stderr("\nUsage: %s [--delete_old] [--no_delete] [--help]\n" % sys.argv[0])
 	stderr("\tWhere: --delete_old   Delete old playlists\n")
 	stderr("\t       --no_delete    Don't delete old playlists\n")
-	stderr("\t       --help         Display help message\n\n")
+	stderr("\t       --help	 Display help message\n\n")
 	return
 
 # Station definition help message
@@ -288,6 +293,11 @@ def format():
 	return
 
 # Start of MAIN script
+
+if os.getuid() != 0:
+	print "This program can only be run as root user or using sudo"
+	sys.exit(1)
+
 deleteOld =  False
 noDelete  =  False
 
@@ -433,15 +443,6 @@ for line in open(StationList,'r'):
 	elif url.endswith('.pls'):
 		isPLS = True
 
-	# Mpeg 3 format (Don't retrieve any URL)
-	#elif url.endswith('.mp3'):
-#		pls_output += parseDirect(title,url,filenumber)
-#		if len(filename) < 1:
-#			filename = createFileName(title,url)
-#			writeFile = True
-#		filenumber += 1
-#		continue
-
 	# Advanced Audio Coding stream (Don't retrieve any URL)
 	else:
 		# Remove redundant (stream) parameter 
@@ -454,11 +455,11 @@ for line in open(StationList,'r'):
 		continue
 
 	# Get the published URL to the stream file
-        try:
-                file = urllib2.urlopen(url)
-                data = file.read()
-                file.close()
-        except:
+	try:
+		file = urllib2.urlopen(url)
+		data = file.read()
+		file.close()
+	except:
 		print "Error: Failed to retrieve ", url
 		errorCount += 1
 		continue
@@ -516,6 +517,10 @@ if oldfiles > 0:
 copiedCount = len(os.listdir(TempDir))
 print "Copying %s new playlist files to directory %s" % (copiedCount,PlsDirectory)
 execCommand ("cp -f " + TempDir + '* ' + PlsDirectory )
+
+if os.path.isfile(PodcastsFile):
+	print "\nCreating Podcast playlists from " + PodcastsFile
+	execCommand(RadioDir + "create_podcasts.py")
 
 # Create summary report
 print "\nNew radio playlist files will be found in " + PlsDirectory

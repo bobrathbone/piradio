@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character LCD version
 #
-# $Id: rradio4.py,v 1.39 2014/06/10 12:55:56 bob Exp $
+# $Id: rradio4.py,v 1.40 2014/07/09 07:49:01 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -378,7 +378,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 		interrupt = True
 
 	elif switch == UP_SWITCH:
-		log.message("UP switch", log.DEBUG)
+		log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
 			if radio.muted():
@@ -402,7 +402,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 			DisplayExitMessage(lcd)
 
 	elif switch == DOWN_SWITCH:
-		log.message("DOWN switch", log.DEBUG)
+		log.message("DOWN switch display_mode " + str(display_mode), log.DEBUG)
 		if  display_mode != radio.MODE_SLEEP:
 			if radio.muted():
 				unmuteRadio(lcd,radio)

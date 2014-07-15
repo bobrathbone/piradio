@@ -48,9 +48,20 @@ Contributors section added
 Display board revision script added - display_model.py
 Revision 1 boards now supported with the Adafruit plate (i2c_class.py)
 
+Version 3.9 changes
+-------------------
+Support for podcast playlists addeded. New create_podcasts.py program
+Crontab entry for podcast playlist creation (/etc/cron.hourly/podcast)
+Improved create_playlists.py program to handle special characters 
+
 Manual
 ------
 Download from http://www.bobrathbone.com/raspberrypi/Raspberry%20PI%20Radio.pdf
+
+Github
+------
+Source available from Github
+See https://github.com/bobrathbone/piradio 
 
 License
 -------

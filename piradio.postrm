@@ -1,6 +1,6 @@
 #!/bin/bash
 # Radio daemon post remove script
-# $Id: piradio.postrm,v 1.3 2014/05/23 09:14:17 bob Exp $
+# $Id: piradio.postrm,v 1.4 2014/07/12 12:41:34 bob Exp $
 
 BOOTCMD=/boot/cmdline.txt
 INITTAB=/etc/inittab
@@ -10,6 +10,7 @@ rm -f ${DIR}/*.pyc
 echo "Executing post remove script ${0}"
 update-rc.d radiod remove
 rm -f /etc/logrotate.d/radiod
+rm -f /etc/cron.hourly/podcast
 
 # Restore serial interface
 if [[ -f  ${INITTAB}.orig ]]; then

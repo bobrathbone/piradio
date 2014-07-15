@@ -1,0 +1,7 @@
+#!/bin/bash
+# Create podcasts from list in podcast file
+
+if [[ -f /var/lib/radiod/podcasts ]]; then
+	echo "Create podcasts `date`" > /var/log/podcasts.log 2>&1
+	sudo /home/pi/radio/create_podcasts.py  >> /var/log/podcasts.log 2>&1
+fi

@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Id: build.sh,v 1.9 2014/06/18 06:50:03 bob Exp $
+# $Id: build.sh,v 1.10 2014/07/09 07:49:01 bob Exp $
 # Build script for the Raspberry PI radio
 # Run this script as user pi and not root
 
@@ -20,6 +20,9 @@ sudo chown pi:pi *.py
 sudo chmod +x *.py
 sudo chown pi:pi *.sh
 sudo chmod +x *.sh
+./create_tar.sh > /dev/null &2>1 
+
+# Build the package
 equivs-build ${PKGDEF}
 if [[ $? -ne 0 ]]; then # Don't seperate from above line
 	exit 1

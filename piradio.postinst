@@ -1,6 +1,6 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.9 2014/06/01 07:03:49 bob Exp $
+# $Id: piradio.postinst,v 1.10 2014/07/12 13:17:00 bob Exp $
 
 # File locations
 DIR=/home/pi/radio
@@ -79,6 +79,8 @@ sudo update-rc.d mpd disable
 # Create playlists if no station list present
 if [[ ! -f ${RADIOLIB}/stationlist ]]; then
 	cd ${DIR}
+	# Copy podcast distribution file
+	cp -f podcasts.dist ${RADIOLIB}/podcasts
 	echo "Creating playlists:"
 	${DIR}/create_playlists.py --no_delete 2>&1 > ${DIR}/playlists.log
 	echo "See ${DIR}/playlists.log for information about playlists created"

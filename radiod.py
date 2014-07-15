@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radiod.py,v 1.77 2014/06/08 13:53:41 bob Exp $
+# $Id: radiod.py,v 1.78 2014/07/09 07:49:01 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -343,8 +343,9 @@ def get_switch_states(lcd,radio,rss):
 
 	elif switch == UP_SWITCH:
 		if  display_mode != radio.MODE_SLEEP:
-			log.message("UP switch", log.DEBUG)
-			radio.unmute()
+			log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
+			if radio.muted():
+				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
 				radio.toggleSource()
@@ -366,9 +367,10 @@ def get_switch_states(lcd,radio,rss):
 			DisplayExitMessage(lcd)
 
 	elif switch == DOWN_SWITCH:
-		log.message("DOWN switch", log.DEBUG)
+		log.message("DOWN switch display_mode " + str(display_mode), log.DEBUG)
 		if  display_mode != radio.MODE_SLEEP:
-			radio.unmute()
+			if radio.muted():
+				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
 				radio.toggleSource()

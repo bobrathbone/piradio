@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 # Rotary encoder version
-# $Id: rradiod.py,v 1.42 2014/06/10 12:55:56 bob Exp $
+# $Id: rradiod.py,v 1.43 2014/07/09 07:49:01 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -381,8 +381,9 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 
 	elif switch == UP_SWITCH:
 		if  display_mode != radio.MODE_SLEEP:
-			log.message("UP switch", log.DEBUG)
-			radio.unmute()
+			log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
+			if radio.muted():
+				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
 				radio.toggleSource()
@@ -404,9 +405,10 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 			DisplayExitMessage(lcd)
 
 	elif switch == DOWN_SWITCH:
-		log.message("DOWN switch", log.DEBUG)
+		log.message("DOWN switch display_mode " + str(display_mode), log.DEBUG)
 		if  display_mode != radio.MODE_SLEEP:
-			radio.unmute()
+			if radio.muted():
+				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
 				radio.toggleSource()

@@ -1,7 +1,7 @@
 #!/bin/bash
-# $Id: create_tar.sh,v 1.23 2014/05/19 08:59:03 bob Exp $
+# $Id: create_tar.sh,v 1.28 2014/07/12 13:18:31 bob Exp $
 
-FILELIST="README radiod lcd_class.py log_class.py radio4.py rradio4.py radio_class.py ada_*.py i2c_class.py radio_daemon.py  radiod.py rradiod.py rss_class.py test_lcd.py test_ada_lcd.py test_switches.py rotary_class.py test_rotary_class.py create_playlists.py display_current.py radiod.logrotate playlists/* translate_class.py station.urls rss/*"
+FILELIST="README radiod lcd_class.py log_class.py radio4.py rradio4.py radio_class.py ada_*.py i2c_class.py radio_daemon.py  radiod.py rradiod.py rss_class.py test_lcd.py test_ada_lcd.py test_switches.py rotary_class.py test_rotary_class.py create_podcasts.py create_playlists.py display_current.py display_model.py radiod.logrotate playlists/* translate_class.py station.urls podcasts.dist rss/* cron.hourly/* contributors/*"
 
 WEBPAGES="/var/www/*  /usr/lib/cgi-bin/select_*"
 
