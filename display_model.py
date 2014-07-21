@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-$Id: display_model.py,v 1.2 2014/06/21 10:25:10 bob Exp $
+$Id: display_model.py,v 1.3 2014/07/15 18:30:29 bob Exp $
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
@@ -47,7 +47,8 @@ model_data = {
     '9': ('A', '2.0', 256, 'Qisda', ''),
     'd': ('B', '2.0', 512, 'Egoman', ''),
     'e': ('B', '2.0', 512, 'Sony', ''),
-    'f': ('B', '2.0', 512, 'Qisda', '')
+    'f': ('B', '2.0', 512, 'Qisda', ''),
+    '10': ('B+', '2.0', 512, 'Unknown', '')
 }
 
 
@@ -72,10 +73,9 @@ class ModelInfo(object):
             rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*(\w+)", cpuinfo) \
                     .group(1)
 
-
         self.revision_hex = rev_hex[-4:] if rev_hex[:4] == "1000" else rev_hex
         self.model, self.revision, self.ram_mb, self.maker, self.info = \
-                model_data[rev_hex.strip("0")]
+                model_data[rev_hex.lstrip("0")]
 
 
     def __repr__(self):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.119 2014/07/12 08:38:58 bob Exp $
+# $Id: radio_class.py,v 1.120 2014/07/20 05:33:05 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -276,7 +276,7 @@ class Radio:
 			cpuinfo = f.read()
 		rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*(\w+)", cpuinfo).group(1)
 		rev_int = int(rev_hex,16)
-		if rev_int > 2:
+		if rev_int > 3:
 			revision = 2
 		self.boardrevision = revision
 		log.message("Board revision " + str(self.boardrevision), log.INFO)
