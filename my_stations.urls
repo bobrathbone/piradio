@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: my_stations.urls,v 1.8 2014/05/19 18:28:07 bob Exp $
+# $Id: my_stations.urls,v 1.10 2014/08/19 12:33:48 bob Exp $
 #
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
@@ -39,29 +39,39 @@
 
 # Netherlands
 (Dutch stations)
-[Radio 1 Nederland] http://icecast.omroep.nl/radio1-bb-aac.m3u
-[Radio 2 Nederland] http://icecast.omroep.nl/radio2-bb-aac.m3u
-[Radio 6 Blues Nederland] http://icecast.omroep.nl/radio6-blues-bb-aac.m3u
+[NPO Radio 1] http://icecast.omroep.nl/radio1-bb-mp3
+[NPO Radio 2] http://icecast.omroep.nl/radio2-bb-mp3
+[NPO Radio 3fm] http://icecast.omroep.nl/3fm-bb-mp3
+[NPO Radio 4] http://icecast.omroep.nl/radio4-bb-mp3
+[NPO Radio 5 Nostalgia] http://icecast.omroep.nl/radio5-bb-mp3
+[NPO Radio 6] http://icecast.omroep.nl/radio6-bb-mp3
 [Radio 10 Gold NL] http://stream.radio10.nl/radio10.m3u
 [Radio Veronica] http://www.stream-server.nl/streams/Veronica675.pls
-[RTV Midden Brabant] http://shoutcast.streamone.nl:9100/listen.pls
 
 # Germany
 (German stations)
 [Radio 7 Germany] http://srv01.radio7.fmstreams.de/stream1/livestream.mp3.m3u
 [Antenne Bayern Top 40] http://www.antenne.de/webradio/channels/top-40.m3u
+[Country 108] http://www.country108.com/listen.pls
 
 # Country music
 (Country music) 
 [977 MIX ASX] http://7639.live.streamtheworld.com:80/977_MIX_SC(stream)
-[Country 108] http://www.country108.com/listen.pls
-[Digital Radio 108] http://digitalradionetworks.com:8002/listen.pls
 [Nashville FM] http://server-10.stream-server.nl:8300/listen.pls
 [WPJR Country] http://provisioning.streamtheworld.com/pls/WPURFM.pls
-[Stream Power MP3] http://mp3.streampower.be/radio1-high.mp3
 
-# UK stations
-(UK stations)
+# Direct mp3 stream
+[Stream Power MP3] http://mp3.streampower.be/radio1-high.mp3
 [Jack Radio Bristol] http://stream3.radiomonitor.com/JackBristol-128.m3u
-[UK Blues] http://206.217.213.16:8430(stream)
+
+# Italy
+(Italian Stations)
+[RAI Radio Uno] http://www.listenlive.eu/rai1.m3u
+[RAI Radio Duo] http://www.listenlive.eu/rai2.m3u
+[Prima Radio Napoli] http://kemoniastreaming2.net:8010/listen.pls
+
+# Jazz
+(Jazz stations)
+[Ghost Sky Jazz] http://streaming.radionomy.com/ghost-sky
+[Radio Sky Music] http://streaming.radionomy.com/RadioSky-Music
 

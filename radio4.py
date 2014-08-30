@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio4.py,v 1.86 2014/07/09 07:49:01 bob Exp $
+# $Id: radio4.py,v 1.91 2014/08/21 06:42:18 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -154,6 +154,7 @@ class MyDaemon(Daemon):
 
 		# Main processing loop
 		count = 0 
+		toggleScrolling = True	# Toggle scrolling between Line 2 and 3
 		while True:
 
 			# See if we have had an interrupt
@@ -181,7 +182,7 @@ class MyDaemon(Daemon):
 				if radio.getStreaming():
 					msg = msg + ' *' 
 				lcd.line1(msg)
-				display_current(lcd,radio)
+				display_current(lcd,radio,toggleScrolling)
 
 			elif display_mode == radio.MODE_SEARCH:
 				display_search(lcd,radio)
@@ -199,9 +200,9 @@ class MyDaemon(Daemon):
 				lcd.line1(todaysdate)
 				input_source = radio.getSource()
 				if input_source == radio.RADIO:
-					lcd.line3("Current station:" + str(radio.getCurrentID()))
+					lcd.line2(radio.getRadioStation())
 				else:
-					lcd.line3("Current track:" + str(radio.getCurrentID()))
+					lcd.line2("Current track:" + str(radio.getCurrentID()))
 				display_rss(lcd,rss)
 
 			elif display_mode == radio.MODE_SLEEP:
@@ -221,6 +222,13 @@ class MyDaemon(Daemon):
 				displayWakeUpMessage(lcd)
 				radio.setDisplayMode(radio.MODE_TIME)
 					
+
+			# Toggle line 2 & 3 scrolling
+			if toggleScrolling:
+				toggleScrolling = False
+			else:
+				toggleScrolling = True
+
 			time.sleep(0.1)
 			# End of main processing loop
 
@@ -364,7 +372,12 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,UP)
+				wait = 0.5
+				while GPIO.input(UP_SWITCH):
+					scroll_search(radio,UP)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,UP)
@@ -388,7 +401,12 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,DOWN)
+				wait = 0.5
+				while GPIO.input(DOWN_SWITCH):
+					scroll_search(radio,DOWN)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,DOWN)
@@ -408,7 +426,15 @@ def get_switch_states(lcd,radio,rss):
 				interrupt = True
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,DOWN)
+				wait = 0.5
+				while GPIO.input(LEFT_SWITCH):
+					scroll_artist(radio,DOWN)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
+				interrupt = True
+
+			elif display_mode == radio.MODE_OPTIONS:
 				interrupt = True
 
 			else:
@@ -444,7 +470,14 @@ def get_switch_states(lcd,radio,rss):
 				interrupt = True
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,UP)
+				wait = 0.5
+				while GPIO.input(RIGHT_SWITCH):
+					scroll_artist(radio,UP)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
+
+			elif display_mode == radio.MODE_OPTIONS:
 				interrupt = True
 			else:
 				# Increase volume
@@ -685,21 +718,28 @@ def mount_share():
 def display_rss(lcd,rss):
 	rss_line = rss.getFeed()
 	lcd.setScrollSpeed(0.2) # Scroll RSS a bit faster
-	lcd.scroll2(rss_line,interrupt)
+	lcd.scroll3(rss_line,interrupt)
 	return
 
 # Display the currently playing station or track
-def display_current(lcd,radio):
-	current = radio.getCurrentStation()
+def display_current(lcd,radio,toggleScrolling):
+	station = radio.getRadioStation()
+	title = radio.getCurrentTitle()
+	if len(title) < 1:
+		title = "--------------------"
 	current_id = radio.getCurrentID()
 	source = radio.getSource()
-	leng = len(current)
 
 	if source == radio.RADIO:
 		if current_id <= 0:
 			lcd.line2("No stations found")
 		else:
-			lcd.line2("Radio station " + str(current_id))
+			station = station + ' (' + str(current_id) + ')'
+			if toggleScrolling:
+				lcd.line3(title)
+				lcd.scroll2(station, interrupt)
+			else:
+				lcd.line2(station)
 	else:
 		index = radio.getSearchIndex()
 		playlist = radio.getPlayList()
@@ -712,13 +752,14 @@ def display_current(lcd,radio):
 		lcd.scroll3(errorStr,interrupt)
 		radio.clearError()
 	else:
+		leng = len(title)
 		if leng > 20:
-			lcd.scroll3(current[0:160],interrupt)
-		elif  leng < 1:
-			lcd.line3("No input!")
-			time.sleep(1)
+			if toggleScrolling:
+				lcd.line3(title)
+			else:
+				lcd.scroll3(title[0:160],interrupt)
 		else:
-			lcd.line3(current)
+			lcd.line3(title)
 
 	# Display progress of the currently playing track
 	if radio.muted():

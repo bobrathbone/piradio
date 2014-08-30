@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class.py,v 1.19 2014/06/02 13:48:47 bob Exp $
+# $Id: lcd_class.py,v 1.22 2014/08/29 10:25:14 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -64,6 +64,13 @@ LCD_LINE_1 = 0x80 # LCD RAM address for the 1st line
 LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
 LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
 LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
+
+# Some LCDs use different addresses (16 x 4 line LCDs)
+# Comment out the above two lines and uncomment the two lines below
+# LCD_LINE_3 = 0x90 # LCD RAM address for the 3rd line
+# LCD_LINE_4 = 0xD0 # LCD RAM address for the 4th line
+
+# If using a 4 x 16 display also amend the lcd.setWidth(<width>) statement in rradio4.py
 
 # Timing constants
 E_PULSE = 0.00005
@@ -282,10 +289,12 @@ class Lcd:
                 # Spanish french
                 s = s.replace(chr(241), 'n')       # Small tilde n
                 s = s.replace(chr(191), '?')       # Small u acute to u
-                s = s.replace(chr(224), 'a')       # Small reverse a acute to a
+                s = s.replace(chr(224), 'a')       # Small a grave to a
                 s = s.replace(chr(225), 'a')       # Small a acute to a
+                s = s.replace(chr(226), 'a')       # Small a circumflex to a
                 s = s.replace(chr(232), 'e')       # Small e grave to e
                 s = s.replace(chr(233), 'e')       # Small e acute to e
+                s = s.replace(chr(234), 'e')       # Small e circumflex to e
                 s = s.replace(chr(237), 'i')       # Small i acute to i
                 s = s.replace(chr(238), 'i')       # Small i circumflex to i
                 s = s.replace(chr(243), 'o')       # Small o acute to o

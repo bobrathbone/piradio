@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character LCD version
 #
-# $Id: rradio4.py,v 1.40 2014/07/09 07:49:01 bob Exp $
+# $Id: rradio4.py,v 1.42 2014/08/21 13:33:46 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -133,6 +133,7 @@ class MyDaemon(Daemon):
 
 		# Main processing loop
 		count = 0 
+		toggleScrolling = True  # Toggle scrolling between Line 2 and 3
 		while True:
 
 			# See if we have had an interrupt
@@ -161,7 +162,7 @@ class MyDaemon(Daemon):
 				if radio.getStreaming():
 					msg = msg + ' *'  
 				lcd.line1(msg)
-				display_current(lcd,radio)
+				display_current(lcd,radio,toggleScrolling)
 
 			elif display_mode == radio.MODE_SEARCH:
 				display_search(lcd,radio)
@@ -200,8 +201,15 @@ class MyDaemon(Daemon):
 				radio.unmute()
 				displayWakeUpMessage(lcd)
 				radio.setDisplayMode(radio.MODE_TIME)
-					
+
+			# Toggle line 2 & 3 scrolling
+			if toggleScrolling:
+				toggleScrolling = False
+			else:
+				toggleScrolling = True
+
 			time.sleep(0.1)
+			# End of main processing loop
 
 	def status(self):
 		# Get the pid from the pidfile
@@ -306,7 +314,6 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 	pid = exec_cmd("cat /var/run/radiod.pid")
 	display_mode = radio.getDisplayMode()
 	input_source = radio.getSource()
-	MaxVolAdjust = 5
 	events = radio.getEvents()
 	option = radio.getOption()
 
@@ -437,9 +444,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 
 			else:
 				# Set the volume by the number of rotary encoder events
-				volAdjust = events
-				if volAdjust > MaxVolAdjust:
-					volAdjust = MaxVolAdjust
+				volAdjust = events/2
 				if radio.muted():
 					radio.unmute()
 				volume = radio.getVolume()
@@ -450,7 +455,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 						volume = 1
 					radio.setVolume(volume)
 					displayLine4(lcd,radio,"Volume " + str(volume))
-                                        volAdjust -= 1
+					volAdjust -= 1
 
 		else:
 			DisplayExitMessage(lcd)
@@ -468,20 +473,18 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				interrupt = True
 			else:
 				# Set the volume by the number of rotary encoder events
-				volAdjust = events
-				if volAdjust > MaxVolAdjust:
-					volAdjust = MaxVolAdjust
+				volAdjust = events/2
 				if radio.muted():
 					radio.unmute()
 				volume = radio.getVolume()
 
 				while volAdjust > 0:
-                                        volume += 1
+					volume += 1
 					if volume >  100:
 						volume = 100
-                                        radio.setVolume(volume)
+					radio.setVolume(volume)
 					displayLine4(lcd,radio,"Volume " + str(volume))
-                                        volAdjust -= 1
+					volAdjust -= 1
 
 	elif switch == MUTE_SWITCH:
 		log.message("MUTE switch" ,log.DEBUG)
@@ -704,17 +707,24 @@ def display_rss(lcd,rss):
 	return
 
 # Display the currently playing station or track
-def display_current(lcd,radio):
-	current = radio.getCurrentStation()
+def display_current(lcd,radio,toggleScrolling):
+	station = radio.getRadioStation()
+	title = radio.getCurrentTitle()
+	if len(title) < 1:
+		title = "--------------------"
 	current_id = radio.getCurrentID()
 	source = radio.getSource()
-	leng = len(current)
 
 	if source == radio.RADIO:
 		if current_id <= 0:
 			lcd.line2("No stations found")
 		else:
-			lcd.line2("Radio station " + str(current_id))
+			station = station + ' (' + str(current_id) + ')'
+			if toggleScrolling:
+				lcd.line3(title)
+				lcd.scroll2(station, interrupt)
+			else:
+				lcd.line2(station)
 	else:
 		index = radio.getSearchIndex()
 		playlist = radio.getPlayList()
@@ -727,13 +737,14 @@ def display_current(lcd,radio):
 		lcd.scroll3(errorStr,interrupt)
 		radio.clearError()
 	else:
+		leng = len(title)
 		if leng > 20:
-			lcd.scroll3(current[0:160],interrupt)
-		elif  leng < 1:
-			lcd.line3("No input!")
-			time.sleep(1)
+			if toggleScrolling:
+				lcd.line3(title)
+			else:
+				lcd.scroll3(title[0:160],interrupt)
 		else:
-			lcd.line3(current)
+			lcd.line3(title)
 
 	# Display progress of the currently playing track
 	if radio.muted():
@@ -745,7 +756,6 @@ def display_current(lcd,radio):
 			displayLine4(lcd,radio,"Volume " + str(radio.getStoredVolume()))
 
 	return
-
 
 # Display if in sleep
 def display_sleep(lcd,radio):

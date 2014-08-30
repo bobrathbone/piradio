@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.120 2014/07/20 05:33:05 bob Exp $
+# $Id: radio_class.py,v 1.125 2014/08/21 06:42:18 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -105,6 +105,7 @@ class Radio:
 	display_artist = False		# Display artist (or tracck) flag
 	current_file = ""  		# Currently playing track or station
 	option_changed = False		# Option changed
+	channelChanged = True		# Used to display title
 	
 	# MPD Options
 	random = False	# Random play
@@ -121,11 +122,14 @@ class Radio:
 	alarmTime = "0:7:00"    # Alarm time default type,hours,minutes
 	alarmTriggered = False	# Alarm fired
 
+	stationName = ''		# Radio station name
+	stationTitle = ''		# Radio station title
+
 	option = RANDOM         # Player option
 	search_index = 0        # The current search index
 	loadnew = False         # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.9"		# Version number
+	VERSION	= "3.11"	# Version number
 
 	def __init__(self):
 		log.init('radio')
@@ -137,7 +141,7 @@ class Radio:
 		if not os.path.isfile(CurrentStationFile):
 			self.execCommand ("mkdir -p " + RadioLibDir )
 
-		# Set up current radio staion file
+		# Set up current radio station file
 		if not os.path.isfile(CurrentStationFile) or os.path.getsize(CurrentStationFile) == 0:
 		        self.execCommand ("echo 1 > " + CurrentStationFile)
 
@@ -193,8 +197,8 @@ class Radio:
 		self.randomOff()
 		self.consumeOff()
 		self.repeatOff()
-		self.currentID = self.getStoredID(self.current_file)
-		log.message("radio.start currentID " + str(self.currentID), log.DEBUG)
+		self.current_id = self.getStoredID(self.current_file)
+		log.message("radio.start current ID " + str(self.current_id), log.DEBUG)
 		self.volume = self.getStoredVolume()
 		self.setVolume(self.volume)
 		self.timeTimer = int(time.time())
@@ -922,50 +926,73 @@ class Radio:
 				log.message("radio.getCurrentSong failed", log.ERROR)
 		return currentsong
 
-
 	# Get the currently playing radio station from mpd 
- 	# Returns the same format as the mpc current command
-	def getCurrentStation(self):
+	# This is usually from "name"but some stations use the "title" field
+	def getRadioStation(self):
 		currentsong = self.getCurrentSong()
 		try:
-			title = str(currentsong.get("title"))
 			name = str(currentsong.get("name"))
 		except:
-			title = "No title"
 			name = "No name"
-
-		# Format the same as the 'mpc current' command
-		if name == 'None':
-			currentPlaying = title
-		else:
-			if title == 'None':
-				currentPlaying = name
-			else:
-				currentPlaying = name + ": " + title
-
-		# If no name returned check that the file name is returned OK and use name from the search index
-		if currentPlaying == "None":
+		# If no name returned check that the file name is returned OK 
+		# and use name from the search index
+		if name == "None":
 			try:
 				time.sleep(0.2)
 				currentsong.get("file")
-				currentPlaying = self.getStationName(self.search_index) 
+				name = self.getStationName(self.search_index) 
 			except:
-				currentPlaying = "Bad stream (" + str(self.currentid) + ")"
+				name = "Bad stream (" + str(self.current_id) + ")"
 
-		currentPlaying = translate.escape(currentPlaying)
+		self.stationName = translate.escape(name)
+		return self.stationName
 
-		self.checkStatus()
-		return currentPlaying
-
-	# Get the name of the currently station or track from mpd 
+	# Get the title of the currently playing station or track from mpd 
 	def getCurrentTitle(self):
 		try:
 			currentsong = self.getCurrentSong()
 			title = str(currentsong.get("title"))
+			#log.message("Title: " + title, log.DEBUG)
 			title = translate.escape(title)
 		except:
-			title = "No title!"
+			title = ''
+
+		if title == 'None':
+			title = ''
+
+		try:
+			genre = str(currentsong.get("genre"))
+		except:
+			genre = ''
+		if genre == 'None':
+			genre = ''
+
+		# If the title contained the station name blank it out
+		if title == self.stationName:
+			title = ''
+
+		if title == '':
+			# Usually used if this is a podcast
+			if len(genre) > 0:
+				title = genre	
+		if self.channelChanged and len(title) > 0: 
+			log.message( "Title: "+ title,log.INFO)
+			self.channelChanged = False
+
 		return title
+
+	# Get the currently playing radio station from mpd 
+ 	# Returns the same format as the mpc current command
+	# Used for two line displays only
+	def getCurrentStation(self):
+		name = self.getRadioStation() + ' (' + str(self.current_id) + ')'
+		title = self.getCurrentTitle()
+		if len(title) > 0:
+			currentPlaying = name + ": " + title
+		else:
+			currentPlaying = name
+		self.checkStatus()
+		return currentPlaying
 
 	# Get the name of the current artist mpd (Music librarry only)
 	def getCurrentArtist(self):
@@ -1011,6 +1038,7 @@ class Radio:
 
 		# If any error MPD will skip to next channel
 		self.checkStatus()
+		self.channelChanged = True
 		return new_id
 
 	# Change radio station down
@@ -1032,6 +1060,7 @@ class Radio:
 			if new_id <= 0:
 				new_id = len(self.playlist)
 			self.play(new_id)
+		self.channelChanged = True
 		return new_id
 
 	# Toggle the input source (Reload is done when Reload requested)
@@ -1276,7 +1305,6 @@ if __name__ == "__main__":
 	radio = Radio()
 	print  "Version",radio.getVersion()
 	print "Board revision", radio.getBoardRevision()
-	sys.exit(0)	#DEBUG
 
 	# Start radio and load the radio stations
 	radio.start()

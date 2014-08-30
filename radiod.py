@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radiod.py,v 1.78 2014/07/09 07:49:01 bob Exp $
+# $Id: radiod.py,v 1.79 2014/08/13 10:19:41 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -352,7 +352,12 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,UP)
+				wait = 0.5
+				while GPIO.input(UP_SWITCH):
+					scroll_search(radio,UP)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,UP)
@@ -377,7 +382,12 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,DOWN)
+				wait = 0.5
+				while GPIO.input(DOWN_SWITCH):
+					scroll_search(radio,DOWN)
+					display_search(lcd,radio)
+					time.sleep(wait)
+					wait = 0.2
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,DOWN)
@@ -397,9 +407,14 @@ def get_switch_states(lcd,radio,rss):
 				toggle_option(radio,lcd,DOWN)
 				interrupt = True
 
-			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,DOWN)
-				interrupt = True
+                        elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
+                                wait = 0.5
+                                while GPIO.input(LEFT_SWITCH):
+                                        scroll_artist(radio,DOWN)
+                                        display_search(lcd,radio)
+                                        time.sleep(wait)
+                                        wait = 0.2
+                                interrupt = True
 
 			else:
 				# Decrease volume
@@ -430,7 +445,12 @@ def get_switch_states(lcd,radio,rss):
 				interrupt = True
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,UP)
+                                wait = 0.5
+                                while GPIO.input(RIGHT_SWITCH):
+                                        scroll_artist(radio,UP)
+                                        display_search(lcd,radio)
+                                        time.sleep(wait)
+                                        wait = 0.2
 				interrupt = True
 			else:
 				# Increase volume

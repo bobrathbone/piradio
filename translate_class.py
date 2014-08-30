@@ -4,7 +4,7 @@
 # Raspberry Pi Radio Character translation class
 # Escaped characters, html and unicode translation to ascii
 #
-# $Id: translate_class.py,v 1.5 2014/03/25 19:42:00 bob Exp $
+# $Id: translate_class.py,v 1.7 2014/08/21 11:16:14 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -13,6 +13,10 @@
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
 #             The authors shall not be liable for any loss or damage however caused.
+#
+# Useful Links on character encodings
+#  	http://www.zytrax.com/tech/web/entities.html
+#	http://www.utf8-chartable.de/
 #
 
 
@@ -55,9 +59,6 @@ class Translate:
 		s = text
 		s = s.replace('//', '/')
 
-		# Currency other special character
-		s = s.replace('\\xa3', chr(156))  # UK pound sign
-		s = s.replace('\\xa9', chr(169))  # Copyright
 
 		# German unicode escape sequences
 		s = s.replace('\\xc3\\x83', chr(223))   # Sharp s es-zett
@@ -68,6 +69,25 @@ class Translate:
  		s = s.replace('\\xc3\\x84', chr(196))	# A umlaut
 		s = s.replace('\\xc3\\x96', chr(214)) 	# O umlaut
  		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
+
+		# French unicode escape sequences
+ 		s = s.replace('\\xc3\\x80', 'A')	# A grave 
+ 		s = s.replace('\\xc3\\x81', 'A')	# A acute 
+ 		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
+ 		s = s.replace('\\xc3\\x83', 'A')	# A tilde 
+ 		s = s.replace('\\xc3\\x88', 'E')	# E grave 
+ 		s = s.replace('\\xc3\\x89', 'E')	# E acute 
+ 		s = s.replace('\\xc3\\x8a', 'E')	# E circumflex 
+ 		s = s.replace('\\xc3\\xa0', chr(224))	# a grave
+ 		s = s.replace('\\xc3\\xa1', chr(225))	# a acute
+ 		s = s.replace('\\xc3\\xa2', chr(226))	# a circumflex
+ 		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
+ 		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
+ 		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
+
+		# Currency other special character
+		s = s.replace('\\xa3', chr(156))  # UK pound sign
+		s = s.replace('\\xa9', chr(169))  # Copyright
 
 		# German short hex representation
 		s = s.replace('\\xdf', chr(223))   	# Sharp s es-zett

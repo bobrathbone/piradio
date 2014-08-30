@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.35 2014/06/08 14:04:16 bob Exp $
+# $Id: ada_radio.py,v 1.36 2014/08/02 05:27:08 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -69,6 +69,7 @@ class MyDaemon(Daemon):
 
 		hostname = exec_cmd('hostname')
 		ipaddr = exec_cmd('hostname -I')
+		log.message("IP " + ipaddr, log.INFO)
 		myos = exec_cmd('uname -a')
 		log.message(myos, log.INFO)
 

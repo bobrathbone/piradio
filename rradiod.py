@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 # Rotary encoder version
-# $Id: rradiod.py,v 1.43 2014/07/09 07:49:01 bob Exp $
+# $Id: rradiod.py,v 1.44 2014/08/21 13:33:46 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -313,7 +313,6 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 	pid = exec_cmd("cat /var/run/radiod.pid")
 	display_mode = radio.getDisplayMode()
 	input_source = radio.getSource()	
-	MaxVolAdjust = 5 	# Prevent big volume jumps
 	events = radio.getEvents()
 	option = radio.getOption()
 	
@@ -442,9 +441,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 			else:
 				# Set the volume by the number of rotary encoder events
 				log.message("events=" + str(radio.getEvents()), log.DEBUG)
-				volAdjust = radio.getEvents()
-				if volAdjust > MaxVolAdjust:
-					volAdjust = MaxVolAdjust
+				volAdjust = radio.getEvents()/2
 				if radio.muted():
 					radio.unmute()
 				volume = radio.getVolume()
@@ -471,9 +468,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 			else:
 				# Set the volume by the number of rotary encoder events
 				log.message("events=" + str(radio.getEvents()), log.DEBUG)
-				volAdjust = radio.getEvents()
-				if volAdjust > MaxVolAdjust:
-					volAdjust = MaxVolAdjust
+				volAdjust = radio.getEvents()/2
 				if radio.muted():
 					radio.unmute()
 

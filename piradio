@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.16 2014/07/12 13:17:00 bob Exp $
+# $Id: piradio,v 1.18 2014/08/21 12:01:07 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 3.9
+Version: 3.11
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 # Pre-Depends: <comma-separated list of packages>
 # Depends: <comma-separated list of packages>
@@ -60,6 +60,7 @@ Files:  radiod.py /home/pi/radio/
 	configs/mpdstream /home/pi/radio/
 	piradio_build.tar.gz /home/pi/radio/
 	README /home/pi/radio/
+	LICENSE /home/pi/radio/
 	install_streaming.sh /home/pi/radio/
 	logrotate.d/radiod /etc/
 	init.d/radiod /etc/

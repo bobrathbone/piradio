@@ -54,6 +54,15 @@ Support for podcast playlists addeded. New create_podcasts.py program
 Crontab entry for podcast playlist creation (/etc/cron.hourly/podcast)
 Improved create_playlists.py program to handle special characters 
 
+Version 3.10 changes
+--------------------
+Improved search facility. Holding in buttons during a search instead of repeatedly pressing them.
+
+Version 3.11 changes
+--------------------
+Name and title of station displayed seperately on line 2 & 3 (4 line displays only) 
+Improved character translation routines (translate_class.py)
+
 Manual
 ------
 Download from http://www.bobrathbone.com/raspberrypi/Raspberry%20PI%20Radio.pdf
