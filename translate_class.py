@@ -12,10 +12,10 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+#	     The authors shall not be liable for any loss or damage however caused.
 #
 # Useful Links on character encodings
-#  	http://www.zytrax.com/tech/web/entities.html
+#	http://www.zytrax.com/tech/web/entities.html
 #	http://www.utf8-chartable.de/
 #
 
@@ -32,8 +32,8 @@ class Translate:
 		return    
 
 	# Translate all 
-        def all(self,text):
-                s = self._convert2escape(text)
+	def all(self,text):
+		s = self._convert2escape(text)
 		s = self._escape(s)
 		s = self._unicode(s)
 		s = self._html(s)
@@ -47,15 +47,15 @@ class Translate:
 			s = s.lstrip("'")
 		return s
 
-        # Convert escaped characters (umlauts) to normal characters
-        def escape(self,text):
-                s = self._convert2escape(text)
+	# Convert escaped characters (umlauts) to normal characters
+	def escape(self,text):
+		s = self._convert2escape(text)
 		s = self._escape(s)
 		return s
 
 
-        # Convert escaped characters (umlauts) to normal characters
-        def _escape(self,text):
+	# Convert escaped characters (umlauts) to normal characters
+	def _escape(self,text):
 		s = text
 		s = s.replace('//', '/')
 
@@ -66,40 +66,40 @@ class Translate:
 		s = s.replace('\\xc3\\xa4', chr(228))   # a umlaut
 		s = s.replace('\\xc3\\xb6', chr(246))   # o umlaut
 		s = s.replace('\\xc3\\xbc', chr(252))   # u umlaut
- 		s = s.replace('\\xc3\\x84', chr(196))	# A umlaut
-		s = s.replace('\\xc3\\x96', chr(214)) 	# O umlaut
- 		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
+		s = s.replace('\\xc3\\x84', chr(196))	# A umlaut
+		s = s.replace('\\xc3\\x96', chr(214))	# O umlaut
+		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
 
 		# French unicode escape sequences
- 		s = s.replace('\\xc3\\x80', 'A')	# A grave 
- 		s = s.replace('\\xc3\\x81', 'A')	# A acute 
- 		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
- 		s = s.replace('\\xc3\\x83', 'A')	# A tilde 
- 		s = s.replace('\\xc3\\x88', 'E')	# E grave 
- 		s = s.replace('\\xc3\\x89', 'E')	# E acute 
- 		s = s.replace('\\xc3\\x8a', 'E')	# E circumflex 
- 		s = s.replace('\\xc3\\xa0', chr(224))	# a grave
- 		s = s.replace('\\xc3\\xa1', chr(225))	# a acute
- 		s = s.replace('\\xc3\\xa2', chr(226))	# a circumflex
- 		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
- 		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
- 		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
+		s = s.replace('\\xc3\\x80', 'A')	# A grave 
+		s = s.replace('\\xc3\\x81', 'A')	# A acute 
+		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
+		s = s.replace('\\xc3\\x83', 'A')	# A tilde 
+		s = s.replace('\\xc3\\x88', 'E')	# E grave 
+		s = s.replace('\\xc3\\x89', 'E')	# E acute 
+		s = s.replace('\\xc3\\x8a', 'E')	# E circumflex 
+		s = s.replace('\\xc3\\xa0', chr(224))	# a grave
+		s = s.replace('\\xc3\\xa1', chr(225))	# a acute
+		s = s.replace('\\xc3\\xa2', chr(226))	# a circumflex
+		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
+		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
+		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
 
 		# Currency other special character
 		s = s.replace('\\xa3', chr(156))  # UK pound sign
 		s = s.replace('\\xa9', chr(169))  # Copyright
 
 		# German short hex representation
-		s = s.replace('\\xdf', chr(223))   	# Sharp s es-zett
-		s = s.replace('\\xe4', chr(228))   	# a umlaut
-		s = s.replace('\\xf6', chr(246))   	# o umlaut
-		s = s.replace('\\xfc', chr(252))   	# u umlaut
- 		s = s.replace('\\xc4', chr(196))	# A umlaut
-		s = s.replace('\\xd6', chr(214)) 	# O umlaut
- 		s = s.replace('\\xdc', chr(220))	# U umlaut
+		s = s.replace('\\xdf', chr(223))	# Sharp s es-zett
+		s = s.replace('\\xe4', chr(228))	# a umlaut
+		s = s.replace('\\xf6', chr(246))	# o umlaut
+		s = s.replace('\\xfc', chr(252))	# u umlaut
+		s = s.replace('\\xc4', chr(196))	# A umlaut
+		s = s.replace('\\xd6', chr(214))	# O umlaut
+		s = s.replace('\\xdc', chr(220))	# U umlaut
 
 		# Spanish and French
-		s = s.replace('\\xa0', ' ')         # Line feed  to space
+		s = s.replace('\\xa0', ' ')	 # Line feed  to space
 		s = s.replace('\\xe0', chr(224))    # Small a reverse acute
 		s = s.replace('\\xe1', chr(225))    # Small a acute
 		s = s.replace('\\xe7', chr(231))    # Small c Cedilla 
@@ -122,31 +122,31 @@ class Translate:
 		s = s.replace('\\xda', chr(218))    # Capital U acute
 
 		s = s.replace('\\xbf', chr(191))    # Spanish Punctuation
-                return s
+		return s
 
 	# HTML translations (callable)
-        def html(self,text):
+	def html(self,text):
 		s = self._html(s)
 		return s
 
 	# HTML translations
-        def _html(self,text):
+	def _html(self,text):
 		s = text
 		s = s.replace('&lt;', '<') 
 		s = s.replace('&gt;', '>') 
 		s = s.replace('&quot;', '"') 
 		s = s.replace('&nbsp;', ' ') 
 		s = s.replace('&amp;', '&') 
-                return s
+		return s
 
 	# Unicodes etc (callable)
-        def unicode(self,text):
-                s = self._convert2escape(text)
+	def unicode(self,text):
+		s = self._convert2escape(text)
 		s = self._unicode(s)
 		return s
 
 	# Unicodes etc
-        def _unicode(self,text):
+	def _unicode(self,text):
 		s = text
 		s = s.replace('\\u201e', '"')    # ORF feed
 		s = s.replace('\\u3000', " ") 
@@ -154,6 +154,6 @@ class Translate:
 		s = s.replace('\\u201d', '"') 
 		s = s.replace("\\'", "'") 
 		s = s.replace("\\n", " ") 
-                return s
+		return s
 
 # End of class

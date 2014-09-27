@@ -14,7 +14,7 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+#	     The authors shall not be liable for any loss or damage however caused.
 #
 
 import os
@@ -125,9 +125,9 @@ class Radio:
 	stationName = ''		# Radio station name
 	stationTitle = ''		# Radio station title
 
-	option = RANDOM         # Player option
-	search_index = 0        # The current search index
-	loadnew = False         # Load new track from search
+	option = RANDOM	 # Player option
+	search_index = 0	# The current search index
+	loadnew = False	 # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
 	VERSION	= "3.11"	# Version number
 
@@ -136,34 +136,34 @@ class Radio:
 
 		# Set up MPD port file
 		if not os.path.isfile(MpdPortFile) or os.path.getsize(MpdPortFile) == 0:
-		        self.execCommand ("echo 6600 > " + MpdPortFile)
+			self.execCommand ("echo 6600 > " + MpdPortFile)
 
 		if not os.path.isfile(CurrentStationFile):
 			self.execCommand ("mkdir -p " + RadioLibDir )
 
 		# Set up current radio station file
 		if not os.path.isfile(CurrentStationFile) or os.path.getsize(CurrentStationFile) == 0:
-		        self.execCommand ("echo 1 > " + CurrentStationFile)
+			self.execCommand ("echo 1 > " + CurrentStationFile)
 
 		# Set up current track file
 		if not os.path.isfile(CurrentTrackFile) or os.path.getsize(CurrentTrackFile) == 0:
-		        self.execCommand ("echo 1 > " + CurrentTrackFile)
+			self.execCommand ("echo 1 > " + CurrentTrackFile)
 
 		# Set up volume file
 		if not os.path.isfile(VolumeFile) or os.path.getsize(VolumeFile) == 0:
-		        self.execCommand ("echo 75 > " + VolumeFile)
+			self.execCommand ("echo 75 > " + VolumeFile)
 
 		# Set up timer file
 		if not os.path.isfile(TimerFile) or os.path.getsize(TimerFile) == 0:
-		        self.execCommand ("echo 30 > " + TimerFile)
+			self.execCommand ("echo 30 > " + TimerFile)
 
 		# Set up Alarm file
 		if not os.path.isfile(AlarmFile) or os.path.getsize(AlarmFile) == 0:
-		        self.execCommand ("echo 0:7:00 > " + AlarmFile)
+			self.execCommand ("echo 0:7:00 > " + AlarmFile)
 
 		# Set up Streaming (Icecast) file
 		if not os.path.isfile(StreamFile) or os.path.getsize(StreamFile) == 0:
-		        self.execCommand ("echo off > " + StreamFile)
+			self.execCommand ("echo off > " + StreamFile)
 
 		# Create mount point for USB stick link it to the music directory
 		if not os.path.isfile("/media"):
@@ -183,16 +183,19 @@ class Radio:
 		self.execCommand("chmod -R 764 " + RadioLibDir)
 		self.current_file = CurrentStationFile
 		self.current_id = self.getStoredID(self.current_file)
+                
+                print("Radioklasse initialisiert")
 
 	# Start the MPD daemon
 	def start(self):
 		# Start the player daemon
-		self.execCommand("service mpd start")
+                print ("starte mpd")
+		#self.execCommand("service mpd start")
 		# Connect to MPD
 		self.boardrevision = self.getBoardRevision()
 		self.mpdport = self.getMpdPort()
 		self.connect(self.mpdport)
-		client.clear()
+		#client.clear()
 		self.randomOff()
 		self.randomOff()
 		self.consumeOff()
@@ -426,7 +429,7 @@ class Radio:
 		return volume
 
 	# Store volume in volume file
-        def storeVolume(self,volume):
+	def storeVolume(self,volume):
 		self.execCommand ("echo " + str(volume) + " > " + VolumeFile)
 		return
 
@@ -548,7 +551,7 @@ class Radio:
 		return timerValue
 
 	# Store timer time in timer file
-        def storeTimer(self,timerValue):
+	def storeTimer(self,timerValue):
 		self.execCommand ("echo " + str(timerValue) + " > " + TimerFile)
 		return
 
@@ -658,7 +661,7 @@ class Radio:
 		return alarmValue
 
 	# Store alarm time in alarm file
-        def storeAlarm(self,alarmString):
+	def storeAlarm(self,alarmString):
 		self.execCommand ("echo " + alarmString + " > " + AlarmFile)
 		return
 
@@ -740,7 +743,7 @@ class Radio:
 		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 	# Store stram on or off in streaming file
-        def storeStreaming(self,onoff):
+	def storeStreaming(self,onoff):
 		self.execCommand ("echo " + onoff + " > " + StreamFile)
 		return
 
@@ -1301,10 +1304,10 @@ class Radio:
 
 ### Test routine ###
 if __name__ == "__main__":
-	print "Test radio_class.py"
+	print ("Test radio_class.py")
 	radio = Radio()
-	print  "Version",radio.getVersion()
-	print "Board revision", radio.getBoardRevision()
+	print  ("Version",radio.getVersion())
+	print ("Board revision", radio.getBoardRevision())
 
 	# Start radio and load the radio stations
 	radio.start()
@@ -1312,50 +1315,50 @@ if __name__ == "__main__":
 	radio.play(1)
 	current_id = radio.getCurrentID()
 	index = current_id - 1
-	print "Current ID ", current_id 
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Current ID ", current_id )
+	print ("Station",current_id,":", radio.getStationName(index))
 
 	# Test volume controls
-	print "Stored volume", radio.getStoredVolume()
+	print ("Stored volume", radio.getStoredVolume())
 	radio.setVolume(75)
 	radio.increaseVolume()
 	radio.decreaseVolume()
 	radio.getVolume()
 	time.sleep(5)
-	print "Mute"
+	print ("Mute")
 	radio.mute()
 	time.sleep(3)
-	print "Unmute"
+	print ("Unmute")
 	radio.unmute()
-	print "Volume", radio.getVolume()
+	print ("Volume", radio.getVolume())
 	time.sleep(5)
 
 	# Test channel functions
 	current_id = radio.channelUp()
-	print "Channel up"
+	print ("Channel up")
 	index = current_id - 1
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Station",current_id,":", radio.getStationName(index))
 	time.sleep(5)
 	current_id = radio.channelDown()
-	print "Channel down"
+	print ("Channel down")
 	index = current_id - 1
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Station",current_id,":", radio.getStationName(index))
 
 	# Check library load
-	print "Load music library"
+	print ("Load music library")
 	radio.loadMusic()
 
 	# Check state
-	print "Paused  " +  str(radio.paused())
+	print ("Paused  " +  str(radio.paused()))
 
 	# Check timer
-	print "Set Timer 1 minute"
+	print ("Set Timer 1 minute")
 	radio.timerValue = 1
 	radio.timerOn()
 
 	while not radio.fireTimer():
 		time.sleep(1)
-	print "Timer fired"
+	print ("Timer fired")
 
 	# Exit 
 	sys.exit(0)
