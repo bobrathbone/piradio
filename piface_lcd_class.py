@@ -107,12 +107,16 @@ class Piface_lcd:
         def __init__(self):
                 self.cad = pifacecad.PiFaceCAD()
                 self.lcd = self.cad.lcd
+                self.width = 16
+                for i in range (0,2):
+                        self.savelines[i] = "".ljust(self.width," ")
+                self.lcd.clear()
 		return
 
 	# Initialise for either revision 1 or 2 boards
 	def init(self):
                 
-                print ("iniit")
+                print ("init")
 		#self.lcd.send_command(0x33)
 		#self.lcd.send_command(0x32)
 		#self.lcd.send_command(0x28) # 4bit, 2 Zeilen, 5x8-font
@@ -151,25 +155,39 @@ class Piface_lcd:
 	# Set the display width
 	def setWidth(self,width):
 		self.width = width
+                for i in range (0,2):
+                        self.savelines = "".ljust(self.width," ")
 		return
 
 	# Send string to display
 	def _string(self,message):
-		s = message.ljust(self.width," ")
+                s = message
 		if not self.RawMode:
 			s = self.translateSpecialChars(s)
                 self.lcd.write(s);
 		return
 
 	# Display Line 1 on LED
-	def line(self,x,y,text):
+	def line(self,x,y,message):
+		text = message.ljust(self.width," ")
                 leng = len(text)
                 end = x+leng
-                self.savelines[y] = (str(self.savelines[y][0:x]) 
-                                    + str(text) 
-                                    + str(self.savelines[end:self.width]))
-                self.lcd.set_cursor(x,y)
-		self._string(text)
+                current_line = (str(self.savelines[y][0:x]) 
+                                + str(text) 
+                                + str(self.savelines[y][end:self.width]))
+                first_difference = self.width
+                for i in range(0,self.width-1):
+                        if current_line[i] != self.savelines[y][i]:
+                                first_difference = i
+                                break
+                last_difference = first_difference -1
+                for i in range(self.width-1,first_difference-1,-1):
+                        if current_line[i] != self.savelines[y][i]:
+                                last_difference = i+1
+                                break
+                self.lcd.set_cursor(first_difference,y)
+		self._string(str(current_line[first_difference:last_difference]))
+                self.savelines[y] = current_line
 		return
 
 	# Scroll message on line 1
@@ -182,8 +200,7 @@ class Piface_lcd:
 		ilen = len(mytext)
 		skip = False
 
-		self.lcd.set_cursor(x,y)
-		self._string(mytext[0:self.width + 1])
+		self.line(x,y,mytext[0:self.width + 1])
 	
 		if (ilen <= self.width):
 			skip = True
