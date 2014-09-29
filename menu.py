@@ -245,9 +245,9 @@ class menu(object):
         log.message("Processing left+right button", log.DEBUG)
         # Shutdown if menu button held for > 3 seconds
         MenuSwitch = True
-        count = 15
+        count = 30
         while MenuSwitch:
-            time.sleep(0.2)
+            time.sleep(0.1)
             MenuSwitch = lcd.buttonPressed(lcd.ENTER)
             lcd.backlight(True)
             count = count - 1
@@ -324,8 +324,13 @@ class menu(object):
 
     # Display time and timer/alarm
     def display_time(self,x,y):
-	todaysdate = strftime("%d.%m.%Y %H:%M")
-	timenow = strftime("%H:%M")
+        beat = int(time.time()) % 2
+        if beat:
+            todaysdate = strftime("%d.%m.%Y %H.%M")
+            timenow = strftime("%H.%M")
+        else:
+            todaysdate = strftime("%d.%m.%Y %H %M")
+            timenow = strftime("%H.%M")
 	if radio.getTimer():
             message = timenow + " " + radio.getTimerString()
             if radio.alarmActive():
@@ -379,6 +384,12 @@ class date_play_menu(menu):
             lcd.unlock()
         else:
             self.display_current(0,1)
+
+    def heartbeat(self):
+        self.display_time(0,0)
+        lcd.heartbeat()
+
+
 
 # search station as well as music files by artist
 class search_menu(menu):
