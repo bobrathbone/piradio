@@ -28,6 +28,7 @@ import os
 import time
 import pifacecommon
 import pifacecad
+import threading
 #import RPi.GPIO as GPIO
 
 # The wiring for the LCD is as follows:
@@ -90,14 +91,15 @@ class Piface_lcd:
         ENTER = 5
         LEFT  = 6
         RIGHT = 7
-        LEFTBUTTON  = 0
+        BUTTON1     = 0
         BUTTON2     = 1
         BUTTON3     = 2
-        RIGHTBUTTON = 3
-        EXTRABUTTON = 4
+        BUTTON4     = 3
+        BUTTON5     = 4
 
-        saveline1 = ""
-        saveline2 = ""
+        savelines = ["","","",""]
+
+        lcdlock = threading.Lock()
 
 
 #	lcd_d4 = LCD_D4_27	# Default for revision 2 boards 
@@ -160,57 +162,27 @@ class Piface_lcd:
 		return
 
 	# Display Line 1 on LED
-	def line1(self,text):
-                self.saveline1 = text
-                self.lcd.set_cursor(0,0)
-		self._string(text)
-		return
-
-	# Display Line 2 on LED
-	def line2(self,text):
-                self.saveline2 = text
-		self.lcd.set_cursor(0,1)
-		self._string(text)
-		return
-
-	# Display Line 3 on LED
-	def line3(self,text):
-                self.lcd.set_cursor(0,2)
-		self._string(text)
-		return
-
-	# Display Line 4 on LED
-	def line4(self,text):
-		self.lcd.set_cursor(0,3)
+	def line(self,x,y,text):
+                leng = len(text)
+                end = x+leng
+                self.savelines[y] = (str(self.savelines[y][0:x]) 
+                                    + str(text) 
+                                    + str(self.savelines[end:self.width]))
+                self.lcd.set_cursor(x,y)
 		self._string(text)
 		return
 
 	# Scroll message on line 1
-	def scroll1(self,mytext,interrupt):
-		self._scroll(mytext,0,interrupt)
-		return
-
-	# Scroll message on line 2
-	def scroll2(self,mytext,interrupt):
-		self._scroll(mytext,1,interrupt)
-		return
-
-	# Scroll message on line 3
-	def scroll3(self,mytext,interrupt):
-		self._scroll(mytext,2,interrupt)
-		return
-
-	# Scroll message on line 4
-	def scroll4(self,mytext,interrupt):
-		self._scroll(mytext,3,interrupt)
+	def scroll(self,x,y,mytext):
+		self._scroll(mytext,x,y)
 		return
 
 	# Scroll line - interrupt() breaks out routine if True
-	def _scroll(self,mytext,line,interrupt):
+	def _scroll(self,mytext,x,y):
 		ilen = len(mytext)
 		skip = False
 
-		self.lcd.set_cursor(0,line)
+		self.lcd.set_cursor(x,y)
 		self._string(mytext[0:self.width + 1])
 	
 		if (ilen <= self.width):
@@ -219,24 +191,16 @@ class Piface_lcd:
 		if not skip:
 			for i in range(0, 5):
 				time.sleep(0.2)
-				if interrupt():
-					skip = True
-					break
 
 		if not skip and False:
 			for i in range(0, ilen - self.width + 1 ):
 				self._byte_out(line, LCD_CMD)
 				self._string(mytext[i:i+self.width])
-				if interrupt():
-					skip = True
-					break
 				time.sleep(self.ScrollSpeed)
 
 		if not skip:
 			for i in range(0, 5):
 				time.sleep(0.2)
-				if interrupt():
-					break
 		return
 
         # Set Scroll line speed - Best values are 0.2 and 0.3
@@ -318,7 +282,13 @@ class Piface_lcd:
                 self.listener = pifacecad.SwitchEventListener(chip=self.cad)
                 return self.listener
 
-        def update_display(self):
-                self.line1(self.saveline1)
-                self.line2(self.saveline2)
+        def lock(self):
+                self.lcdlock.acquire()
+
+        def unlock(self):
+                self.lcdlock.release()
+
+        def heartbeat(self):
+                return
+
 # End of Lcd class

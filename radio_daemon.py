@@ -117,7 +117,7 @@ class Daemon:
 		"""
 		Stop the daemon
 		"""
-		# Get the pid from the pidfile
+# Get the pid from the pidfile
 		try:
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
