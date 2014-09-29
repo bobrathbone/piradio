@@ -567,9 +567,11 @@ class top_menu(menu):
         if (self.current_entry == 0):
             radio.setSource(radio.RADIO)
             submenu(search_menu())
+            current_menu.changed = True
         elif self.current_entry == 1:
             radio.setSource(radio.PLAYER)
             submenu(search_menu())
+            current_menu.changed = True
         elif self.current_entry == 2:
             submenu(rss_menu())
         elif self.current_entry == 3:
