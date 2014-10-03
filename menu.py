@@ -3,6 +3,8 @@ import copy
 import time
 import datetime
 from time import strftime
+from radio_api import RadioApi
+radio_api = RadioApi()
 lcd = None
 radio = None
 rss = None
@@ -29,6 +31,9 @@ def submenu(menu):
 
 def heartbeat():
     current_menu.heartbeat()
+
+def _(string):
+    return string
 
 # Execute system command
 def exec_cmd(cmd):
@@ -93,6 +98,16 @@ class menukeys_class:
 
     def button5_off(self,event):
         current_menu.button1_off(event)
+
+    # IR remote control
+    def key(self,event):
+        log.message("IR event: " + str(event),log.DEBUG)
+
+    def key_channelup(self,event):
+        current_menu.channel_up(event)
+
+    def key_channeldown(self,event):
+        current_menu.channel_down(event)
 
 menukeys = menukeys_class()
 
@@ -225,20 +240,22 @@ class menu(object):
         return
 
     def button3(self,event):
-        self.channel_down()
+        self.channel_down(event)
         return
 
     def button4(self,event):
-        self.channel_up()
+        self.channel_up(event)
         return
 
     def button5(self,event):
         return
 
     def leftswitch(self,event):
+        self.channel_down(event)
         return
 
     def rightswitch(self,event):
+        self.channel_up(event)
         return
 
     def leftrightbutton(self,event):
@@ -326,18 +343,20 @@ class menu(object):
     def display_time(self,x,y):
         beat = int(time.time()) % 2
         if beat:
-            todaysdate = strftime("%d.%m.%Y %H.%M")
             timenow = strftime("%H.%M")
+            todaysdate = strftime("%d.%m.%Y ") + timenow
         else:
-            todaysdate = strftime("%d.%m.%Y %H %M")
-            timenow = strftime("%H.%M")
+            timenow = strftime("%H %M")
+            todaysdate = strftime("%d.%m.%Y ") + timenow
 	if radio.getTimer():
             message = timenow + " " + radio.getTimerString()
             if radio.alarmActive():
                 message = message + " " + radio.getAlarmTime()
         else:
             message = todaysdate
+        lcd.lock()
         lcd.line(x,y, message)
+        lcd.unlock()
 	return
 
     def display_volume(self,x,y):
@@ -362,6 +381,8 @@ class shutdown_menu(menu):
         lcd.unlock()
 
 class date_play_menu(menu):
+    next_time = 0
+
     def get_parent_menu(self):
         return search_menu()
 
@@ -386,7 +407,10 @@ class date_play_menu(menu):
             self.display_current(0,1)
 
     def heartbeat(self):
-        self.display_time(0,0)
+        current_time = time.time()
+        if current_time >= self.next_time:
+            self.display_time(0,0)
+            self.next_time = int(current_time)+1
         lcd.heartbeat()
 
 
@@ -524,7 +548,8 @@ class search_menu(menu):
 
 class top_menu(menu):
     current_entry = None
-    entry_list = [ "Internet Radio",
+    entry_list = [ "Radio",
+                   "Internet Radio",
                    "Music library",
                    "RSS",
                    "Sleep",
@@ -565,22 +590,24 @@ class top_menu(menu):
 
     def enter(self,event):
         if (self.current_entry == 0):
+            submenu(radio_menu())
+        elif self.current_entry == 1:
             radio.setSource(radio.RADIO)
             submenu(search_menu())
             current_menu.changed = True
-        elif self.current_entry == 1:
+        elif self.current_entry == 2:
             radio.setSource(radio.PLAYER)
             submenu(search_menu())
             current_menu.changed = True
-        elif self.current_entry == 2:
-            submenu(rss_menu())
         elif self.current_entry == 3:
-            submenu(sleep_menu())
+            submenu(rss_menu())
         elif self.current_entry == 4:
-            submenu(shutdown_menu())
+            submenu(sleep_menu())
         elif self.current_entry == 5:
-            submenu(options_menu())
+            submenu(shutdown_menu())
         elif self.current_entry == 6:
+            submenu(options_menu())
+        elif self.current_entry == 7:
             submenu(about_menu())
         return
         
@@ -887,3 +914,123 @@ class sleep_menu(menu):
 
     def leftrightbutton(self,event):
         self.wakeup()
+
+class radio_station_menu(menu):
+    current_entry = 0
+    heading = "Unknown menu"
+    entry_list = {}
+    
+    def __init__(self, stations, heading):
+        self.heading = heading
+        self.entry_list = stations
+
+    def displayMode(self):
+        log.message("Current Station: " + 
+                    unicode(self.entry_list[self.current_entry]), 
+                    log.DEBUG)
+        lcd.lock()
+	lcd.line(0,0, self.heading % (self.current_entry + 1))
+        lcd.line(0,1, self.entry_list[self.current_entry]['name'])
+        lcd.unlock()
+	return
+
+    def previous_entry(self,event):
+        size = len(self.entry_list)
+        if self.current_entry > 0:
+            self.current_entry = self.current_entry - 1
+        else: self.current_entry = size - 1
+        self.displayMode()
+
+    def next_entry(self,event):
+        size = len(self.entry_list)
+        self.current_entry = self.current_entry + 1
+        if self.current_entry >= size:
+            self.current_entry = 0
+        self.displayMode()
+
+    def enter(self,event):
+        return
+            
+    def leftswitch(self,event):
+        self.previous_entry(event)
+
+    def rightswitch(self,event):
+        self.next_entry(event)
+
+    def leftrightbutton(self,event):
+        self.enter(event)
+
+
+class radio_menu(menu):
+    current_entry = 0
+
+    def unimplemented():
+        lcd.line(0,1,_("Unimplemented"))
+        return
+    def local_stations():
+        submenu(radio_station_menu(radio_api.get_local_stations(99),
+                                    "Local radio: %d"))
+        return
+
+    entry_list = (
+        {'label': _('Local Stations'),
+         'method': local_stations},
+        {'label': _('Recomendations'),
+         'method': unimplemented},
+        {'label': _('Top 100'),
+         'method': unimplemented},
+        {'label': _('Genre'),
+         'method': unimplemented},
+        {'label': _('Topic'),
+         'method': unimplemented},
+        {'label': _('Category'),
+         'method': unimplemented},
+        {'label': _('City'),
+         'method': unimplemented},
+        {'label': _('Language'),
+         'method': unimplemented},
+        {'label': _('Search'),
+         'method': unimplemented},
+        {'label': _('My stations'),
+         'method': unimplemented},
+    )
+
+    def __init__(self):
+        super(radio_menu,self).__init__()
+        log.message("radio_menu.init()",log.DEBUG)
+
+
+    def displayMode(self):
+        lcd.lock()
+	lcd.line(0,0, "Search Radio:")
+        lcd.line(0,1, self.entry_list[self.current_entry]['label'])
+        lcd.unlock()
+	return
+
+    def previous_entry(self,event):
+        size = len(self.entry_list)
+        if self.current_entry > 0:
+            self.current_entry = self.current_entry - 1
+        else: self.current_entry = size - 1
+        self.displayMode()
+
+    def next_entry(self,event):
+        size = len(self.entry_list)
+        self.current_entry = self.current_entry + 1
+        if self.current_entry >= size:
+            self.current_entry = 0
+        self.displayMode()
+
+    def enter(self,event):
+        self.entry_list[self.current_entry]['method']()
+        return
+        
+            
+    def leftswitch(self,event):
+        self.previous_entry(event)
+
+    def rightswitch(self,event):
+        self.next_entry(event)
+
+    def leftrightbutton(self,event):
+        self.enter(event)

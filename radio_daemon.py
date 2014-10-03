@@ -34,35 +34,24 @@ class Daemon:
 		Programming in the UNIX Environment" for details (ISBN 0201563177)
 		http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
 		"""
-                print("daemonize")
-                
                 try: 
                         pid = os.fork() 
                         if pid > 0:
-                                print ("fork 1 ok")
-                                print ("pid = ", os.getpid())
                                 # exit first parent
                                 sys.exit(0) 
                 except OSError as e: 
                         sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
                         sys.exit(1)
 	
-                print ("forekd")
 		# decouple from parent environment
 		os.chdir("/") 
-                print ("pid = ", pid)
-                print ("pid = ", os.getpid())
-                print ("ppid = ", os.getppid())
 		os.setsid() 
 		os.umask(0) 
 	
-                print ("decoupled")
                 # do second fork
                 try: 
                         pid = os.fork() 
                         if pid > 0:
-                                print ("fork2 ok")
-                                print ("pid = ", os.getpid())
                                 # exit from second parent
                                 sys.exit(0) 
                 except OSError as e: 
@@ -78,8 +67,6 @@ class Daemon:
 		os.dup2(si.fileno(), sys.stdin.fileno())
 		os.dup2(so.fileno(), sys.stdout.fileno())
 		os.dup2(se.fileno(), sys.stderr.fileno())
-                print ("pid2 = ", pid)
-                print ("pid = ", os.getpid())
 
 		# write pidfile
 		atexit.register(self.delpid)
@@ -95,10 +82,8 @@ class Daemon:
 		"""
 		# Check for a pidfile to see if the daemon already runs
 		try:
-                        print ("pidfile " + self.pidfile)
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
-                        print ("pid = " + str(pid))
                         pf.close()
 		except IOError:
 			pid = None

@@ -1,12 +1,16 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
 # $Id: lcd_class.py,v 1.22 2014/08/29 10:25:14 bob Exp $
 # Raspberry Pi Internet Radio
-# using an HD44780 LCD display
+# using Piface Control & Display
 #
-# Author : Bob Rathbone
-# Site   : http://www.bobrathbone.com
+# Autor : Tobias Schlemmer
+# Site  : http://schlemmersoft.de/
+#
+# Original Author : Bob Rathbone
+# Original Site   : http://www.bobrathbone.com
+#  
 #
 # From original LCD routines : Matt Hawkins
 # Site   : http://www.raspberrypi-spy.co.uk
@@ -25,10 +29,13 @@
 
 
 import os
+import sys
 import time
 import pifacecommon
 import pifacecad
 import threading
+import codecs
+import cpHD44780
 #import RPi.GPIO as GPIO
 
 # The wiring for the LCD is as follows:
@@ -111,6 +118,15 @@ class Piface_lcd:
                 for i in range (0,2):
                         self.savelines[i] = "".ljust(self.width," ")
                 self.lcd.clear()
+
+                self.lcd.backlight_on()
+#                 for i in range(8):
+#                         for j in range(2):
+#                                 self.lcd.set_cursor(0,j)
+#                                 for k in range(16):
+#                                         self.lcd.write(chr(16*(2*i + j)+k))
+#                         sys.stdin.readline()
+#                 
 		return
 
 	# Initialise for either revision 1 or 2 boards
@@ -164,6 +180,7 @@ class Piface_lcd:
                 s = message
 		if not self.RawMode:
 			s = self.translateSpecialChars(s)
+                log.message("LCD._string: " + s, log.DEBUG)
                 self.lcd.write(s);
 		return
 
@@ -172,9 +189,9 @@ class Piface_lcd:
 		text = message.ljust(self.width," ")
                 leng = len(text)
                 end = x+leng
-                current_line = (str(self.savelines[y][0:x]) 
-                                + str(text) 
-                                + str(self.savelines[y][end:self.width]))
+                current_line = (self.savelines[y][0:x]
+                                + text
+                                + self.savelines[y][end:self.width])
                 first_difference = self.width
                 for i in range(0,self.width-1):
                         if current_line[i] != self.savelines[y][i]:
@@ -186,7 +203,7 @@ class Piface_lcd:
                                 last_difference = i+1
                                 break
                 self.lcd.set_cursor(first_difference,y)
-		self._string(str(current_line[first_difference:last_difference]))
+		self._string(current_line[first_difference:last_difference])
                 self.savelines[y] = current_line
 		return
 
@@ -243,10 +260,11 @@ class Piface_lcd:
 	# Translate special characters (umlautes etc) to LCD values
 	# See standard character patterns for LCD display
 	def translateSpecialChars(self,sp):
+                return codecs.charmap_encode(sp,'replace',cpHD44780.encoding_map_A00)[0];
 		s = sp
 
                 # Currency
-                s = s.replace(chr(156), '#')       # Pound by hash
+                s = s.replace('œ', 'oe')       # Pound by hash
                 s = s.replace(chr(169), '(c)')     # Copyright
 
                 # Spanish french

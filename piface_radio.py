@@ -26,6 +26,7 @@ import datetime
 import atexit
 import shutil
 import threading
+import lirc
 import pifacecommon
 import pifacecad
 import piface_lcd_class
@@ -59,6 +60,7 @@ interrupt = False
 def finish():
 	lcd.clear()
         listener.deactivate()
+        if irlistener_activated: irlistenter.deactivate()
 	radio.execCommand("umount /media  > /dev/null 2>&1")
 	radio.execCommand("umount /share  > /dev/null 2>&1")
 	lcd.line(0,0, "Radio stopped")
@@ -159,6 +161,18 @@ class MyDaemon(Daemon):
                                   pifacecad.IODIR_OFF,
                                   menu.menukeys.leftrightbutton_off)
                 listener.activate()
+                irlistener = pifacecad.IREventListener(
+                        prog="pifacecad-radio-ts",
+                        lircrc="/home/pi/radio/radiolircrc")
+                for i in range(10):
+                        irlistener.register(str(i), menu.menukeys.key)
+                try:
+                        irlistener.activate()
+                except lirc.InitError:
+                        log.message("Could not initialise IR, radio running without IR contorls.",log.WARNING)
+                        irlistener_activated = False
+                else:
+                        irlistener_activated = True
 
 		# Main processing loop
 		count = 0 

@@ -1,0 +1,5 @@
+piradio (3.13-0ts) UNRELEASED; urgency=medium
+
+  * Initial release based on the original piradio package.
+
+ -- Tobias Schlemmer <keinstein@users.sourceforge.net>  Fri, 03 Oct 2014 20:20:37 +0200
