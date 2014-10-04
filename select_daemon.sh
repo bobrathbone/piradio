@@ -20,6 +20,7 @@ INIT=/etc/init.d/radiod
 # Display types
 LCD=3	# LCD screen (direct)
 ADA=4	# Adafruit LCD plate
+PIFACE=5 # piface radio
 
 echo
 echo "Radio daemon and board revision selection"
@@ -31,6 +32,7 @@ echo "2) Four line LCD with push buttons (radio4.py)"
 echo "3) Two line LCD with rotary encoders  (rradiod.py)"
 echo "4) Four line LCD with rotary encoders (rradio4.py)"
 echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
+echo "6) Two line Piface Control & Display with push buttons (piface_radio.py)"
 echo "x) Exit"
 echo -n "Select version: "
 
@@ -55,6 +57,10 @@ do
 	elif [[ ${ans} == '5' ]]; then
 		DAEMON=ada_radio.py
 		TYPE=${ADA}
+		break
+	elif [[ ${ans} == '5' ]]; then
+		DAEMON=piface_radio.py
+		TYPE=${PIFACE}
 		break
 	elif [[ ${ans} == 'x' ]]; then
 		exit 0

@@ -1,9 +1,7 @@
-piradio-3.13 for Debian
+piradio for Debian
 -----------------------
 
-<this file describes information about the source package, see Debian policy
-manual section 4.14. You WILL either need to modify or delete this file>
-
+This is a modified version that has been done for the Raspberry Pi internet radio of the maintainer.
 
 
  -- Tobias Schlemmer <keinstein@users.sourceforge.net>  Fri, 03 Oct 2014 20:47:51 +0200

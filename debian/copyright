@@ -1,10 +1,10 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: piradio-3.13
-Source: <url://example.com>
+Upstream-Name: piradio
+Source: http://www.bobrathbone.com
 
 Files: *
-Copyright: <years> <put author's name and email here>
-           <years> <likewise for another author>
+Copyright: 2014 Bob Rathbone
+           2014 Tobias Schlemmer
 License: GPL-3.0+
 
 Files: debian/*

@@ -1,20 +1,17 @@
-Source: piradio-3.13
-Section: unknown
+Source: piradio
+Section: sound
 Priority: optional
 Maintainer: Tobias Schlemmer <keinstein@users.sourceforge.net>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.5
-Homepage: <insert the upstream URL, if relevant>
+Homepage: http://www.bobrathbone.com
 #Vcs-Git: git://anonscm.debian.org/collab-maint/piradio-3.13.git
 #Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/piradio-3.13.git;a=summary
 
-Package: piradio-3.13
+Package: piradio
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
-
-Package: piradio-3.13-doc
-Architecture: all
-Description: documentation for piradio-3.13
- <insert long description, indented with spaces>
+Depends: mopidy, python-mpd, ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Description: Raspberry PI radio
+ This package provides a radio daemon using MPD
+ .
+ It requires mpc, mpd and python-mpd to run (Install separately)

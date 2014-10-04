@@ -1,34 +1,55 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          piradio-3.13
-# Required-Start:    $local_fs $network $remote_fs $syslog
-# Required-Stop:     $local_fs $network $remote_fs $syslog
+# Provides:          piradio
+# Should-Start:      
+# Should-Stop:       
+# Required-Start:    $remote_fs $syslog   
+# Required-Stop:     $remote_fs $syslog 
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: <Enter a short description of the software>
-# Description:       <Enter a long description of the software>
-#                    <...>
-#                    <...>
+# Short-Description: Raspberry PI Radio Daemon
+# Description:       Start the Radio Daemon (piradio) service
+#                    for network access to the local audio queue.
 ### END INIT INFO
-
+#
+# Raspberry Pi Internet Radio Init script
+# $Id: piradio,v 1.3 2014/05/22 07:27:32 bob Exp $
+#
+# Author : Bob Rathbone
+# Site   : http://www.bobrathbone.com
 # Author: Tobias Schlemmer <keinstein@users.sourceforge.net>
-
+#
+# This script controls the piradio service
+#
+# License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
+#
+# Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
+#             The authors shall not be liable for any loss or damage however caused.
+#
 # Do NOT "set -e"
 
+. /lib/lsb/init-functions
+
+# Change NAME parameter this next line to the version of the daemon you are using
+# Choices are radiod.py, radio4.py, rradiod.py, rradio4.py or ada_radio.py
+# No spaces around the = character
+NAME=piradio
+MAINFILE=piface_radio.py
+DESC="PI Radio Daemon"
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="piradio-3.13"
-NAME=piradio-3.13
-DAEMON=/usr/sbin/piradio-3.13
 DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
-
-# Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+GROUP=mopidy
+USER=mopidy
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+DAEMON=/usr/share/$NAME/$MAINFILE
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
@@ -49,7 +70,7 @@ do_start()
 	#   2 if daemon could not be started
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -g $GROUP -u $USER  -- \
 		$DAEMON_ARGS \
 		|| return 2
 	# The above code will not work for interpreted scripts, use the next

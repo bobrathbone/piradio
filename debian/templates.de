@@ -1,0 +1,55 @@
+Template: piradio/selectlcd
+Type: select
+Choices: Two line LCD with push buttons  (radiod.py),
+  Four line LCD with push buttons (radio4.py),
+  Two line LCD with rotary encoders  (rradiod.py),
+  Four line LCD with rotary encoders (rradio4.py),
+  Two line Adafruit LCD with push buttons (ada_radio.py)
+  Two line Piface Control & Display with push buttons (piface_radio.py)
+Choices-de:  Zweizeiliges LCD mit Tastern  (radiod.py),
+  Vierzeiliges LCD mit Tastern (radio4.py),
+  Zweizeiliges LCD mit Drehknöpfen (rradiod.py),
+  Vierzeiliges LCD mit Drehknöpfen (rradio4.py),
+  Zweizeiliges Adafruit LCD mit Tastern (ada_radio.py)
+  Zweizeiliges Piface Control & Display mit Tastern und Wippe (piface_radio.py)
+Description: Which LCD shall be used?
+ Piradio can use one of the following LCD. You should select the
+ one that corresponds to your setup.
+Description-de: Welche Anzeige soll benutzt werden?
+ Piradio kann eine der folgenden Anzeigen ansteuern.
+ Es sollte diejenige gewählt werden, die Ihrer Anordnung entspricht.
+
+Template: piradio/selectuser
+Type: text
+Default: mopidy
+Description: Under which user id shall the daemon run?
+ Piradio should not be run as superuser. Depending on the user different
+ folder are accessable for it. Thus, you should chose one that allows it to
+ read the music library.
+ .
+ If you installed mopidy use mopidy, here. Otherwise choose your user id.
+Description-de: Welche Nutzerkennung soll piradio benutzen?
+ Piradio sollte nicht als Superuser laufen. Abhänging von der Nutzerkennung kann 
+ das Programm unterschiedliche Ordner benutzen. Sie sollten eine Kennung benutzen,
+ die Zugriff auf die Musikbibliothek hat.
+ .
+ Wenn Sie mopidy installiert haben, wählen Sie mopidy hier, ansonsten ihre eigene 
+ Nutzerkennung.
+
+Template: piradio/selectgroup
+Type: text
+Default: mopidy
+Default-de: 
+Description: Under which group id shall the daemon run?
+ Piradio should not be run as superuser. Depending on the group id
+ different folder are accessable for it. Anyway, should chose one that
+ allows it to read the music library.
+ .
+ If you installed mopidy use mopidy, here. Otherwise choose your group id or user.
+Description-de: Welche Gruppe soll piradio benutzen?
+ Piradio sollte nicht als Superuser laufen. Abhänging von der Gruppenkennung kann 
+ das Programm unterschiedliche Ordner benutzen. Sie sollten eine Kennung benutzen,
+ die Zugriff auf die Musikbibliothek hat.
+ .
+ Wenn Sie mopidy installiert haben, wählen Sie mopidy hier, ansonsten ihre eigene 
+ Gruppe oder user.

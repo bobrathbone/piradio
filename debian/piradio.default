@@ -1,0 +1,26 @@
+# Defaults for piradio initscript
+# sourced by /etc/init.d/piradio
+# installed at /etc/default/piradio by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# main script to start the radio
+# see /usr/share/docs/piradio/README for details
+# MAINFILE=radio4.py
+# MAINFILE=ada_radio.py
+# MAINFILE=radio.py
+# MAINFILE=piface_radio.py
+MAINFILE=piface_radio.py
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS=""
+
+# The user ID the daemon runs at
+#USER=mopidy
+USER=pi
+
+# The group the daemon runs at
+#USER=mopidy
+GROUP=pi
