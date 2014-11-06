@@ -1,0 +1,4965 @@
+Description: Test
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ piradio (3.13-0ts-1) unstable; urgency=low
+ .
+   * Initial release.
+Author: Tobias Schlemmer <keinstein@users.sourceforge.net>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- piradio-3.13-0ts.orig/select_daemon.sh
++++ piradio-3.13-0ts/select_daemon.sh
+@@ -20,6 +20,7 @@ INIT=/etc/init.d/radiod
+ # Display types
+ LCD=3	# LCD screen (direct)
+ ADA=4	# Adafruit LCD plate
++PIFACE=5 # piface radio
+ 
+ echo
+ echo "Radio daemon and board revision selection"
+@@ -31,6 +32,7 @@ echo "2) Four line LCD with push buttons
+ echo "3) Two line LCD with rotary encoders  (rradiod.py)"
+ echo "4) Four line LCD with rotary encoders (rradio4.py)"
+ echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
++echo "6) Two line Piface Control & Display with push buttons (piface_radio.py)"
+ echo "x) Exit"
+ echo -n "Select version: "
+ 
+@@ -56,6 +58,10 @@ do
+ 		DAEMON=ada_radio.py
+ 		TYPE=${ADA}
+ 		break
++	elif [[ ${ans} == '5' ]]; then
++		DAEMON=piface_radio.py
++		TYPE=${PIFACE}
++		break
+ 	elif [[ ${ans} == 'x' ]]; then
+ 		exit 0
+ 	else
+--- /dev/null
++++ piradio-3.13-0ts/radiolircrc
+@@ -0,0 +1,251 @@
++begin
++  remote = *
++  button = key_home
++  prog = pifacecad-radio-ts
++  config = home
++end
++
++begin
++  remote = *
++  button = key_back
++  prog = pifacecad-radio-ts
++  config = back
++end
++
++begin
++  remote = *
++  button = key_menu
++  prog = pifacecad-radio-ts
++  config = menu
++end
++
++begin
++  remote = *
++  button = key_tv
++  prog = pifacecad-radio-ts
++  config = tv
++end
++
++begin
++  remote = *
++  button = key_power
++  prog = pifacecad-radio-ts
++  config = power
++end
++
++begin
++  remote = *
++  button = key_up
++  prog = pifacecad-radio-ts
++  config = up
++end
++
++begin
++  remote = *
++  button = key_down
++  prog = pifacecad-radio-ts
++  config = down
++end
++
++begin
++  remote = *
++  button = key_left
++  prog = pifacecad-radio-ts
++  config = left
++end
++
++begin
++  remote = *
++  button = key_right
++  prog = pifacecad-radio-ts
++  config = right
++end
++
++begin
++  remote = *
++  button = key_ok
++  prog = pifacecad-radio-ts
++  config = ok
++end
++
++begin
++  remote = *
++  button = key_volumeup
++  prog = pifacecad-radio-ts
++  config = volumeup
++end
++
++begin
++  remote = *
++  button = key_volumedown
++  prog = pifacecad-radio-ts
++  config = volumedown
++end
++
++begin
++  remote = *
++  button = key_mute
++  prog = pifacecad-radio-ts
++  config = mute
++end
++
++begin
++  remote = *
++  button = key_channelup
++  prog = pifacecad-radio-ts
++  config = channelup
++end
++
++begin
++  remote = *
++  button = key_channeldown
++  prog = pifacecad-radio-ts
++  config = channeldown
++end
++
++begin
++  remote = *
++  button = key_previous
++  prog = pifacecad-radio-ts
++  config = previous
++end
++
++begin
++  remote = *
++  button = key_stop
++  prog = pifacecad-radio-ts
++  config = stop
++end
++
++begin
++  remote = *
++  button = key_record
++  prog = pifacecad-radio-ts
++  config = record
++end
++
++begin
++  remote = *
++  button = key_previoussong
++  prog = pifacecad-radio-ts
++  config = previoussong
++end
++
++begin
++  remote = *
++  button = key_nextsong
++  prog = pifacecad-radio-ts
++  config = nextsong
++end
++
++begin
++  remote = *
++  button = key_pause
++  prog = pifacecad-radio-ts
++  config = pause
++end
++
++begin
++  remote = *
++  button = key_play
++  prog = pifacecad-radio-ts
++  config = play
++end
++
++begin
++  remote = *
++  button = key_rewind
++  prog = pifacecad-radio-ts
++  config = rewind
++end
++
++begin
++  remote = *
++  button = key_fastforward
++  prog = pifacecad-radio-ts
++  config = fastforward
++end
++
++begin
++  remote = *
++  button = key_text
++  prog = pifacecad-radio-ts
++  config = text
++end
++
++begin
++  remote = *
++  button = key_subtitle
++  prog = pifacecad-radio-ts
++  config = subtitle
++end
++
++begin
++  remote = *
++  button = key_0
++  prog = pifacecad-radio-ts
++  config = 0
++end
++
++begin
++  remote = *
++  button = key_1
++  prog = pifacecad-radio-ts
++  config = 1
++end
++
++begin
++  remote = *
++  button = key_2
++  prog = pifacecad-radio-ts
++  config = 2
++end
++
++begin
++  remote = *
++  button = key_3
++  prog = pifacecad-radio-ts
++  config = 3
++end
++
++begin
++  remote = *
++  button = key_4
++  prog = pifacecad-radio-ts
++  config = 4
++end
++
++begin
++  remote = *
++  button = key_5
++  prog = pifacecad-radio-ts
++  config = 5
++end
++
++begin
++  remote = *
++  button = key_6
++  prog = pifacecad-radio-ts
++  config = 6
++end
++
++begin
++  remote = *
++  button = key_7
++  prog = pifacecad-radio-ts
++  config = 7
++end
++
++begin
++  remote = *
++  button = key_8
++  prog = pifacecad-radio-ts
++  config = 8
++end
++
++begin
++  remote = *
++  button = key_9
++  prog = pifacecad-radio-ts
++  config = 9
++end
+--- /dev/null
++++ piradio-3.13-0ts/piface_radio.py
+@@ -0,0 +1,1127 @@
++#!/usr/bin/env python
++#
++# Raspberry Pi Internet Radio
++# using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
++# $Id: ada_radio.py,v 1.36 2014/08/02 05:27:08 bob Exp $
++#
++# Author : Bob Rathbone
++# Site   : http://www.bobrathbone.com
++# 
++# This program uses  Music Player Daemon 'mpd'and it's client 'mpc' 
++# See http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
++#
++#
++# License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
++#
++# Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
++#	     The authors shall not be liable for any loss or damage however caused.
++#
++
++import os
++import subprocess
++import sys
++import time
++import string
++import datetime 
++import atexit
++import shutil
++import threading
++import lirc
++import pifacecommon
++import pifacecad
++import piface_lcd_class
++from piface_lcd_class import Piface_lcd
++
++# Class imports
++from radio_daemon import Daemon
++from radio_class import Radio
++from log_class import Log
++from rss_class import Rss
++import menu
++
++UP = 0
++DOWN = 1
++
++CurrentStationFile = "/var/lib/radiod/current_station"
++CurrentTrackFile = "/var/lib/radiod/current_track"
++CurrentFile = CurrentStationFile
++
++# Instantiate classes
++log = Log()
++piface_lcd_class.log = log
++menu.log = log
++radio = Radio()
++rss = Rss()
++lcd = Piface_lcd()
++listener = False 
++interrupt = False
++
++# Register exit routine
++def finish():
++	lcd.clear()
++        listener.deactivate()
++        if irlistener_activated: irlistenter.deactivate()
++	radio.execCommand("umount /media  > /dev/null 2>&1")
++	radio.execCommand("umount /share  > /dev/null 2>&1")
++	lcd.line(0,0, "Radio stopped")
++        lcd.backlight_off()
++
++
++# Daemon class
++class MyDaemon(Daemon):
++	def run(self):
++		global CurrentFile
++                lcd.lock()
++		log.init('radio')
++
++		progcall = str(sys.argv)
++		log.message('Radio running pid ' + str(os.getpid()), log.INFO)
++		log.message("Radio " +  progcall + " daemon version " + radio.getVersion(), log.INFO)
++
++		hostname = exec_cmd('hostname')
++		ipaddr = exec_cmd('hostname -I')
++		log.message("IP " + ipaddr, log.INFO)
++		myos = exec_cmd('uname -a')
++		log.message(myos, log.INFO)
++
++		# Display daemon pid on the LCD
++		message = "Radio pid " + str(os.getpid())
++		lcd.line(0,0, message)
++		lcd.line(0,1, "IP " + ipaddr)
++                lcd.backlight(True)
++		time.sleep(4)
++		log.message("Restarting MPD", log.INFO)
++		lcd.line(0,1, "Starting MPD")
++		radio.start()
++		log.message("MPD started", log.INFO)
++
++		mpd_version = radio.execMpcCommand("version")
++		log.message(mpd_version, log.INFO)
++		lcd.line(0,0, "Radio ver "+ radio.getVersion())
++		lcd.scroll(0,1, mpd_version)
++		time.sleep(1)
++                lcd.unlock()
++
++                menu.set_rss(rss)
++                menu.set_radio(radio)
++                menu.set_lcd(lcd)
++		 	
++		reload(lcd,radio)
++		radio.play(get_stored_id(CurrentFile))
++                menu.submenu(menu.date_play_menu())
++		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
++
++                listener = lcd.get_listener()
++                listener.register(lcd.BUTTON1,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.button1)
++                listener.register(lcd.BUTTON2,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.button2)
++                listener.register(lcd.BUTTON3,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.button3)
++                listener.register(lcd.BUTTON4,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.button4)
++                listener.register(lcd.BUTTON5,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.button5)
++                listener.register(lcd.LEFT,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.leftswitch)
++                listener.register(lcd.RIGHT,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.rightswitch)
++                listener.register(lcd.ENTER,
++                                  pifacecad.IODIR_ON,
++                                  menu.menukeys.leftrightbutton)
++                listener.register(lcd.BUTTON1,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.button1_off)
++                listener.register(lcd.BUTTON2,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.button2_off)
++                listener.register(lcd.BUTTON3,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.button3_off)
++                listener.register(lcd.BUTTON4,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.button4_off)
++                listener.register(lcd.BUTTON5,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.button5_off)
++                listener.register(lcd.LEFT,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.leftswitch_off)
++                listener.register(lcd.RIGHT,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.rightswitch_off)
++                listener.register(lcd.ENTER,
++                                  pifacecad.IODIR_OFF,
++                                  menu.menukeys.leftrightbutton_off)
++                listener.activate()
++                irlistener = pifacecad.IREventListener(
++                        prog="pifacecad-radio-ts",
++                        lircrc="/home/pi/radio/radiolircrc")
++                for i in range(10):
++                        irlistener.register(str(i), menu.menukeys.key)
++                try:
++                        irlistener.activate()
++                except lirc.InitError:
++                        log.message("Could not initialise IR, radio running without IR contorls.",log.WARNING)
++                        irlistener_activated = False
++                else:
++                        irlistener_activated = True
++
++		# Main processing loop
++		count = 0 
++		while True:
++                        time.sleep(0.1)
++                        menu.heartbeat()
++                        
++        
++        def old_displayMode(self):
++                radio.setSwitch(0)
++
++                #lcd.update_display()
++
++                display_mode = radio.getDisplayMode()
++                lcd.setScrollSpeed(0.3) # Scroll speed normal 
++                ipaddr = exec_cmd('hostname -I')
++
++                # Shutdown command issued
++                if display_mode == radio.MODE_SHUTDOWN:
++                        displayShutdown(lcd)
++                        while display_mode == radio.MODE_SHUTDOWN:
++                                time.sleep(1)
++
++                lcdlock.acquire()
++                lcd.backlight(True)
++                lcdlock.release()
++                if ipaddr is "":
++                        lcd.line(0,0, "No IP network")
++
++                elif display_mode == radio.MODE_TIME:
++                        displayTime(lcd,radio)
++                        if radio.muted():
++                                msg = "Sound muted"
++                                if radio.getStreaming():
++                                        msg = msg + ' *'
++                                lcdlock.acquire()
++                                lcd.line(0,1, msg)
++                                lcdlock.release()
++                        else:
++                                display_current(lcd,radio)
++
++                elif display_mode == radio.MODE_SEARCH:
++                        display_search(lcd,radio)
++
++                elif display_mode == radio.MODE_SOURCE:
++                        display_source_select(lcd,radio)
++
++                elif display_mode == radio.MODE_OPTIONS:
++                        display_options(lcd,radio)
++
++                elif display_mode == radio.MODE_IP:
++                        lcdlock.acquire()
++                        lcd.line(0,1, "Radio v" + radio.getVersion())
++                        if ipaddr is "":
++                                lcd.line(0,0, "No IP network")
++                        else:
++                                lcd.scroll(0,0, "IP " + ipaddr, interrupt)
++                        lcdlock.release()
++
++                elif display_mode == radio.MODE_RSS:
++                        displayTime(lcd,radio)
++                        display_rss(lcd,rss)
++
++                elif display_mode == radio.MODE_SLEEP:
++                        displayTime(lcd,radio)
++                        display_sleep(lcd,radio)
++                        time.sleep(0.3)
++
++                # Timer function
++                checkTimer(radio)
++
++                # Check state (pause or play)
++                checkState(radio)
++
++                # Alarm wakeup function
++                if display_mode == radio.MODE_SLEEP and radio.alarmFired():
++                        log.message("Alarm fired", log.INFO)
++                        unmuteRadio(lcd,radio)
++                        displayWakeUpMessage(lcd)
++                        radio.setDisplayMode(radio.MODE_TIME)
++
++                if radio.volumeChanged():
++                        lcdlock.acquire()
++                        lcd.line(0,1, "Volume " + str(radio.getVolume()))
++                        lcdlock.release()
++
++	def old_status(self):
++		# Get the pid from the pidfile
++		try:
++			pf = file(self.pidfile,'r')
++			pid = int(pf.read().strip())
++			pf.close()
++		except IOError:
++			pid = None
++
++		if not pid:
++			message = "radiod status: not running"
++	    		log.message(message, log.INFO)
++			print message 
++		else:
++			message = "radiod running pid " + str(pid)
++	    		log.message(message, log.INFO)
++			print message 
++		return
++
++        def left_button(self,event = None):
++                log.message("LEFT switch" ,log.DEBUG)
++                display_mode = radio.getDisplayMode()
++                input_source = radio.getSource()
++                if  display_mode != radio.MODE_SLEEP:
++                        if display_mode == radio.MODE_OPTIONS:
++                                toggle_option(radio,lcd,DOWN)
++                                interrupt = True
++                                self.displayMode()
++
++                        elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
++                                scroll_artist(radio,DOWN)
++                                interrupt = True
++                                self.displayMode()
++                        else:
++                                # Decrease volume
++                                volChange = True
++                                while volChange:
++
++                                        # Mute function (Both buttons depressed)
++                                        if lcd.buttonPressed(lcd.BUTTON2):
++                                                radio.mute()
++                                                lcdlock.acquire()
++                                                lcd.line(0,1, "Mute")
++                                                self.fix_display = 3
++                                                lcdlock.release()
++                                                volChange = False
++                                                interrupt = True
++                                        else:
++                                                volume = radio.decreaseVolume()
++                                                displayVolume(lcd,radio)
++                                                volChange = lcd.buttonPressed(lcd.LEFT)
++
++                                                if volume <= 0:
++                                                        volChange = False
++                                                time.sleep(0.05)
++                else:
++                        DisplayExitMessage(lcd)
++        def left_button_off(self,event = None):
++                self.displayMode()
++
++
++        def button2(self, event=None):
++                display_mode = radio.getDisplayMode()
++                input_source = radio.getSource()
++		log.message("2nd switch" ,log.DEBUG)
++		if  display_mode != radio.MODE_SLEEP:
++			if display_mode == radio.MODE_OPTIONS:
++				toggle_option(radio,lcd,UP)
++				interrupt = True
++                                self.displayMode()
++
++			elif display_mode == radio.MODE_SEARCH \
++                             and input_source == radio.PLAYER:
++				scroll_artist(radio,UP)
++				interrupt = True
++                                self.displayMode()
++			else:
++				# Increase volume
++				volChange = True
++				while volChange:
++                                        lcd.backlight(True)
++
++                                        # Mute function (Both buttons depressed)
++					if lcd.buttonPressed(lcd.LEFTBUTTON):
++						radio.mute()
++                                                lcdlock.acquire()
++						lcd.line(0,1, "Mute")
++                                                self.fix_display = 3
++                                                lcdlock.release()
++						volChange = False
++						interrupt = True
++					else:
++						volume = radio.increaseVolume()
++						displayVolume(lcd,radio)
++						volChange = lcd.buttonPressed(lcd.RIGHT) 
++
++						if volume >= 100:
++							volChange = False
++						time.sleep(0.05)
++		else:
++			DisplayExitMessage(lcd)
++        def button2_off(self, event=None):
++                self.displayMode()
++
++        def enter_button(self, event = None):
++                display_mode = radio.getDisplayMode()
++                input_source = radio.getSource()
++
++		log.message("MENU switch mode=" + str(display_mode), log.DEBUG)
++		if radio.muted():
++			unmuteRadio(lcd,radio)
++		display_mode = display_mode + 1
++
++		if display_mode > radio.MODE_LAST:
++			display_mode = radio.MODE_TIME
++
++		if display_mode == radio.MODE_RSS and not radio.alarmActive():
++			if not rss.isAvailable():
++				display_mode = display_mode + 1
++			else:
++                                lcdlock.aquire()
++				lcd.line(0,1, "Getting RSS feed")
++                                self.fix_display = -1
++                                lcdlock.release
++
++		radio.setDisplayMode(display_mode)
++		log.message("New mode " + radio.getDisplayModeString()+ 
++					"(" + str(display_mode) + ")", log.DEBUG)
++
++		# Shutdown if menu button held for > 3 seconds
++		MenuSwitch = lcd.buttonPressed(lcd.ENTER)
++		count = 15
++		while MenuSwitch:
++			time.sleep(0.2)
++			MenuSwitch = lcd.buttonPressed(lcd.ENTER)
++                        lcd.backlight(True)
++			count = count - 1
++			if count < 0:
++				log.message("Shutdown", log.DEBUG)
++				MenuSwitch = False
++				radio.setDisplayMode(radio.MODE_SHUTDOWN)
++
++		if radio.getUpdateLibrary():
++			update_library(lcd,radio)
++			radio.setDisplayMode(radio.MODE_TIME)
++
++		elif radio.getReload(): 
++			source = radio.getSource()
++                        lcdlock.acquire()
++			log.message("Reload " + str(source), log.INFO)
++			lcd.line(0,1, "Please wait ")
++                        lcdlock.release()
++			reload(lcd,radio)
++			radio.setReload(False)
++			radio.setDisplayMode(radio.MODE_TIME)
++
++		elif radio.optionChanged():
++			radio.setDisplayMode(radio.MODE_TIME)
++			radio.optionChangedFalse()
++
++		elif radio.loadNew():
++			log.message("Load new  search=" + str(radio.getSearchIndex()), log.DEBUG)
++			radio.playNew(radio.getSearchIndex())
++			radio.setDisplayMode(radio.MODE_TIME)
++
++		time.sleep(0.2)
++		interrupt = True
++        def enter_button_off(self, event = None):
++                self.displayMode()
++
++        def go_right(self, event=None):
++                display_mode = radio.getDisplayMode()
++
++		log.message("right", log.DEBUG)
++		if  display_mode != radio.MODE_SLEEP:
++
++			radio.unmute()
++
++			if display_mode == radio.MODE_SOURCE:
++				radio.toggleSource()
++				radio.setReload(True)
++
++			elif display_mode == radio.MODE_SEARCH:
++				scroll_search(radio,UP)
++
++			elif display_mode == radio.MODE_OPTIONS:
++				cycle_options(radio,UP)
++
++			else:
++				radio.channelUp()
++				if display_mode == radio.MODE_RSS:
++					radio.setDisplayMode(radio.MODE_TIME)
++
++			interrupt = True
++		else:
++			DisplayExitMessage(lcd)
++        def go_right_off(self, event=None):
++                self.displayMode()
++
++        def go_left(self, event=None):
++                display_mode = radio.getDisplayMode()
++		log.message("left", log.DEBUG)
++		if  display_mode != radio.MODE_SLEEP:
++			radio.unmute()
++
++			if display_mode == radio.MODE_SOURCE:
++				radio.toggleSource()
++				radio.setReload(True)
++
++			elif display_mode == radio.MODE_SEARCH:
++				scroll_search(radio,DOWN)
++
++			elif display_mode == radio.MODE_OPTIONS:
++				cycle_options(radio,DOWN)
++
++			else:
++				radio.channelDown()
++				if display_mode == radio.MODE_RSS:
++					radio.setDisplayMode(radio.MODE_TIME)
++
++			interrupt = True
++		else:
++			DisplayExitMessage(lcd)
++        def go_left_off(self, event=None):
++                self.displayMode()
++                        
++
++# End of class overrides
++
++# Interrupt scrolling LCD routine
++def interrupt():
++	global lcd
++	global radio
++	global rss
++	interrupt = get_switch_states(lcd,radio,rss)
++
++	# Rapid display of timer
++	if radio.getTimer() and not interrupt:
++		displayTime(lcd,radio)
++		interrupt = checkTimer(radio)
++
++	if radio.volumeChanged():
++		lcd.line(0,1, "Volume " + str(radio.getVolume()))
++		time.sleep(0.5)
++
++	if not interrupt:
++		interrupt = checkState(radio)
++
++	return interrupt
++
++def no_interrupt():
++	return False
++
++# Call back routine called by switch events
++def switch_event(switch):
++	global radio
++	radio.setSwitch(switch)
++	return
++
++
++
++# Check switch states
++def get_switch_states(lcd,radio,rss):
++	return interrupt
++
++
++# Cycle through the options
++# Only display reload the library if in PLAYER mode
++def cycle_options(radio,direction):
++	log.message("cycle_options " + str(direction) , log.DEBUG)
++
++	option = radio.getOption()
++
++	if direction == UP:
++		option += 1
++	else:
++		option -= 1
++
++	# Don;t display reload if not player mode
++	source = radio.getSource()
++	if option == radio.RELOADLIB:
++		if source != radio.PLAYER:
++			if direction == UP:
++				option = option+1
++			else:
++				option = option-1
++	
++	if option == radio.STREAMING:
++		if not radio.streamingAvailable():
++			if direction == UP:
++				option = option+1
++			else:
++				option = option-1
++
++	if option > radio.OPTION_LAST:
++		option = radio.RANDOM
++	elif option < 0:
++		if source == radio.PLAYER:
++			option = radio.OPTION_LAST
++		else:
++			option = radio.OPTION_LAST-1
++
++	radio.setOption(option)
++	radio.optionChangedTrue()
++	return
++
++# Toggle random mode
++def toggle_option(radio,lcd,direction):
++	option = radio.getOption() 
++	log.message("toggle_option option="+ str(option), log.DEBUG)
++
++	if option == radio.RANDOM:
++		if radio.getRandom():
++			radio.randomOff()
++		else:
++			radio.randomOn()
++
++	elif option == radio.CONSUME:
++		if radio.getSource() == radio.PLAYER:
++			if radio.getConsume():
++				radio.consumeOff()
++			else:
++				radio.consumeOn()
++		else:
++                        lcdlock.acquire()
++			lcd.line(0,1, "Not allowed")
++			time.sleep(2)
++                        lcdlock.release()
++
++	elif option == radio.REPEAT:
++		if radio.getRepeat():
++			radio.repeatOff()
++		else:
++			radio.repeatOn()
++
++	elif option == radio.TIMER:
++		TimerChange = True
++
++		# Buttons held in
++		if radio.getTimer():
++                        lcdlock.acquire()
++			while TimerChange:
++				if direction == UP:
++					radio.incrementTimer(1)
++					lcd.line(0,1, "Timer " + radio.getTimerString())
++					TimerChange = lcd.buttonPressed(lcd.RIGHT)
++				else:
++					radio.decrementTimer(1)
++					lcd.line(0,1, "Timer " + radio.getTimerString())
++					TimerChange = lcd.buttonPressed(lcd.LEFT)
++				time.sleep(0.1)
++                        lcdlock.release()
++		else:
++			radio.timerOn()
++
++	elif option == radio.ALARM:
++		radio.alarmCycle(direction)
++
++	elif option == radio.ALARMSET:
++
++		# Buttons held in
++		AlarmChange = True
++		value = 1
++		twait = 0.4
++                lcdlock.auqire()
++		while AlarmChange:
++			if direction == UP:
++				radio.incrementAlarm(value)
++				lcd.line(0,1, "Alarm " + radio.getAlarmTime())
++				AlarmChange = lcd.buttonPressed(lcd.RIGHT)
++			else:
++				radio.decrementAlarm(value)
++				lcd.line(0,1, "Alarm " + radio.getAlarmTime())
++				AlarmChange = lcd.buttonPressed(lcd.LEFT)
++			time.sleep(twait)
++			twait = 0.1
++			value = 5
++                lcdlock.release()
++
++	elif option == radio.STREAMING:
++		radio.toggleStreaming()
++
++	elif option == radio.RELOADLIB:
++		if radio.getUpdateLibrary():
++			radio.setUpdateLibOff()
++		else:
++			radio.setUpdateLibOn()
++
++	radio.optionChangedTrue()
++	return
++
++# Update music library
++def update_library(lcd,radio):
++	log.message("Initialising music library", log.INFO)
++	lcd.line(0,0, "Initialising")
++	lcd.line(0,1, "Please wait")
++	exec_cmd("/bin/umount /media")
++	exec_cmd("/bin/umount /share")
++	radio.updateLibrary()
++	mount_usb(lcd)
++	mount_share()
++	log.message("Updatimg music library", log.INFO)
++	lcd.line(0,0, "Updating Library")
++	lcd.line(0,1, "Please wait")
++	radio.updateLibrary()
++	radio.loadMusic()
++	return
++
++# Reload if new source selected (RADIO or PLAYER)
++def reload(lcd,radio):
++        lcd.lock()
++	lcd.line(0,0, "Loading:")
++	exec_cmd("/bin/umount /media")  # Unmount USB stick
++	exec_cmd("/bin/umount /share")  # Unmount network drive
++
++	source = radio.getSource()
++	if source == radio.RADIO:
++		lcd.line(0,1, "Radio Stations")
++		dirList=os.listdir("/var/lib/mpd/playlists")
++		for fname in dirList:
++			log.message("Loading " + fname, log.DEBUG)
++			lcd.line(0,1, fname)
++			time.sleep(0.1)
++		radio.loadStations()
++
++	elif source == radio.PLAYER:
++		mount_usb(lcd)
++		mount_share()
++		radio.loadMusic()
++		current = radio.execMpcCommand("current")
++		if len(current) < 1:
++			update_library(lcd,radio)
++        lcd.line(0,1, "Finished")
++        lcd.unlock()
++	return
++
++# Mount USB  drive
++def mount_usb(lcd):
++	usbok = False
++	if os.path.exists("/dev/sda1"):
++		device = "/dev/sda1"
++		usbok = True
++
++	elif os.path.exists("/dev/sdb1"):
++		device = "/dev/sdb1"
++		usbok = True
++
++	if usbok:
++		exec_cmd("/bin/mount -o rw,uid=1000,gid=1000 "+ device + " /media")
++		log.message(device + " mounted on /media", log.DEBUG)
++		dirList=os.listdir("/var/lib/mpd/music")
++		for fname in dirList:
++			lcd.line(0,1, fname)
++			time.sleep(0.1)
++	else:
++		msg = "No USB stick found!"
++		lcd.line(0,1, msg)
++		time.sleep(2)
++		log.message(msg, log.WARNING)
++	return
++
++# Mount any remote network drive
++def old_mount_share():
++	if os.path.exists("/var/lib/radiod/share"):
++		myshare = exec_cmd("cat /var/lib/radiod/share")
++		if myshare[:1] != '#':
++			exec_cmd(myshare)
++			log.message(myshare,log.DEBUG)
++	return
++
++# Display the RSS feed
++def old_display_rss(lcd,rss):
++	rss_line = rss.getFeed()
++	lcd.setScrollSpeed(0.2) # Display rss feeds a bit quicker
++	lcd.scroll(0,1, rss_line,interrupt)
++	return
++
++# Display the currently playing station or track
++def old_display_current(lcd,radio):
++	current_id = radio.getCurrentID()
++	source = radio.getSource()
++
++	if source == radio.RADIO:
++		current = radio.getCurrentStation()
++	else:
++		current_artist = radio.getCurrentArtist()
++		index = radio.getSearchIndex()
++		current_artist = radio.getCurrentArtist()
++		track_name = radio.getCurrentTitle()
++		current = current_artist + " - " + track_name
++
++        lcdlock.acquire()
++	# Display any stream error
++	leng = len(current)
++	if radio.gotError():
++		errorStr = radio.getErrorString()
++		lcd.scroll(0,1, errorStr,interrupt)
++		radio.clearError()
++	else:
++		leng = len(current)
++		if leng > 16:
++			lcd.scroll(0,1, current[0:160],interrupt)
++		elif  leng < 1:
++			lcd.line(0,1, "No input!")
++			time.sleep(1)
++			radio.play(1) # Reset station or track
++		else:
++			lcd.line(0,1, current)
++        lcdlock.release()
++	return
++
++# Get currently playing station or track number from MPC
++def old_get_current_id():
++	current_id = 1
++	status = radio.execMpcCommand("status | grep \"\[\" ")
++	if len(status) > 1:
++		x = status.index('#')+1
++		y = status.index('/')
++		current_id = int(status[x:y])
++	exec_cmd ("echo " + str(current_id) + " > " + CurrentFile)
++	return current_id
++
++# Get the last ID stored in /var/lib/radiod
++def get_stored_id(current_file):
++	current_id = 5
++	if os.path.isfile(current_file):
++		current_id = int(exec_cmd("cat " + current_file) )
++	return current_id
++
++# Execute system command
++def exec_cmd(cmd):
++	p = os.popen(cmd)
++	result = p.readline().rstrip('\n')
++	return result
++
++# Get list of tracks or stations
++def old_get_mpc_list(cmd):
++	list = []
++	line = ""
++	p = os.popen("/usr/bin/mpc " + cmd)
++	while True:
++		line =  p.readline().strip('\n')
++		if line.__len__() < 1:
++			break
++		list.append(line)
++
++	return list
++
++# Scroll up and down between stations/tracks
++def old_scroll_search(radio,direction):
++	current_id = radio.getCurrentID()
++	playlist = radio.getPlayList()
++	index = radio.getSearchIndex()
++
++	# Artist displayed then don't increment track first time in
++	
++	if not radio.displayArtist():
++		leng = len(playlist)
++		log.message("len playlist =" + str(leng),log.DEBUG)
++		if leng > 0:
++			if direction == UP:
++				index = index + 1
++				if index >= leng:
++					index = 0 
++			else:
++				index = index - 1
++				if index < 0:
++					index = leng - 1
++			
++	radio.setDisplayArtist(False)
++	track =  radio.getTrackNameByIndex(index)
++ 	radio.setSearchIndex(index)	
++ 	radio.setLoadNew(True)	
++	return 
++
++# Scroll through tracks by artist
++def old_scroll_artist(radio,direction):
++	radio.setLoadNew(True)
++	index = radio.getSearchIndex()
++	playlist = radio.getPlayList()
++	current_artist = radio.getArtistName(index)
++
++	found = False
++	leng = len(playlist)
++	count = leng
++	while not found:
++		if direction == UP:
++			index = index + 1
++			if index >= leng:
++				index = 0
++		elif direction == DOWN:
++			index = index - 1
++			if index < 1:
++				index = leng - 1
++
++		new_artist = radio.getArtistName(index)
++		if current_artist != new_artist:
++			found = True
++
++		count = count - 1
++
++		# Prevent everlasting loop
++		if count < 1:
++			found = True
++			index = current_id
++
++	# If a Backward Search find start of this list
++	found = False
++	if direction == DOWN:
++		current_artist = new_artist
++		while not found:
++			index = index - 1
++			new_artist = radio.getArtistName(index)
++			if current_artist != new_artist:
++				found = True
++		index = index + 1
++		if index >= leng:
++			index = leng-1
++
++	radio.setSearchIndex(index)
++	return
++
++# Source selection display
++def old_display_source_select(lcd,radio):
++        lcdlock.acquire()
++	lcd.line(0,0, "Input Source:")
++	source = radio.getSource()
++	if source == radio.RADIO:
++		lcd.line(0,1, "Internet Radio")
++	elif source == radio.PLAYER:
++		lcd.line(0,1, "Music library")
++        lcdlock.release()
++	return
++
++# Display search (Station or Track)
++def old_display_search(lcd,radio):
++	index = radio.getSearchIndex()
++	source = radio.getSource()
++        lcdlock.acquire()
++	if source == radio.PLAYER:
++		current_artist = radio.getArtistName(index)
++		lcd.scroll(0,0, "(" + str(index+1) + ")" + current_artist[0:160],interrupt)
++		current_track = radio.getTrackNameByIndex(index)
++		lcd.scroll(0,1, current_track,interrupt)
++	else:
++		lcd.line(0,0, "Search:" + str(index+1))
++		current_station = radio.getStationName(index)
++		lcd.scroll(0,1, current_station[0:160],interrupt)
++        lcdlock.release()
++	time.sleep(0.25)
++	return
++
++
++# Unmute radio and get stored volume
++def old_unmuteRadio(lcd,radio):
++	radio.unmute()
++	displayVolume(lcd,radio)
++	return
++
++# Display volume and streaming on indicator
++def old_displayVolume(lcd,radio):
++	volume = radio.getVolume()
++	msg = "Volume " + str(volume)
++	if radio.getStreaming():
++		msg = msg + ' *'
++        lcdlock.acquire()
++	lcd.line(0,1, msg)
++        lcdlock.release()
++	return
++
++# Options menu
++def old_display_options(lcd,radio):
++
++        lcdlock.acquire()
++	option = radio.getOption()
++	if option != radio.TIMER and option != radio.ALARM and option != radio.ALARMSET:
++			lcd.line(0,0, "Menu selection:")
++
++	if option == radio.RANDOM:
++		if radio.getRandom():
++			lcd.line(0,1, "Random on")
++		else:
++			lcd.line(0,1, "Random off")
++
++	elif option == radio.CONSUME:
++		if radio.getConsume():
++			lcd.line(0,1, "Consume on")
++		else:
++			lcd.line(0,1, "Consume off")
++
++	elif option == radio.REPEAT:
++		if radio.getRepeat():
++			lcd.line(0,1, "Repeat on")
++		else:
++			lcd.line(0,1, "Repeat off")
++
++	elif option == radio.TIMER:
++		lcd.line(0,0, "Set timer:")
++		if radio.getTimer():
++			lcd.line(0,1, "Timer " + radio.getTimerString())
++		else:
++			lcd.line(0,1, "Timer off")
++
++	elif option == radio.ALARM:
++		alarmString = "Alarm off"
++		lcd.line(0,0, "Set alarm:")
++		alarmType = radio.getAlarmType()
++
++		if alarmType == radio.ALARM_ON:
++			alarmString = "Alarm on"
++		elif alarmType == radio.ALARM_REPEAT:
++			alarmString = "Alarm repeat"
++		elif alarmType == radio.ALARM_WEEKDAYS:
++			alarmString = "Weekdays only"
++		lcd.line(0,1, alarmString)
++
++	elif option == radio.ALARMSET:
++		lcd.line(0,0, "Set alarm time:")
++		lcd.line(0,1, "Alarm " + radio.getAlarmTime())
++
++	elif option == radio.STREAMING:
++		if radio.getStreaming():
++			lcd.line(0,1, "Streaming on")
++		else:
++			lcd.line(0,1, "Streaming off")
++
++
++	elif option == radio.RELOADLIB:
++		if radio.getUpdateLibrary():
++			lcd.line(0,1, "Update list:Yes")
++		else:
++			lcd.line(0,1, "Update list:No")
++        lcdlock.release()
++	return
++
++# Display if in sleep
++def old_display_sleep(lcd,radio):
++	message = 'Sleep mode'
++	if radio.alarmActive():
++		message = "Alarm " + radio.getAlarmTime()
++        lcdlock.acquire()
++	lcd.line(0,1, message)
++        lcdlock.release()
++	return
++
++# Display time and timer/alarm
++def old_displayTime(lcd,radio):
++	todaysdate = strftime("%d.%m.%Y %H:%M")
++	timenow = strftime("%H:%M")
++	message = todaysdate
++	if radio.getTimer():
++		message = timenow + " " + radio.getTimerString()
++		if radio.alarmActive():
++			message = message + " " + radio.getAlarmTime()
++        lcdlock.acquire()
++	lcd.line(0,0, message)
++        lcdlock.release()
++	return
++
++# Display wake up message
++def old_displayWakeUpMessage(lcd):
++	message = 'Good day'
++	t = datetime.datetime.now()
++	if t.hour >= 0 and t.hour < 12:
++		message = 'Good morning'
++	if t.hour >= 12 and t.hour < 18:
++		message = 'Good afternoon'
++	if t.hour >= 16 and t.hour <= 23:
++		message = 'Good evening'
++        lcdlock.acquire()
++	lcd.line(0,1, message)
++        lcdlock.release()
++	time.sleep(3)
++	return
++
++
++# Display shutdown message
++def old_displayShutdown(lcd):
++        lcdlock.acquire()
++	lcd.line(0,0, "Stpoping radio")
++	radio.execCommand("service mpd stop")
++	radio.execCommand("shutdown -h now")
++	lcd.line(0,1, "Shutdown issued")
++	time.sleep(3)
++	lcd.line(0,0, "Radio stopped")
++	lcd.line(0,1, "Power off radio")
++        lcdlock.release()
++	return
++
++def old_displayInfo(lcd,ipaddr,mpd_version):
++        lcdlock.acquire()
++	lcd.line(0,0, "Radio version " + radio.getVersion())
++	if ipaddr is "":
++		lcd.line(0,1, "No IP network")
++	else:
++		lcd.scroll(0,1, "IP "+ ipaddr,interrupt)
++        lcdlock.release()
++	return
++
++# Sleep exit message
++def old_DisplayExitMessage(lcd):
++        lcdlock.acquiere()
++	lcd.line(0,0, "Hit menu button")
++	lcd.line(0,1, "to exit sleep")
++	time.sleep(1)
++        lcdlock.release()
++	return
++
++# Check Timer fired
++def old_checkTimer(radio):
++	interrupt = False
++	if radio.fireTimer():
++		log.message("Timer fired", log.INFO)
++		radio.mute()
++		radio.setDisplayMode(radio.MODE_SLEEP)
++		interrupt = True
++	return interrupt
++
++# Check state (play or pause)
++# Returns paused True if paused
++def old_checkState(radio):
++	paused = False
++	display_mode = radio.getDisplayMode()
++	state = radio.getState()
++	radio.getVolume()
++
++	if state == 'pause':
++		paused = True
++		if not radio.muted():
++			if radio.alarmActive() and not radio.getTimer():
++				radio.setDisplayMode(radio.MODE_SLEEP)
++			radio.mute()
++	elif state == 'play':
++		if radio.muted():
++			unmuteRadio(lcd,radio)
++			radio.setDisplayMode(radio.MODE_TIME)
++	return paused
++
++
++### Main routine ###
++if __name__ == "__main__":
++        global daemon
++	daemon = MyDaemon('/var/run/radiod.pid')
++	if len(sys.argv) == 2:
++		if 'start' == sys.argv[1]:
++                        lcd.init()
++			daemon.start()
++		elif 'stop' == sys.argv[1]:
++			os.system("service mpd stop")
++			daemon.stop()
++		elif 'restart' == sys.argv[1]:
++			daemon.restart()
++		elif 'status' == sys.argv[1]:
++			daemon.status()
++		elif 'version' == sys.argv[1]:
++			print "Version " + radio.getVersion()
++		else:
++			print "Unknown command: " + sys.argv[1]
++			sys.exit(2)
++		sys.exit(0)
++	else:
++		print "usage: %s start|stop|restart|status|version" % sys.argv[0]
++		sys.exit(2)
++
++# End of script 
++
+--- /dev/null
++++ piradio-3.13-0ts/menu.py
+@@ -0,0 +1,1036 @@
++import os
++import copy
++import time
++import datetime
++from time import strftime
++from radio_api import RadioApi
++radio_api = RadioApi()
++lcd = None
++radio = None
++rss = None
++current_menu = None
++log = None
++
++def set_lcd(menu_lcd):
++    global lcd
++    lcd = menu_lcd
++
++def set_radio(menu_radio):
++    global radio
++    radio = menu_radio
++
++def set_rss(menu_rss):
++    global rss
++    rss = menu_rss
++    
++def submenu(menu):
++    global current_menu
++    current_menu = menu
++    current_menu.update_radio()
++    current_menu.displayMode()
++
++def heartbeat():
++    current_menu.heartbeat()
++
++def _(string):
++    return string
++
++# Execute system command
++def exec_cmd(cmd):
++	p = os.popen(cmd)
++	result = p.readline().rstrip('\n')
++	return result
++
++class menukeys_class:
++    def button1(self,event):
++        current_menu.button1(event)
++        return
++
++    def button2(self,event):
++        current_menu.button2(event)
++        return
++
++    def button3(self,event):
++        current_menu.button3(event)
++        return
++
++    def button4(self,event):
++        current_menu.button4(event)
++        return
++
++    def button5(self,event):
++        current_menu.button5(event)
++        return
++
++    def leftswitch(self,event):
++        current_menu.leftswitch(event)
++        return
++
++    def rightswitch(self,event):
++        current_menu.rightswitch(event)
++        return
++
++    def leftrightbutton(self,event):
++        current_menu.leftrightbutton(event)
++        return
++ 
++
++    def leftswitch_off(self,event):
++        current_menu.leftswitch_off(event)
++
++    def rightswitch_off(self,event):
++        current_menu.rightswitch_off(event)
++
++    def leftrightbutton_off(self,event):
++        current_menu.leftrightbutton_off(event)
++
++    def button1_off(self,event):
++        current_menu.button1_off(event)
++        
++    def button2_off(self,event):
++        current_menu.button1_off(event)
++
++    def button3_off(self,event):
++        current_menu.button1_off(event)
++
++    def button4_off(self,event):
++        current_menu.button1_off(event)
++
++    def button5_off(self,event):
++        current_menu.button1_off(event)
++
++    # IR remote control
++    def key(self,event):
++        log.message("IR event: " + str(event),log.DEBUG)
++
++    def key_channelup(self,event):
++        current_menu.channel_up(event)
++
++    def key_channeldown(self,event):
++        current_menu.channel_down(event)
++
++menukeys = menukeys_class()
++
++class menu(object):
++    changed = False
++    ignore_button = None
++    ignore_until = 0
++
++    def __init__(self):
++        self.changed = False
++
++    def get_parent_menu(self):
++        return self
++
++    def parent_menu(self):
++        submenu(self.get_parent_menu())
++
++    def update_radio(self):
++        return
++
++    def displayMode(self):
++        displayTime(lcd,radio)
++        lcd.lock()
++        lcd.line(0,1, "Unknown menu")
++        lcd.unlock()
++
++    def heartbeat(self):
++        lcd.heartbeat()
++
++    def mute(self,event):
++        if radio.muted():
++            radio.unmute() 
++            lcd.lock()
++            self.display_volume(0,1)
++            lcd.unlock()
++        else:
++            radio.mute()
++            lcd.lock()
++            lcd.line(0,1, "Mute")
++            lcd.unlock()        
++
++    def increase_volume(self,event):
++        volume = radio.increaseVolume()
++        lcd.lock()
++        self.display_volume(0,1)
++        lcd.unlock()
++        return volume                                                    
++        
++    def decrease_volume(self,event):
++        volume = radio.decreaseVolume()
++        lcd.lock()
++        self.display_volume(0,1)
++        lcd.unlock()
++        return volume
++
++    def channel_up(self,event):
++        radio.channelUp()
++
++    def channel_down(self,event):
++        radio.channelDown()
++
++    def enterbutton(self,event):
++        return
++
++    def menubutton(self,event):
++        self.parent_menu()
++        return
++
++    def reactivate_playmenu(self):
++        submenu(date_play_menu())
++
++    # LCD buttons
++    # we must ignore the following interrupt if we 
++    def button1(self,event):
++        if self.ignore_button == lcd.BUTTON1:
++            if time.time() < self.ignore_time:
++                self.ignore_time = time.time()+0.1
++                return
++            else: self.ignore_button = None
++        sleeptime = 0.4
++        volchange = True
++        while volchange:
++            if lcd.buttonPressed(lcd.BUTTON2):
++                self.mute(event)
++                volchange = False
++                self.ignore_time = time.time()+0.2
++                self.ignore_button = lcd.BUTTON2
++
++                while lcd.buttonPressed(lcd.BUTTON1) \
++                      or lcd.buttonPressed(lcd.BUTTON2):
++                    time.sleep(0.1)
++                    self.ignore_time = time.time()+0.2
++            else:
++                volume = self.decrease_volume(event)
++                volchange = lcd.buttonPressed(lcd.BUTTON1) 
++                
++                if volume >= 100:
++                    volchange = False
++                    time.sleep(sleeptime)
++                    sleeptime = 0.1
++        return
++
++    def button2(self,event):
++        if self.ignore_button == lcd.BUTTON2:
++            if time.time() < self.ignore_time:
++                self.ignore_time = time.time()+0.1
++                return
++            else: self.ignore_button = None
++        volchange = True
++        sleeptime = 0.4
++        while volchange:
++            if lcd.buttonPressed(lcd.BUTTON1):
++                self.mute(event)
++                volchange = False
++                self.ignore_time = time.time()+0.2
++                self.ignore_button = lcd.BUTTON1
++
++                while lcd.buttonPressed(lcd.BUTTON1) \
++                      or lcd.buttonPressed(lcd.BUTTON2):
++                    time.sleep(0.1)
++                    self.ignore_time = time.time()+0.2
++            else:
++                volume = self.increase_volume(event)
++                volchange = lcd.buttonPressed(lcd.BUTTON2) 
++                
++                if volume >= 100:
++                    volchange = False
++                    time.sleep(sleeptime)
++                    sleeptime = 0.1
++        return
++
++    def button3(self,event):
++        self.channel_down(event)
++        return
++
++    def button4(self,event):
++        self.channel_up(event)
++        return
++
++    def button5(self,event):
++        return
++
++    def leftswitch(self,event):
++        self.channel_down(event)
++        return
++
++    def rightswitch(self,event):
++        self.channel_up(event)
++        return
++
++    def leftrightbutton(self,event):
++        log.message("Processing left+right button", log.DEBUG)
++        # Shutdown if menu button held for > 3 seconds
++        MenuSwitch = True
++        count = 30
++        while MenuSwitch:
++            time.sleep(0.1)
++            MenuSwitch = lcd.buttonPressed(lcd.ENTER)
++            lcd.backlight(True)
++            count = count - 1
++            if count < 0:
++                submenu(shutdown_menu())
++                MenuSwitch = False
++
++        if not self.changed:
++            self.menubutton(event)
++        return
++ 
++
++    def leftswitch_off(self,event):
++        self.displayMode()
++
++    def rightswitch_off(self,event):
++        self.displayMode()
++
++    def leftrightbutton_off(self,event):
++        log.message("Released left+right button", log.DEBUG)
++        self.displayMode()
++
++    def button1_off(self,event):
++        self.displayMode()
++        
++    def button2_off(self,event):
++        self.displayMode()
++
++    def button3_off(self,event):
++        self.displayMode()
++
++    def button4_off(self,event):
++        self.displayMode()
++
++    def button5_off(self,event):
++        self.displayMode()
++ 
++    def update_radio(self):
++        self.changed = False
++
++    # Display the currently playing station or track
++    def display_current(self,x,y):
++	current_id = radio.getCurrentID()
++	source = radio.getSource()
++
++	if source == radio.RADIO:
++		current = radio.getCurrentStation()
++	else:
++		current_artist = radio.getCurrentArtist()
++		index = radio.getSearchIndex()
++		current_artist = radio.getCurrentArtist()
++		track_name = radio.getCurrentTitle()
++		current = current_artist + " - " + track_name
++
++        lcd.lock()
++	# Display any stream error
++	leng = len(current)
++	if radio.gotError():
++		errorStr = radio.getErrorString()
++		lcd.scroll(x,y,errorStr)
++		radio.clearError()
++	else:
++		leng = len(current)
++		if leng > 16:
++			lcd.scroll(x,y,current)
++		elif  leng < 1:
++			lcd.line(x,y, "No input!")
++			time.sleep(1)
++			radio.play(1) # Reset station or track
++		else:
++			lcd.line(x,y, current)
++        lcd.unlock()
++	return
++
++    # Display time and timer/alarm
++    def display_time(self,x,y):
++        beat = int(time.time()) % 2
++        if beat:
++            timenow = strftime("%H.%M")
++            todaysdate = strftime("%d.%m.%Y ") + timenow
++        else:
++            timenow = strftime("%H %M")
++            todaysdate = strftime("%d.%m.%Y ") + timenow
++	if radio.getTimer():
++            message = timenow + " " + radio.getTimerString()
++            if radio.alarmActive():
++                message = message + " " + radio.getAlarmTime()
++        else:
++            message = todaysdate
++        lcd.lock()
++        lcd.line(x,y, message)
++        lcd.unlock()
++	return
++
++    def display_volume(self,x,y):
++	if radio.getStreaming():
++		stream = '*'
++        else: stream = ' '
++	msg = "Volume %d %s" % (radio.getVolume(),stream)
++	lcd.line(x,y, msg)
++
++class shutdown_menu(menu):
++    def update_radio(self):
++        radio.setDisplayMode(radio.MODE_SHUTDOWN)
++        self.displayMode()
++
++    def displayMode(self):
++        lcd.lock()
++	lcd.line(0,0, "Stopping radio")
++	radio.execCommand("service mpd stop")
++	lcd.line(0,0, "Radio stopped")
++	radio.execCommand("shutdown -h now")
++	lcd.line(0,1, "Shutting down")
++        lcd.unlock()
++
++class date_play_menu(menu):
++    next_time = 0
++
++    def get_parent_menu(self):
++        return search_menu()
++
++    def update_radio(self):
++        if radio.loadNew():
++            log.message("Load new  search=" + str(radio.getSearchIndex()), log.DEBUG)
++            radio.playNew(radio.getSearchIndex())
++        radio.setDisplayMode(radio.MODE_TIME)
++        self.displayMode()
++        return
++
++    def displayMode(self):
++        self.display_time(0,0)
++        if radio.muted():
++            msg = "Sound muted"
++            if radio.getStreaming():
++                msg = msg + ' *'
++            lcd.lock()
++            lcd.line(0,1, msg)
++            lcd.unlock()
++        else:
++            self.display_current(0,1)
++
++    def heartbeat(self):
++        current_time = time.time()
++        if current_time >= self.next_time:
++            self.display_time(0,0)
++            self.next_time = int(current_time)+1
++        lcd.heartbeat()
++
++
++
++# search station as well as music files by artist
++class search_menu(menu):
++    def get_parent_menu(self):
++        return top_menu()
++
++    def update_radio(self):
++        radio.setDisplayMode(radio.MODE_SEARCH)
++        self.displayMode()
++
++    def displayMode(self):
++       	index = radio.getSearchIndex()
++	source = radio.getSource()
++        lcd.lock()
++	if source == radio.PLAYER:
++		current_artist = radio.getArtistName(index)
++		lcd.scroll(0,0, "(" + str(index+1) + ")" + current_artist)
++		current_track = radio.getTrackNameByIndex(index)
++		lcd.scroll(0,1, current_track)
++	else:
++		lcd.line(0,0, "Search: " + str(index+1))
++		current_station = radio.getStationName(index)
++		lcd.scroll(0,1, current_station[0:160])
++        lcd.unlock()
++	return
++
++    def previous_artist(self,event):
++	index = radio.getSearchIndex()
++	playlist = radio.getPlayList()
++	current_artist = radio.getArtistName(index)
++
++	found = False
++	leng = len(playlist)
++	count = leng
++	while not found:
++            if index > 0:
++                index = index - 1
++            else: index = leng - 1
++
++            new_artist = radio.getArtistName(index)
++            if current_artist != new_artist:
++                found = True
++
++            count = count - 1
++
++            # Prevent everlasting loop
++            if count < 1:
++                found = True
++        if count > 0:
++            self.changed = True
++            radio.setSearchIndex(index)
++	return
++
++    def next_artist(self,event):
++	index = radio.getSearchIndex()
++	playlist = radio.getPlayList()
++	current_artist = radio.getArtistName(index)
++
++	found = False
++	leng = len(playlist)
++	count = leng
++	while not found:
++            index = index + 1
++            if index >= leng:
++                index = 0
++
++            new_artist = radio.getArtistName(index)
++            if current_artist != new_artist:
++                found = True
++
++            count = count - 1
++
++            # Prevent everlasting loop
++            if count < 1:
++                found = True
++                
++        if count > 0:
++            radio.setSearchIndex(index)
++            self.changed = True
++	return
++
++    def previous_song(self,event):
++        self.changed = True
++	playlist = radio.getPlayList()
++	index = radio.getSearchIndex()
++	
++        leng = len(playlist)
++        log.message("len playlist =" + str(leng),log.DEBUG)
++        if index > 0:
++            index = index - 1
++        else: index = leng-1
++			
++ 	radio.setSearchIndex(index)	
++	return 
++
++    def next_song(self,event):
++        self.changed = True
++	playlist = radio.getPlayList()
++	index = radio.getSearchIndex()
++	
++        leng = len(playlist)
++        log.message("len playlist =" + str(leng),log.DEBUG)
++        index = index + 1
++        if index >= leng:
++            index = 0
++			
++ 	radio.setSearchIndex(index)	
++	return 
++
++    def play(self,event):
++ 	radio.setLoadNew(True)	
++        submenu(date_play_menu())
++
++    def button1(self,event):
++        self.previous_artist(event)
++
++    def button2(self,event):
++        self.next_artist(event)
++
++    def leftswitch(self,event):
++        self.previous_song(event)
++
++    def rightswitch(self,event):
++        self.next_song(event)
++
++    def leftrightbutton(self,event):
++        if self.changed:
++            self.play(event)
++        else: 
++            super(search_menu,
++                  self).leftrightbutton(event)
++
++class top_menu(menu):
++    current_entry = None
++    entry_list = [ "Radio",
++                   "Internet Radio",
++                   "Music library",
++                   "RSS",
++                   "Sleep",
++                   "Shut down",
++                   "Options",
++                   "About" ]
++    def __init__(self):
++        super(top_menu,self).__init__()
++        log.message("top_menu.init()",log.DEBUG)
++        source = radio.getSource()
++        if source == radio.RADIO:
++            self.current_entry = 0
++        elif source == radio.PLAYER:
++            self.current_entry = 1
++        else:
++            self.current_entry = 0
++
++    def displayMode(self):
++        lcd.lock()
++	lcd.line(0,0, "Main Menu:")
++        lcd.line(0,1, self.entry_list[self.current_entry])
++        lcd.unlock()
++	return
++
++    def previous_entry(self,event):
++        size = len(self.entry_list)
++        if self.current_entry > 0:
++            self.current_entry = self.current_entry - 1
++        else: self.current_entry = size - 1
++        self.displayMode()
++
++    def next_entry(self,event):
++        size = len(self.entry_list)
++        self.current_entry = self.current_entry + 1
++        if self.current_entry >= size:
++            self.current_entry = 0
++        self.displayMode()
++
++    def enter(self,event):
++        if (self.current_entry == 0):
++            submenu(radio_menu())
++        elif self.current_entry == 1:
++            radio.setSource(radio.RADIO)
++            submenu(search_menu())
++            current_menu.changed = True
++        elif self.current_entry == 2:
++            radio.setSource(radio.PLAYER)
++            submenu(search_menu())
++            current_menu.changed = True
++        elif self.current_entry == 3:
++            submenu(rss_menu())
++        elif self.current_entry == 4:
++            submenu(sleep_menu())
++        elif self.current_entry == 5:
++            submenu(shutdown_menu())
++        elif self.current_entry == 6:
++            submenu(options_menu())
++        elif self.current_entry == 7:
++            submenu(about_menu())
++        return
++        
++            
++    def leftswitch(self,event):
++        self.previous_entry(event)
++
++    def rightswitch(self,event):
++        self.next_entry(event)
++
++    def leftrightbutton(self,event):
++        self.enter(event)
++
++class options_menu(menu):
++    current_entry = 0
++    entry_list = [["Options:"        , "Go back"],
++                  ["Playback Options", "Random "],
++                  ["Playback Options", "Consume "],
++                  ["Playback Options", "Repeat "],
++                  ["Output to Stream", "Streaming "],
++                  ["Set Timer:"      , "Timer "],
++                  ["Set alarm mode:" , "" ],
++                  ["Set alarm time:" , "" ],
++                  ["Update library:" , "Update list: "]]
++    def get_parent_menu(self):
++        return top_menu()
++
++    def option_up(self, event):
++        if (self.current_entry == 0):
++            parent_menu()
++        elif self.current_entry == 1:
++            radio.randomOn()
++        elif self.current_entry == 2:
++            if (radio.getSource() == radio.PLAYER):
++                radio.consumeOn()
++            else:
++                lcd.lock()
++                lcd.line(0,1, "Not allowed")
++                time.sleep(2)
++                lcd.unlock()
++        elif self.current_entry == 3:
++            radio.repeatOn()
++        elif self.current_entry == 4:
++            radio.streamingOn()
++        elif self.current_entry == 5:
++            if radio.getTimer():
++                radio.incrementTimer(1)
++            else:
++                radio.timerOn()
++        elif self.current_entry == 6:
++            radio.alarmCycle(radio.UP)
++        elif self.current_entry == 7:
++            radio.incrementAlarm(60)
++        elif self.current_entry == 8:
++            radio.setUpdateLibOn()
++	radio.optionChangedTrue()
++
++    def option_down(self, event):
++        if (self.current_entry == 0):
++            parent_menu()
++        elif self.current_entry == 1:
++            radio.randomOff()
++        elif self.current_entry == 2:
++            if (radio.getSource() == radio.PLAYER):
++                radio.consumeOff()
++            else:
++                lcd.lock()
++                lcd.line(0,1, "Not allowed")
++                time.sleep(2)
++                lcd.unlock()
++        elif self.current_entry == 3:
++            radio.repeatOff()
++        elif self.current_entry == 4:
++            radio.streamingOff()
++        elif self.current_entry == 5:
++            if (radio.getTimerValue > 0):
++                radio.decrementTimer(1)
++            else: radio.timerOff()
++        elif self.current_entry == 6:
++            radio.alarmCycle(radio.DOWN)
++        elif self.current_entry == 7:
++            radio.decrementAlarm(60)
++        elif current_enty == 8:
++            radio.setUpdateLibOff()
++	radio.optionChangedTrue()
++
++
++
++    def option_up2(self, event):
++        if self.current_entry == 7:
++            radio.incrementAlarm(1)
++            radio.optionChangedTrue()
++        else: self.option_up(event)
++
++    def option_down2(self, event):
++        if self.current_entry == 7:
++            radio.decrementAlarm(1)
++            radio.optionChangedTrue()
++        else: self.option_down(event)
++
++
++
++            
++    def onoffstr(self,value):
++        if (value):
++            return "On"
++        else: return "Off"
++
++    def displayMode(self):
++        current_str = list(self.entry_list[self.current_entry]);
++        if self.current_entry == 1:
++            current_str[1] += self.onoffstr(radio.getRandom())
++        elif self.current_entry == 2:
++            current_str[1] += self.onoffstr(radio.getConsume())
++        elif self.current_entry == 3:
++            current_str[1] += self.onoffstr(radio.getRepeat())
++        elif self.current_entry == 4:
++            current_str[1] += self.onoffstr(radio.getStreaming())
++        elif self.current_entry == 5:
++            if radio.getTimer():
++                current_str[1] += radio.getTimerString()
++            else:
++                current_str[1] += "Off"
++        elif self.current_entry == 6:
++            alarmType = radio.getAlarmType()
++            if alarmType == radio.ALARM_OFF:
++                current_str[1] = "No alarm"
++            elif alarmType == radio.ALARM_ON:
++                current_str[1] = "Do not repeat"
++            elif alarmType == radio.ALARM_REPEAT:
++                current_str[1] = "Repeat every day"
++            elif alarmType == radio.ALARM_WEEKDAYS:
++                current_str[1] = "Weekdays only"
++        elif self.current_entry == 7:
++            current_str[1] += radio.getAlarmTime()
++        elif self.current_entry == 8:
++            current_str[1] += self.onoffstr(radio.getUpdateLibrary())
++            
++            
++        lcd.lock()
++	lcd.line(0,0, current_str[0])
++        lcd.line(0,1, current_str[1])
++        lcd.unlock()
++	return
++
++    def previous_entry(self,event):
++        size = len(self.entry_list)
++        if self.current_entry > 0:
++            self.current_entry = self.current_entry - 1
++        else: self.current_entry = size - 1
++        self.displayMode()
++
++    def next_entry(self,event):
++        size = len(self.entry_list)
++        self.current_entry = self.current_entry + 1
++        if self.current_entry >= size:
++            self.current_entry = 0
++        self.displayMode()
++
++    def button1(self,event):
++        button_pressed = True
++        twait = 0.4
++        while button_pressed:
++            self.option_down(event)
++            self.displayMode()
++            if (self.current_entry == 5 or 
++                self.current_entry == 7):
++                time.sleep(twait)
++                twait = 0.1
++                button_pressed = lcd.buttonPressed(lcd.BUTTON1)
++            else: button_pressed = False
++
++    def button2(self,event):
++        button_pressed = True
++        twait = 0.4
++        while button_pressed:
++            self.option_up(event)
++            self.displayMode()
++            if (self.current_entry == 5 or 
++                self.current_entry == 7):
++                time.sleep(twait)
++                twait = 0.1
++                button_pressed = lcd.buttonPressed(lcd.BUTTON2)
++            else: button_pressed = False
++
++    def button3(self,event):
++        button_pressed = True
++        twait = 0.4
++        while button_pressed:
++            self.option_down2(event)
++            self.displayMode()
++            if (self.current_entry == 5 or 
++                self.current_entry == 7):
++                time.sleep(twait)
++                twait = 0.1
++                button_pressed = lcd.buttonPressed(lcd.BUTTON1)
++            else: button_pressed = False
++
++    def button4(self,event):
++        button_pressed = True
++        twait = 0.4
++        while button_pressed:
++            self.option_up2(event)
++            self.displayMode()
++            if (self.current_entry == 5 or 
++                self.current_entry == 7):
++                time.sleep(twait)
++                twait = 0.1
++                button_pressed = lcd.buttonPressed(lcd.BUTTON2)
++            else: button_pressed = False
++
++    def leftswitch(self,event):
++        self.previous_entry(event)
++
++    def rightswitch(self,event):
++        self.next_entry(event)
++
++class about_menu(menu):
++    def get_parent_menu(self):
++        return top_menu()
++
++    def displayMode(self):
++        lcd.lock()
++        ipaddr = exec_cmd('hostname -I')
++        if ipaddr is "":
++            lcd.line(0, 1, "No IP network")
++        else:
++            lcd.scroll(0, 1, "IP " + ipaddr)
++        lcd.line(0, 0, "Radio v" + radio.getVersion())
++        lcd.unlock()
++   
++class rss_menu(menu):
++    def get_parent_menu(self):
++        return top_menu()
++
++    def displayMode(self):
++        self.display_time(0,0)
++	rss_line = rss.getFeed()
++	lcd.setScrollSpeed(0.2) # Display rss feeds a bit quicker
++	lcd.scroll(0, 1, rss_line)
++
++class sleep_menu(menu):
++    def get_parent_menu(self):
++        return top_menu()
++
++    def update_radio(self):
++        lcd.backlight(False)
++        radio.mute()
++
++    def displayMode(self):
++        self.display_time(0,0)
++        message = 'Sleep mode'
++	if radio.alarmActive():
++            message = "Alarm " + radio.getAlarmTime()
++        lcd.lock()
++        lcd.line(0,1, message)
++        lcd.unlock()
++
++    def heartbeat(self):
++        super(sleep_menu,self).heartbeat()
++        # Alarm wakeup function
++        if radio.alarmFired():
++            log.message("Alarm fired", log.INFO)
++            self.wakeup()
++
++    def wakeup(self):
++        log.message("Alarm fired", log.INFO)
++        radio.unmute()
++        message = 'Good day'
++	t = datetime.datetime.now()
++	if t.hour >= 0 and t.hour < 12:
++		message = 'Good morning'
++	if t.hour >= 12 and t.hour < 18:
++		message = 'Good afternoon'
++	if t.hour >= 16 and t.hour <= 23:
++		message = 'Good evening'
++        lcd.lock()
++	lcd.line(0,1, message)
++        lcd.backlight(True)
++        lcd.unlock()
++	time.sleep(3)
++        self.reactivate_playmenu()
++
++    def button1(self,event):
++        self.wakeup()
++
++    def button2(self,event):
++        self.wakeup()
++
++    def button3(self,event):
++        self.wakeup()
++
++    def button4(self,event):
++        self.wakeup()
++
++    def button5(self,event):
++        self.wakeup()
++
++    def leftswitch(self,event):
++        self.wakeup()
++
++    def rightswitch(self,event):
++        self.wakeup()
++
++    def leftrightbutton(self,event):
++        self.wakeup()
++
++class radio_station_menu(menu):
++    current_entry = 0
++    heading = "Unknown menu"
++    entry_list = {}
++    
++    def __init__(self, stations, heading):
++        self.heading = heading
++        self.entry_list = stations
++
++    def displayMode(self):
++        log.message("Current Station: " + 
++                    unicode(self.entry_list[self.current_entry]), 
++                    log.DEBUG)
++        lcd.lock()
++	lcd.line(0,0, self.heading % (self.current_entry + 1))
++        lcd.line(0,1, self.entry_list[self.current_entry]['name'])
++        lcd.unlock()
++	return
++
++    def previous_entry(self,event):
++        size = len(self.entry_list)
++        if self.current_entry > 0:
++            self.current_entry = self.current_entry - 1
++        else: self.current_entry = size - 1
++        self.displayMode()
++
++    def next_entry(self,event):
++        size = len(self.entry_list)
++        self.current_entry = self.current_entry + 1
++        if self.current_entry >= size:
++            self.current_entry = 0
++        self.displayMode()
++
++    def enter(self,event):
++        return
++            
++    def leftswitch(self,event):
++        self.previous_entry(event)
++
++    def rightswitch(self,event):
++        self.next_entry(event)
++
++    def leftrightbutton(self,event):
++        self.enter(event)
++
++
++class radio_menu(menu):
++    current_entry = 0
++
++    def unimplemented():
++        lcd.line(0,1,_("Unimplemented"))
++        return
++    def local_stations():
++        submenu(radio_station_menu(radio_api.get_local_stations(99),
++                                    "Local radio: %d"))
++        return
++
++    entry_list = (
++        {'label': _('Local Stations'),
++         'method': local_stations},
++        {'label': _('Recomendations'),
++         'method': unimplemented},
++        {'label': _('Top 100'),
++         'method': unimplemented},
++        {'label': _('Genre'),
++         'method': unimplemented},
++        {'label': _('Topic'),
++         'method': unimplemented},
++        {'label': _('Category'),
++         'method': unimplemented},
++        {'label': _('City'),
++         'method': unimplemented},
++        {'label': _('Language'),
++         'method': unimplemented},
++        {'label': _('Search'),
++         'method': unimplemented},
++        {'label': _('My stations'),
++         'method': unimplemented},
++    )
++
++    def __init__(self):
++        super(radio_menu,self).__init__()
++        log.message("radio_menu.init()",log.DEBUG)
++
++
++    def displayMode(self):
++        lcd.lock()
++	lcd.line(0,0, "Search Radio:")
++        lcd.line(0,1, self.entry_list[self.current_entry]['label'])
++        lcd.unlock()
++	return
++
++    def previous_entry(self,event):
++        size = len(self.entry_list)
++        if self.current_entry > 0:
++            self.current_entry = self.current_entry - 1
++        else: self.current_entry = size - 1
++        self.displayMode()
++
++    def next_entry(self,event):
++        size = len(self.entry_list)
++        self.current_entry = self.current_entry + 1
++        if self.current_entry >= size:
++            self.current_entry = 0
++        self.displayMode()
++
++    def enter(self,event):
++        self.entry_list[self.current_entry]['method']()
++        return
++        
++            
++    def leftswitch(self,event):
++        self.previous_entry(event)
++
++    def rightswitch(self,event):
++        self.next_entry(event)
++
++    def leftrightbutton(self,event):
++        self.enter(event)
+--- /dev/null
++++ piradio-3.13-0ts/radio_api.py
+@@ -0,0 +1,232 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++#
++#     Copyright (C) 2012 Tristan Fischer (sphere@dersphere.de)
++#
++#    This program is free software: you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation, either version 3 of the License, or
++#    (at your option) any later version.
++#
++#    This program is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with this program. If not, see <http://www.gnu.org/licenses/>.
++#
++import json
++from urllib import urlencode
++from urllib2 import urlopen, Request, HTTPError, URLError
++import random
++
++
++class RadioApiError(Exception):
++    pass
++
++
++class RadioApi():
++
++    MAIN_URLS = {
++        'english': 'http://rad.io/info',
++        'german': 'http://radio.de/info',
++        'french': 'http://radio.fr/info',
++    }
++
++    CATEGORY_TYPES = (
++        'genre', 'topic', 'country', 'city', 'language',
++    )
++
++    USER_AGENT = 'Piradio Addon Radio'
++
++    PLAYLIST_PREFIXES = ('m3u', 'pls', 'asx', 'xml')
++
++    def __init__(self, language='german', user_agent=USER_AGENT):
++        self.set_language(language)
++        self.user_agent = user_agent
++
++    def set_language(self, language):
++        if not language in RadioApi.MAIN_URLS.keys():
++            raise ValueError('Invalid language')
++        self.api_url = RadioApi.MAIN_URLS[language]
++
++    def get_recommendation_stations(self):
++        self.log('get_recommendation_stations started')
++        path = 'broadcast/editorialreccomendationsembedded'
++        stations = self.__api_call(path)
++        return self.__format_stations(stations)
++
++    def get_top_stations(self):
++        self.log('get_top_stations started')
++        path = 'menu/broadcastsofcategory'
++        param = {'category': '_top'}
++        stations = self.__api_call(path, param)
++        return self.__format_stations(stations)
++
++    def get_local_stations(self, num_entries=25):
++        self.log('get_local_stations started with num_entries=%d'
++                 % num_entries)
++        most_wanted_stations = self._get_most_wanted(num_entries)
++        return self.__format_stations(most_wanted_stations['localBroadcasts'])
++
++    def get_category_types(self):
++        self.log('get_category_types started')
++        return RadioApi.CATEGORY_TYPES
++
++    def get_categories(self, category_type):
++        self.log('get_categories started with category_type=%s'
++                 % category_type)
++        if not category_type in RadioApi.CATEGORY_TYPES:
++            raise ValueError('Bad category_type')
++        path = 'menu/valuesofcategory'
++        param = {'category': '_%s' % category_type}
++        categories = self.__api_call(path, param)
++        return categories
++
++    def get_stations_by_category(self, category_type, category_value):
++        self.log(('get_stations_by_category started with category_type=%s, '
++                  'category_value=%s') % (category_type, category_value))
++        if not category_type in self.get_category_types():
++            raise ValueError('Bad category_type')
++        path = 'menu/broadcastsofcategory'
++        param = {
++            'category': '_%s' % category_type,
++            'value': category_value,
++        }
++        stations = self.__api_call(path, param)
++        return self.__format_stations(stations)
++
++    def search_stations_by_string(self, search_string):
++        self.log('search_stations_by_string started with search_string=%s'
++                 % search_string)
++        path = 'index/searchembeddedbroadcast'
++        param = {
++            'q': search_string,
++            'start': '0',
++            'rows': '10000',
++            'streamcontentformats': 'aac,mp3',
++        }
++        stations = self.__api_call(path, param)
++        return self.__format_stations(stations)
++
++    def get_station_by_station_id(self, station_id, resolve_playlists=True):
++        self.log('get_station_by_station_id started with station_id=%s'
++                 % station_id)
++        path = 'broadcast/getbroadcastembedded'
++        param = {'broadcast': str(station_id)}
++        station = self.__api_call(path, param)
++        if resolve_playlists and self.__check_paylist(station['streamURL']):
++            playlist_url = station['streamURL']
++            station['streamURL'] = self.__resolve_playlist(station)
++        stations = (station, )
++        return self.__format_stations(stations)[0]
++
++    def _get_most_wanted(self, num_entries=25):
++        self.log('get_most_wanted started with num_entries=%d'
++                 % num_entries)
++        if not isinstance(num_entries, int):
++            raise TypeError('Need int')
++        path = 'account/getmostwantedbroadcastlists'
++        param = {'sizeoflists': str(num_entries)}
++        stations_lists = self.__api_call(path, param)
++        return stations_lists
++
++    def __api_call(self, path, param=None):
++        self.log('__api_call started with path=%s, param=%s'
++                 % (path, param))
++        url = '%s/%s' % (self.api_url, path)
++        if param:
++            url += '?%s' % urlencode(param)
++        response = self.__urlopen(url)
++        json_data = json.loads(response)
++        return json_data
++
++    def __resolve_playlist(self, station):
++        self.log('__resolve_playlist started with station=%s'
++                 % station['id'])
++        servers = []
++        stream_url = station['streamURL']
++        if stream_url.lower().endswith('m3u'):
++            response = self.__urlopen(stream_url)
++            self.log('__resolve_playlist found .m3u file')
++            servers = [
++                l for l in response.splitlines()
++                if l.strip() and not l.strip().startswith('#')
++            ]
++        elif stream_url.lower().endswith('pls'):
++            response = self.__urlopen(stream_url)
++            self.log('__resolve_playlist found .pls file')
++            servers = [
++                l.split('=')[1] for l in response.splitlines()
++                if l.lower().startswith('file')
++            ]
++        elif stream_url.lower().endswith('asx'):
++            response = self.__urlopen(stream_url)
++            self.log('__resolve_playlist found .asx file')
++            servers = [
++                l.split('href="')[1].split('"')[0]
++                for l in response.splitlines() if 'href' in l
++            ]
++        elif stream_url.lower().endswith('xml'):
++            self.log('__resolve_playlist found .xml file')
++            servers = [
++                stream_url['streamUrl']
++                for stream_url in station.get('streamUrls', [])
++                if 'streamUrl' in stream_url
++            ]
++        if servers:
++            self.log('__resolve_playlist found %d servers' % len(servers))
++            return random.choice(servers)
++        return stream_url
++
++    def __urlopen(self, url):
++        self.log('__urlopen opening url=%s' % url)
++        req = Request(url)
++        req.add_header('User-Agent', self.user_agent)
++        try:
++            response = urlopen(req).read()
++        except HTTPError, error:
++            self.log('__urlopen HTTPError: %s' % error)
++            raise RadioApiError('HTTPError: %s' % error)
++        except URLError, error:
++            self.log('__urlopen URLError: %s' % error)
++            raise RadioApiError('URLError: %s' % error)
++        return response
++
++    @staticmethod
++    def __format_stations(stations):
++        formated_stations = []
++        for station in stations:
++            thumbnail = (
++                station.get('picture4TransName') or
++                station.get('picture4Name') or
++                station.get('picture1TransName').replace('_1_', '_4_') or
++                station.get('picture1Name').replace('_1_', '_4_')
++            )
++            genre = station.get('genresAndTopics') or ','.join(
++                station.get('genres', []) + station.get('topics', []),
++            )
++            formated_stations.append({
++                'name': station['name'],
++                'thumbnail': station['pictureBaseURL'] + thumbnail,
++                'rating': station['rating'],
++                'genre': genre,
++                'bitrate': station['bitrate'],
++                'id': station['id'],
++                'current_track': station['currentTrack'],
++                'stream_url': station.get('streamURL', ''),
++                'description': station.get('description', '')
++            })
++        return formated_stations
++
++    @staticmethod
++    def __check_paylist(stream_url):
++        for prefix in RadioApi.PLAYLIST_PREFIXES:
++            if stream_url.lower().endswith(prefix):
++                return True
++        return False
++
++    @staticmethod
++    def log(text):
++        print 'RadioApi: %s' % repr(text)
+--- /dev/null
++++ piradio-3.13-0ts/piface_lcd_class.py
+@@ -0,0 +1,329 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++#
++# $Id: lcd_class.py,v 1.22 2014/08/29 10:25:14 bob Exp $
++# Raspberry Pi Internet Radio
++# using Piface Control & Display
++#
++# Autor : Tobias Schlemmer
++# Site  : http://schlemmersoft.de/
++#
++# Original Author : Bob Rathbone
++# Original Site   : http://www.bobrathbone.com
++#  
++#
++# From original LCD routines : Matt Hawkins
++# Site   : http://www.raspberrypi-spy.co.uk
++#
++# Expanded to use 4 x 20  display
++#
++# This program uses  Music Player Daemon 'mpd'and it's client 'mpc'
++# See http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
++#
++# License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
++#
++# Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
++#             The authors shall not be liable for any loss or damage however caused.
++#
++
++
++
++import os
++import sys
++import time
++import pifacecommon
++import pifacecad
++import threading
++import codecs
++import cpHD44780
++#import RPi.GPIO as GPIO
++
++# The wiring for the LCD is as follows:
++# 1 : GND
++# 2 : 5V
++# 3 : Contrast (0-5V)*
++# 4 : RS (Register Select)
++# 5 : R/W (Read Write)       - GROUND THIS PIN
++# 6 : Enable or Strobe
++# 7 : Data Bit 0             - NOT USED
++# 8 : Data Bit 1             - NOT USED
++# 9 : Data Bit 2             - NOT USED
++# 10: Data Bit 3             - NOT USED
++# 11: Data Bit 4
++# 12: Data Bit 5
++# 13: Data Bit 6
++# 14: Data Bit 7
++# 15: LCD Backlight +5V**
++# 16: LCD Backlight GND
++
++# Define GPIO to LCD mapping
++#LCD_RS = 7
++#LCD_E  = 8
++#LCD_D4_21 = 21    # Rev 1 Board
++#LCD_D4_27 = 27    # Rev 2 Board
++#LCD_D5 = 22
++#LCD_D6 = 23
++#LCD_D7 = 24
++
++# Define LCD device constants
++LCD_WIDTH = 16    # Default characters per line
++LCD_CHR = True
++LCD_CMD = False
++
++LCD_LINE_1 = 0x80 # LCD RAM address for the 1st line
++LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
++LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
++LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
++
++# Some LCDs use different addresses (16 x 4 line LCDs)
++# Comment out the above two lines and uncomment the two lines below
++# LCD_LINE_3 = 0x90 # LCD RAM address for the 3rd line
++# LCD_LINE_4 = 0xD0 # LCD RAM address for the 4th line
++
++# If using a 4 x 16 display also amend the lcd.setWidth(<width>) statement in rradio4.py
++
++# Timing constants
++E_PULSE = 0.00005
++E_DELAY = 0.00005
++
++
++# Lcd Class 
++class Piface_lcd:
++	width = LCD_WIDTH
++	# If display can support umlauts set to True else False
++	displayUmlauts = True
++        RawMode = False         # Test only
++        ScrollSpeed = 0.3       # Default scroll speed
++
++        ENTER = 5
++        LEFT  = 6
++        RIGHT = 7
++        BUTTON1     = 0
++        BUTTON2     = 1
++        BUTTON3     = 2
++        BUTTON4     = 3
++        BUTTON5     = 4
++
++        savelines = ["","","",""]
++
++        lcdlock = threading.Lock()
++
++
++#	lcd_d4 = LCD_D4_27	# Default for revision 2 boards 
++
++        def __init__(self):
++                self.cad = pifacecad.PiFaceCAD()
++                self.lcd = self.cad.lcd
++                self.width = 16
++                for i in range (0,2):
++                        self.savelines[i] = "".ljust(self.width," ")
++                self.lcd.clear()
++
++                self.lcd.backlight_on()
++#                 for i in range(8):
++#                         for j in range(2):
++#                                 self.lcd.set_cursor(0,j)
++#                                 for k in range(16):
++#                                         self.lcd.write(chr(16*(2*i + j)+k))
++#                         sys.stdin.readline()
++#                 
++		return
++
++	# Initialise for either revision 1 or 2 boards
++	def init(self):
++                
++                print ("init")
++		#self.lcd.send_command(0x33)
++		#self.lcd.send_command(0x32)
++		#self.lcd.send_command(0x28) # 4bit, 2 Zeilen, 5x8-font
++		#self.lcd.send_command(0x0C) # disp. on, cursor off, position_car off
++		#self.lcd.send_command(0x06) # Increment/no shift
++		# self.lcd.send_command(0x01,LCD_CMD) # clear display
++		self.lcd.blink_off()
++		self.lcd.cursor_off()
++		self.lcd.clear()
++                time.sleep(0.3)
++		self.lcd.backlight_on()
++		return
++
++
++	# Output byte to Led  mode = Command or Data
++	def _byte_out(self,bits, mode):
++		# Send byte to data pins
++		# bits = data
++		# mode = True  for character
++		#        False for command
++                if (mode):
++                        self.lcd.send_data(bits)
++                else:
++                        self.lcd.send_command(bits)
++		return
++
++	def clear(self):
++		self.lcd.clear()
++
++        def backlight(self,on):
++                if (on):
++                        self.lcd.backlight_on()
++                else:
++                        self.lcd.backlight_off()
++
++	# Set the display width
++	def setWidth(self,width):
++		self.width = width
++                for i in range (0,2):
++                        self.savelines = "".ljust(self.width," ")
++		return
++
++	# Send string to display
++	def _string(self,message):
++                s = message
++		if not self.RawMode:
++			s = self.translateSpecialChars(s)
++                log.message("LCD._string: " + s, log.DEBUG)
++                self.lcd.write(s);
++		return
++
++	# Display Line 1 on LED
++	def line(self,x,y,message):
++		text = message.ljust(self.width," ")
++                leng = len(text)
++                end = x+leng
++                current_line = (self.savelines[y][0:x]
++                                + text
++                                + self.savelines[y][end:self.width])
++                first_difference = self.width
++                for i in range(0,self.width-1):
++                        if current_line[i] != self.savelines[y][i]:
++                                first_difference = i
++                                break
++                last_difference = first_difference -1
++                for i in range(self.width-1,first_difference-1,-1):
++                        if current_line[i] != self.savelines[y][i]:
++                                last_difference = i+1
++                                break
++                self.lcd.set_cursor(first_difference,y)
++		self._string(current_line[first_difference:last_difference])
++                self.savelines[y] = current_line
++		return
++
++	# Scroll message on line 1
++	def scroll(self,x,y,mytext):
++		self._scroll(mytext,x,y)
++		return
++
++	# Scroll line - interrupt() breaks out routine if True
++	def _scroll(self,mytext,x,y):
++		ilen = len(mytext)
++		skip = False
++
++		self.line(x,y,mytext[0:self.width + 1])
++	
++		if (ilen <= self.width):
++			skip = True
++
++		if not skip:
++			for i in range(0, 5):
++				time.sleep(0.2)
++
++		if not skip and False:
++			for i in range(0, ilen - self.width + 1 ):
++				self._byte_out(line, LCD_CMD)
++				self._string(mytext[i:i+self.width])
++				time.sleep(self.ScrollSpeed)
++
++		if not skip:
++			for i in range(0, 5):
++				time.sleep(0.2)
++		return
++
++        # Set Scroll line speed - Best values are 0.2 and 0.3
++        # Limit to between 0.05 and 1.0
++        def setScrollSpeed(self,speed):
++                if speed < 0.05:
++                        speed = 0.2
++                elif speed > 1.0:
++                        speed = 0.3
++                self.ScrollSpeed = speed
++                return
++
++        # Set raw mode on (No translation)
++        def setRawMode(self,value):
++                self.RawMode = value
++                return
++
++	# Display umlats if tro elese oe ae etc
++        def displayUmlauts(self,value):
++                self.displayUmlauts = value
++                return
++
++	# Translate special characters (umlautes etc) to LCD values
++	# See standard character patterns for LCD display
++	def translateSpecialChars(self,sp):
++                return codecs.charmap_encode(sp,'replace',cpHD44780.encoding_map_A00)[0];
++		s = sp
++
++                # Currency
++                s = s.replace('œ', 'oe')       # Pound by hash
++                s = s.replace(chr(169), '(c)')     # Copyright
++
++                # Spanish french
++                s = s.replace(chr(241), 'n')       # Small tilde n
++                s = s.replace(chr(191), '?')       # Small u acute to u
++                s = s.replace(chr(224), 'a')       # Small a grave to a
++                s = s.replace(chr(225), 'a')       # Small a acute to a
++                s = s.replace(chr(226), 'a')       # Small a circumflex to a
++                s = s.replace(chr(232), 'e')       # Small e grave to e
++                s = s.replace(chr(233), 'e')       # Small e acute to e
++                s = s.replace(chr(234), 'e')       # Small e circumflex to e
++                s = s.replace(chr(237), 'i')       # Small i acute to i
++                s = s.replace(chr(238), 'i')       # Small i circumflex to i
++                s = s.replace(chr(243), 'o')       # Small o acute to o
++                s = s.replace(chr(244), 'o')       # Small o circumflex to o
++                s = s.replace(chr(250), 'u')       # Small u acute to u
++                s = s.replace(chr(193), 'A')       # Capital A acute to A
++                s = s.replace(chr(201), 'E')       # Capital E acute to E
++                s = s.replace(chr(205), 'I')       # Capital I acute to I
++                s = s.replace(chr(209), 'N')       # Capital N acute to N
++                s = s.replace(chr(211), 'O')       # Capital O acute to O
++                s = s.replace(chr(218), 'U')       # Capital U acute to U
++                s = s.replace(chr(220), 'U')       # Capital U umlaut to U
++                s = s.replace(chr(231), 'c')       # Small c Cedilla
++                s = s.replace(chr(199), 'C')       # Capital C Cedilla
++
++                # German
++                s = s.replace(chr(196), "Ae")           # A umlaut
++                s = s.replace(chr(214), "Oe")           # O umlaut
++                s = s.replace(chr(220), "Ue")           # U umlaut
++
++                if self.displayUmlauts:
++                        s = s.replace(chr(223), chr(226))       # Sharp s
++                        s = s.replace(chr(246), chr(239))       # o umlaut
++                        s = s.replace(chr(228), chr(225))       # a umlaut
++                        s = s.replace(chr(252), chr(245))       # u umlaut
++                else:
++                        s = s.replace(chr(228), "ae")           # a umlaut
++                        s = s.replace(chr(223), "ss")           # Sharp s
++                        s = s.replace(chr(246), "oe")           # o umlaut
++                        s = s.replace(chr(252), "ue")           # u umlaut
++		return s
++
++        def buttonPressed(self,Wert):
++                retval = self.cad.switches[Wert].value
++                print ("Buttons: ",hex(self.cad.switch_port.value))
++                print ("Button %d = %d" % (Wert,self.cad.switches[Wert].value))
++                return retval
++        def get_listener(self):
++                self.listener = pifacecad.SwitchEventListener(chip=self.cad)
++                return self.listener
++
++        def lock(self):
++                self.lcdlock.acquire()
++
++        def unlock(self):
++                self.lcdlock.release()
++
++        def heartbeat(self):
++                return
++
++# End of Lcd class
+--- piradio-3.13-0ts.orig/radio_daemon.py
++++ piradio-3.13-0ts/radio_daemon.py
+@@ -22,7 +22,7 @@ class Daemon:
+ 	
+ 	Usage: subclass the Daemon class and override the run() method
+ 	"""
+-	def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
++	def __init__(self, pidfile, stdin='/dev/null', stdout='/var/log/radiod.stdout', stderr='/var/log/radiod.stderr'):
+ 		self.stdin = stdin
+ 		self.stdout = stdout
+ 		self.stderr = stderr
+@@ -34,29 +34,29 @@ class Daemon:
+ 		Programming in the UNIX Environment" for details (ISBN 0201563177)
+ 		http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
+ 		"""
+-		try: 
+-			pid = os.fork() 
+-			if pid > 0:
+-				# exit first parent
+-				sys.exit(0) 
+-		except OSError, e: 
+-			sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
+-			sys.exit(1)
++                try: 
++                        pid = os.fork() 
++                        if pid > 0:
++                                # exit first parent
++                                sys.exit(0) 
++                except OSError as e: 
++                        sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
++                        sys.exit(1)
+ 	
+ 		# decouple from parent environment
+ 		os.chdir("/") 
+ 		os.setsid() 
+ 		os.umask(0) 
+ 	
+-		# do second fork
+-		try: 
+-			pid = os.fork() 
+-			if pid > 0:
+-				# exit from second parent
+-				sys.exit(0) 
+-		except OSError, e: 
+-			sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
+-			sys.exit(1) 
++                # do second fork
++                try: 
++                        pid = os.fork() 
++                        if pid > 0:
++                                # exit from second parent
++                                sys.exit(0) 
++                except OSError as e: 
++                        sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
++                        sys.exit(1) 
+ 	
+ 		# redirect standard file descriptors
+ 		sys.stdout.flush()
+@@ -67,7 +67,7 @@ class Daemon:
+ 		os.dup2(si.fileno(), sys.stdin.fileno())
+ 		os.dup2(so.fileno(), sys.stdout.fileno())
+ 		os.dup2(se.fileno(), sys.stderr.fileno())
+-	
++
+ 		# write pidfile
+ 		atexit.register(self.delpid)
+ 		pid = str(os.getpid())
+@@ -84,9 +84,10 @@ class Daemon:
+ 		try:
+ 			pf = file(self.pidfile,'r')
+ 			pid = int(pf.read().strip())
+-			pf.close()
++                        pf.close()
+ 		except IOError:
+ 			pid = None
++                        print ("no pid")
+ 	
+ 		if pid:
+ 			message = "pidfile %s already exist. Daemon already running?\n"
+@@ -101,7 +102,7 @@ class Daemon:
+ 		"""
+ 		Stop the daemon
+ 		"""
+-		# Get the pid from the pidfile
++# Get the pid from the pidfile
+ 		try:
+ 			pf = file(self.pidfile,'r')
+ 			pid = int(pf.read().strip())
+@@ -121,15 +122,14 @@ class Daemon:
+ 				os.kill(pid, SIGTERM)
+ 				time.sleep(0.2)
+ 				count -= 1
+-			sys.exit(0)
+ 
+-		except OSError, err:
++		except OSError as err:
+ 			err = str(err)
+ 			if err.find("No such process") > 0:
+ 				if os.path.exists(self.pidfile):
+ 					os.remove(self.pidfile)
+ 			else:
+-				print str(err)
++				print (str(err))
+ 				sys.exit(1)
+ 
+ 	def restart(self):
+--- piradio-3.13-0ts.orig/log_class.py
++++ piradio-3.13-0ts/log_class.py
+@@ -10,7 +10,7 @@
+ # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
+ #
+ # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
+-#             The authors shall not be liable for any loss or damage however caused.
++#	     The authors shall not be liable for any loss or damage however caused.
+ #
+ 
+ import os
+@@ -31,17 +31,17 @@ class Log:
+ 	module = ''
+ 	level = logging.INFO
+ 
+-        def __init__(self):
+-                return 
++	def __init__(self):
++		return 
+ 
+ 	def init(self,module):
+ 		self.module = module
+-                # Set up loglevel file
+-                if not os.path.isfile(self.LogLevelFile) or os.path.getsize(self.LogLevelFile) == 0:
+-                        os.popen("echo INFO > " + self.LogLevelFile)
++		# Set up loglevel file
++		if not os.path.isfile(self.LogLevelFile) or os.path.getsize(self.LogLevelFile) == 0:
++			os.popen("echo INFO > " + self.LogLevelFile)
+ 			os.popen("echo INFO > " + self.LogLevelFile)
+ 		self.level = self.getLevel()
+-                return 
++		return 
+ 
+ 	def message(self,message,level):
+ 		# Set up logging, level can be INFO, WARNING, ERROR, DEBUG or NONE
+@@ -70,25 +70,25 @@ class Log:
+ 		return
+ 
+ 	# Get the log level from the configuration file
+-        def getLevel(self):
+-                self.loglevel = logging.INFO
+-                if os.path.isfile(self.LogLevelFile):
+-                        try:
+-                                p = os.popen("cat " + self.LogLevelFile)
+-                                strLogLevel = p.readline().rstrip('\n')
+-                                if strLogLevel == "DEBUG":
+-                                        self.loglevel = logging.DEBUG
+-                                elif strLogLevel == "WARNING":
+-                                        self.loglevel = logging.WARNING
+-                                elif strLogLevel == "ERROR":
+-                                        self.loglevel = logging.ERROR
+-                                elif strLogLevel == "NONE":
+-                                        self.loglevel = self.NONE
++	def getLevel(self):
++		self.loglevel = logging.INFO
++		if os.path.isfile(self.LogLevelFile):
++			try:
++				p = os.popen("cat " + self.LogLevelFile)
++				strLogLevel = p.readline().rstrip('\n')
++				if strLogLevel == "DEBUG":
++					self.loglevel = logging.DEBUG
++				elif strLogLevel == "WARNING":
++					self.loglevel = logging.WARNING
++				elif strLogLevel == "ERROR":
++					self.loglevel = logging.ERROR
++				elif strLogLevel == "NONE":
++					self.loglevel = self.NONE
+ 
+-                        except ValueError:
+-                                self.loglevel = logging.INFO
++			except ValueError:
++				self.loglevel = logging.INFO
+ 
+-                return self.loglevel
++		return self.loglevel
+ 
+ # End of log class
+ 
+--- piradio-3.13-0ts.orig/translate_class.py
++++ piradio-3.13-0ts/translate_class.py
+@@ -12,10 +12,10 @@
+ # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
+ #
+ # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
+-#             The authors shall not be liable for any loss or damage however caused.
++#	     The authors shall not be liable for any loss or damage however caused.
+ #
+ # Useful Links on character encodings
+-#  	http://www.zytrax.com/tech/web/entities.html
++#	http://www.zytrax.com/tech/web/entities.html
+ #	http://www.utf8-chartable.de/
+ #
+ 
+@@ -32,8 +32,8 @@ class Translate:
+ 		return    
+ 
+ 	# Translate all 
+-        def all(self,text):
+-                s = self._convert2escape(text)
++	def all(self,text):
++		s = self._convert2escape(text)
+ 		s = self._escape(s)
+ 		s = self._unicode(s)
+ 		s = self._html(s)
+@@ -47,15 +47,15 @@ class Translate:
+ 			s = s.lstrip("'")
+ 		return s
+ 
+-        # Convert escaped characters (umlauts) to normal characters
+-        def escape(self,text):
+-                s = self._convert2escape(text)
++	# Convert escaped characters (umlauts) to normal characters
++	def escape(self,text):
++		s = self._convert2escape(text)
+ 		s = self._escape(s)
+ 		return s
+ 
+ 
+-        # Convert escaped characters (umlauts) to normal characters
+-        def _escape(self,text):
++	# Convert escaped characters (umlauts) to normal characters
++	def _escape(self,text):
+ 		s = text
+ 		s = s.replace('//', '/')
+ 
+@@ -66,40 +66,40 @@ class Translate:
+ 		s = s.replace('\\xc3\\xa4', chr(228))   # a umlaut
+ 		s = s.replace('\\xc3\\xb6', chr(246))   # o umlaut
+ 		s = s.replace('\\xc3\\xbc', chr(252))   # u umlaut
+- 		s = s.replace('\\xc3\\x84', chr(196))	# A umlaut
+-		s = s.replace('\\xc3\\x96', chr(214)) 	# O umlaut
+- 		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
++		s = s.replace('\\xc3\\x84', chr(196))	# A umlaut
++		s = s.replace('\\xc3\\x96', chr(214))	# O umlaut
++		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
+ 
+ 		# French unicode escape sequences
+- 		s = s.replace('\\xc3\\x80', 'A')	# A grave 
+- 		s = s.replace('\\xc3\\x81', 'A')	# A acute 
+- 		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
+- 		s = s.replace('\\xc3\\x83', 'A')	# A tilde 
+- 		s = s.replace('\\xc3\\x88', 'E')	# E grave 
+- 		s = s.replace('\\xc3\\x89', 'E')	# E acute 
+- 		s = s.replace('\\xc3\\x8a', 'E')	# E circumflex 
+- 		s = s.replace('\\xc3\\xa0', chr(224))	# a grave
+- 		s = s.replace('\\xc3\\xa1', chr(225))	# a acute
+- 		s = s.replace('\\xc3\\xa2', chr(226))	# a circumflex
+- 		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
+- 		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
+- 		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
++		s = s.replace('\\xc3\\x80', 'A')	# A grave 
++		s = s.replace('\\xc3\\x81', 'A')	# A acute 
++		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
++		s = s.replace('\\xc3\\x83', 'A')	# A tilde 
++		s = s.replace('\\xc3\\x88', 'E')	# E grave 
++		s = s.replace('\\xc3\\x89', 'E')	# E acute 
++		s = s.replace('\\xc3\\x8a', 'E')	# E circumflex 
++		s = s.replace('\\xc3\\xa0', chr(224))	# a grave
++		s = s.replace('\\xc3\\xa1', chr(225))	# a acute
++		s = s.replace('\\xc3\\xa2', chr(226))	# a circumflex
++		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
++		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
++		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
+ 
+ 		# Currency other special character
+ 		s = s.replace('\\xa3', chr(156))  # UK pound sign
+ 		s = s.replace('\\xa9', chr(169))  # Copyright
+ 
+ 		# German short hex representation
+-		s = s.replace('\\xdf', chr(223))   	# Sharp s es-zett
+-		s = s.replace('\\xe4', chr(228))   	# a umlaut
+-		s = s.replace('\\xf6', chr(246))   	# o umlaut
+-		s = s.replace('\\xfc', chr(252))   	# u umlaut
+- 		s = s.replace('\\xc4', chr(196))	# A umlaut
+-		s = s.replace('\\xd6', chr(214)) 	# O umlaut
+- 		s = s.replace('\\xdc', chr(220))	# U umlaut
++		s = s.replace('\\xdf', chr(223))	# Sharp s es-zett
++		s = s.replace('\\xe4', chr(228))	# a umlaut
++		s = s.replace('\\xf6', chr(246))	# o umlaut
++		s = s.replace('\\xfc', chr(252))	# u umlaut
++		s = s.replace('\\xc4', chr(196))	# A umlaut
++		s = s.replace('\\xd6', chr(214))	# O umlaut
++		s = s.replace('\\xdc', chr(220))	# U umlaut
+ 
+ 		# Spanish and French
+-		s = s.replace('\\xa0', ' ')         # Line feed  to space
++		s = s.replace('\\xa0', ' ')	 # Line feed  to space
+ 		s = s.replace('\\xe0', chr(224))    # Small a reverse acute
+ 		s = s.replace('\\xe1', chr(225))    # Small a acute
+ 		s = s.replace('\\xe7', chr(231))    # Small c Cedilla 
+@@ -122,31 +122,31 @@ class Translate:
+ 		s = s.replace('\\xda', chr(218))    # Capital U acute
+ 
+ 		s = s.replace('\\xbf', chr(191))    # Spanish Punctuation
+-                return s
++		return s
+ 
+ 	# HTML translations (callable)
+-        def html(self,text):
++	def html(self,text):
+ 		s = self._html(s)
+ 		return s
+ 
+ 	# HTML translations
+-        def _html(self,text):
++	def _html(self,text):
+ 		s = text
+ 		s = s.replace('&lt;', '<') 
+ 		s = s.replace('&gt;', '>') 
+ 		s = s.replace('&quot;', '"') 
+ 		s = s.replace('&nbsp;', ' ') 
+ 		s = s.replace('&amp;', '&') 
+-                return s
++		return s
+ 
+ 	# Unicodes etc (callable)
+-        def unicode(self,text):
+-                s = self._convert2escape(text)
++	def unicode(self,text):
++		s = self._convert2escape(text)
+ 		s = self._unicode(s)
+ 		return s
+ 
+ 	# Unicodes etc
+-        def _unicode(self,text):
++	def _unicode(self,text):
+ 		s = text
+ 		s = s.replace('\\u201e', '"')    # ORF feed
+ 		s = s.replace('\\u3000', " ") 
+@@ -154,6 +154,6 @@ class Translate:
+ 		s = s.replace('\\u201d', '"') 
+ 		s = s.replace("\\'", "'") 
+ 		s = s.replace("\\n", " ") 
+-                return s
++		return s
+ 
+ # End of class
+--- piradio-3.13-0ts.orig/radio_class.py
++++ piradio-3.13-0ts/radio_class.py
+@@ -14,7 +14,7 @@
+ # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
+ #
+ # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
+-#             The authors shall not be liable for any loss or damage however caused.
++#	     The authors shall not be liable for any loss or damage however caused.
+ #
+ 
+ import os
+@@ -125,9 +125,9 @@ class Radio:
+ 	stationName = ''		# Radio station name
+ 	stationTitle = ''		# Radio station title
+ 
+-	option = RANDOM         # Player option
+-	search_index = 0        # The current search index
+-	loadnew = False         # Load new track from search
++	option = RANDOM	 # Player option
++	search_index = 0	# The current search index
++	loadnew = False	 # Load new track from search
+ 	streaming = False	# Streaming (Icecast) disabled
+ 	VERSION	= "3.11"	# Version number
+ 
+@@ -136,34 +136,34 @@ class Radio:
+ 
+ 		# Set up MPD port file
+ 		if not os.path.isfile(MpdPortFile) or os.path.getsize(MpdPortFile) == 0:
+-		        self.execCommand ("echo 6600 > " + MpdPortFile)
++			self.execCommand ("echo 6600 > " + MpdPortFile)
+ 
+ 		if not os.path.isfile(CurrentStationFile):
+ 			self.execCommand ("mkdir -p " + RadioLibDir )
+ 
+ 		# Set up current radio station file
+ 		if not os.path.isfile(CurrentStationFile) or os.path.getsize(CurrentStationFile) == 0:
+-		        self.execCommand ("echo 1 > " + CurrentStationFile)
++			self.execCommand ("echo 1 > " + CurrentStationFile)
+ 
+ 		# Set up current track file
+ 		if not os.path.isfile(CurrentTrackFile) or os.path.getsize(CurrentTrackFile) == 0:
+-		        self.execCommand ("echo 1 > " + CurrentTrackFile)
++			self.execCommand ("echo 1 > " + CurrentTrackFile)
+ 
+ 		# Set up volume file
+ 		if not os.path.isfile(VolumeFile) or os.path.getsize(VolumeFile) == 0:
+-		        self.execCommand ("echo 75 > " + VolumeFile)
++			self.execCommand ("echo 75 > " + VolumeFile)
+ 
+ 		# Set up timer file
+ 		if not os.path.isfile(TimerFile) or os.path.getsize(TimerFile) == 0:
+-		        self.execCommand ("echo 30 > " + TimerFile)
++			self.execCommand ("echo 30 > " + TimerFile)
+ 
+ 		# Set up Alarm file
+ 		if not os.path.isfile(AlarmFile) or os.path.getsize(AlarmFile) == 0:
+-		        self.execCommand ("echo 0:7:00 > " + AlarmFile)
++			self.execCommand ("echo 0:7:00 > " + AlarmFile)
+ 
+ 		# Set up Streaming (Icecast) file
+ 		if not os.path.isfile(StreamFile) or os.path.getsize(StreamFile) == 0:
+-		        self.execCommand ("echo off > " + StreamFile)
++			self.execCommand ("echo off > " + StreamFile)
+ 
+ 		# Create mount point for USB stick link it to the music directory
+ 		if not os.path.isfile("/media"):
+@@ -183,16 +183,19 @@ class Radio:
+ 		self.execCommand("chmod -R 764 " + RadioLibDir)
+ 		self.current_file = CurrentStationFile
+ 		self.current_id = self.getStoredID(self.current_file)
++                
++                print("Radioklasse initialisiert")
+ 
+ 	# Start the MPD daemon
+ 	def start(self):
+ 		# Start the player daemon
+-		self.execCommand("service mpd start")
++                print ("starte mpd")
++		#self.execCommand("service mpd start")
+ 		# Connect to MPD
+ 		self.boardrevision = self.getBoardRevision()
+ 		self.mpdport = self.getMpdPort()
+ 		self.connect(self.mpdport)
+-		client.clear()
++		#client.clear()
+ 		self.randomOff()
+ 		self.randomOff()
+ 		self.consumeOff()
+@@ -426,7 +429,7 @@ class Radio:
+ 		return volume
+ 
+ 	# Store volume in volume file
+-        def storeVolume(self,volume):
++	def storeVolume(self,volume):
+ 		self.execCommand ("echo " + str(volume) + " > " + VolumeFile)
+ 		return
+ 
+@@ -548,7 +551,7 @@ class Radio:
+ 		return timerValue
+ 
+ 	# Store timer time in timer file
+-        def storeTimer(self,timerValue):
++	def storeTimer(self,timerValue):
+ 		self.execCommand ("echo " + str(timerValue) + " > " + TimerFile)
+ 		return
+ 
+@@ -658,7 +661,7 @@ class Radio:
+ 		return alarmValue
+ 
+ 	# Store alarm time in alarm file
+-        def storeAlarm(self,alarmString):
++	def storeAlarm(self,alarmString):
+ 		self.execCommand ("echo " + alarmString + " > " + AlarmFile)
+ 		return
+ 
+@@ -740,7 +743,7 @@ class Radio:
+ 		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+ 
+ 	# Store stram on or off in streaming file
+-        def storeStreaming(self,onoff):
++	def storeStreaming(self,onoff):
+ 		self.execCommand ("echo " + onoff + " > " + StreamFile)
+ 		return
+ 
+@@ -1301,10 +1304,10 @@ class Radio:
+ 
+ ### Test routine ###
+ if __name__ == "__main__":
+-	print "Test radio_class.py"
++	print ("Test radio_class.py")
+ 	radio = Radio()
+-	print  "Version",radio.getVersion()
+-	print "Board revision", radio.getBoardRevision()
++	print  ("Version",radio.getVersion())
++	print ("Board revision", radio.getBoardRevision())
+ 
+ 	# Start radio and load the radio stations
+ 	radio.start()
+@@ -1312,50 +1315,50 @@ if __name__ == "__main__":
+ 	radio.play(1)
+ 	current_id = radio.getCurrentID()
+ 	index = current_id - 1
+-	print "Current ID ", current_id 
+-	print "Station",current_id,":", radio.getStationName(index)
++	print ("Current ID ", current_id )
++	print ("Station",current_id,":", radio.getStationName(index))
+ 
+ 	# Test volume controls
+-	print "Stored volume", radio.getStoredVolume()
++	print ("Stored volume", radio.getStoredVolume())
+ 	radio.setVolume(75)
+ 	radio.increaseVolume()
+ 	radio.decreaseVolume()
+ 	radio.getVolume()
+ 	time.sleep(5)
+-	print "Mute"
++	print ("Mute")
+ 	radio.mute()
+ 	time.sleep(3)
+-	print "Unmute"
++	print ("Unmute")
+ 	radio.unmute()
+-	print "Volume", radio.getVolume()
++	print ("Volume", radio.getVolume())
+ 	time.sleep(5)
+ 
+ 	# Test channel functions
+ 	current_id = radio.channelUp()
+-	print "Channel up"
++	print ("Channel up")
+ 	index = current_id - 1
+-	print "Station",current_id,":", radio.getStationName(index)
++	print ("Station",current_id,":", radio.getStationName(index))
+ 	time.sleep(5)
+ 	current_id = radio.channelDown()
+-	print "Channel down"
++	print ("Channel down")
+ 	index = current_id - 1
+-	print "Station",current_id,":", radio.getStationName(index)
++	print ("Station",current_id,":", radio.getStationName(index))
+ 
+ 	# Check library load
+-	print "Load music library"
++	print ("Load music library")
+ 	radio.loadMusic()
+ 
+ 	# Check state
+-	print "Paused  " +  str(radio.paused())
++	print ("Paused  " +  str(radio.paused()))
+ 
+ 	# Check timer
+-	print "Set Timer 1 minute"
++	print ("Set Timer 1 minute")
+ 	radio.timerValue = 1
+ 	radio.timerOn()
+ 
+ 	while not radio.fireTimer():
+ 		time.sleep(1)
+-	print "Timer fired"
++	print ("Timer fired")
+ 
+ 	# Exit 
+ 	sys.exit(0)
+--- /dev/null
++++ piradio-3.13-0ts/cpHD44780.py
+@@ -0,0 +1,1360 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++""" Python Character Mapping Codec for the HD44780 display controller
++
++"""#"
++
++import codecs
++
++### Codec APIs
++
++class Codec_A00(codecs.Codec):
++
++    def encode(self,input,errors='strict'):
++        return codecs.charmap_encode(input,errors,encoding_map_A00)
++
++    def decode(self,input,errors='strict'):
++        return codecs.charmap_decode(input,errors,decoding_table_A00)
++
++class IncrementalEncoder_A00(codecs.IncrementalEncoder):
++    def encode(self, input, final=False):
++        return codecs.charmap_encode(input,self.errors,encoding_map_A00)[0]
++
++class IncrementalDecoder_A00(codecs.IncrementalDecoder):
++    def decode(self, input, final=False):
++        return codecs.charmap_decode(input,self.errors,decoding_table_A00)[0]
++
++class StreamWriter_A00(Codec_A00,codecs.StreamWriter):
++    pass
++
++class StreamReader_A00(Codec_A00,codecs.StreamReader):
++    pass
++
++class Codec_A02(codecs.Codec):
++
++    def encode(self,input,errors='strict'):
++        return codecs.charmap_encode(input,errors,encoding_map_A02)
++
++    def decode(self,input,errors='strict'):
++        return codecs.charmap_decode(input,errors,decoding_table_A02)
++
++class IncrementalEncoder_A02(codecs.IncrementalEncoder):
++    def encode(self, input, final=False):
++        return codecs.charmap_encode(input,self.errors,encoding_map_A02)[0]
++
++class IncrementalDecoder_A02(codecs.IncrementalDecoder):
++    def decode(self, input, final=False):
++        return codecs.charmap_decode(input,self.errors,decoding_table_A02)[0]
++
++class StreamWriter_A02(Codec_A02,codecs.StreamWriter):
++    pass
++
++class StreamReader_A02(Codec_A02,codecs.StreamReader):
++    pass
++
++### encodings module API
++
++def get_registration_entry_A00():
++    return codecs.CodecInfo(
++        name='HD44780_A00',
++        encode=Codec().encode_A00,
++        decode=Codec().decode_A00,
++        incrementalencoder=IncrementalEncoder_A00,
++        incrementaldecoder=IncrementalDecoder_A00,
++        streamreader=StreamReader_A00,
++        streamwriter=StreamWriter_A00,
++    )
++def get_registration_entry_A02():
++    return codecs.CodecInfo(
++        name='HD44780_A02',
++        encode=Codec().encode_A02,
++        decode=Codec().decode_A02,
++        incrementalencoder=IncrementalEncoder_A02,
++        incrementaldecoder=IncrementalDecoder_A02,
++        streamreader=StreamReader_A02,
++        streamwriter=StreamWriter_A02,
++    )
++codecs.register(get_registration_entry_A00)
++codecs.register(get_registration_entry_A02)
++### Decoding Map
++
++decoding_map_A00 = codecs.make_identity_dict(range(256))
++decoding_map_A00.update({
++    0x5c: 0xa5,
++    0x7e: 0x2192,
++    0x7f: 0x2190,
++    0xe0: 0x3b1,
++    0xe1: 0xe4,
++    0xe2: 0x3b2,
++    0xe3: 0x3b5,
++    0xe4: 0x3bc,
++    0xe5: 0x3c3,
++    0xe6: 0x3c1,
++    0xe7: 0x71,
++    0xe8: 0x221a,
++    0xe9: 0x207b,
++    0xeb: 0x1d12a,
++    0xec: 0xa2,
++    0xed: 0xa3,
++    0xee: 0x101,
++    0xef: 0xf6,
++    0xf0: 0x70,
++    0xf1: 0x71,
++    0xf2: 0x3b8,
++    0xf3: 0x221e,
++    0xf4: 0x3a9,
++    0xf5: 0xfc,
++    0xf6: 0x3a3,
++    0xf7: 0x3c0,
++    0xf8: 0x3c7,
++    0xfd: 0xf7,
++    0xfe: 0x20,
++    0xff: 0x2588
++})
++
++decoding_map_A02 = codecs.make_identity_dict(range(256))
++decoding_map_A02.update({
++    0x0: 0x0,
++    0x1: 0x1,
++    0x2: 0x2,
++    0x3: 0x3,
++    0x4: 0x4,
++    0x5: 0x5,
++    0x6: 0x6,
++    0x7: 0x7,
++    0x8: 0x8,
++    0x9: 0x9,
++    0xa: 0xa,
++    0xb: 0xb,
++    0xc: 0xc,
++    0xd: 0xd,
++    0xe: 0xe,
++    0xf: 0xf,
++    0x10: 0x25b6,
++    0x11: 0x25c0,
++    0x12: 0x201c,
++    0x13: 0x201d,
++    0x14: 0x23eb,
++    0x15: 0x23ec,
++    0x16: 0x25cf,
++    0x17: 0x21b2,
++    0x18: 0x2191,
++    0x19: 0x2193,
++    0x1a: 0x2190,
++    0x1b: 0x2192,
++    0x1c: 0x2264,
++    0x1d: 0x2265,
++    0x1e: 0x25b2,
++    0x1f: 0x25bc,
++    0x20: 0x20,
++    0x21: 0x21,
++    0x22: 0x22,
++    0x23: 0x23,
++    0x24: 0x24,
++    0x25: 0x25,
++    0x26: 0x26,
++    0x27: 0x27,
++    0x28: 0x28,
++    0x29: 0x29,
++    0x2a: 0x2a,
++    0x2b: 0x2b,
++    0x2c: 0x2c,
++    0x2d: 0x2d,
++    0x2e: 0x2e,
++    0x2f: 0x2f,
++    0x30: 0x30,
++    0x31: 0x31,
++    0x32: 0x32,
++    0x33: 0x33,
++    0x34: 0x34,
++    0x35: 0x35,
++    0x36: 0x36,
++    0x37: 0x37,
++    0x38: 0x38,
++    0x39: 0x39,
++    0x3a: 0x3a,
++    0x3b: 0x3b,
++    0x3c: 0x3c,
++    0x3d: 0x3d,
++    0x3e: 0x3e,
++    0x3f: 0x3f,
++    0x40: 0x40,
++    0x41: 0x41,
++    0x42: 0x42,
++    0x43: 0x43,
++    0x44: 0x44,
++    0x45: 0x45,
++    0x46: 0x46,
++    0x47: 0x47,
++    0x48: 0x48,
++    0x49: 0x49,
++    0x4a: 0x4a,
++    0x4b: 0x4b,
++    0x4c: 0x4c,
++    0x4d: 0x4d,
++    0x4e: 0x4e,
++    0x4f: 0x4f,
++    0x50: 0x50,
++    0x51: 0x51,
++    0x52: 0x52,
++    0x53: 0x53,
++    0x54: 0x54,
++    0x55: 0x55,
++    0x56: 0x56,
++    0x57: 0x57,
++    0x58: 0x58,
++    0x59: 0x59,
++    0x5a: 0x5a,
++    0x5b: 0x5b,
++    0x5c: 0x5c,
++    0x5d: 0x5d,
++    0x5e: 0x5e,
++    0x5f: 0x5f,
++    0x60: 0x60,
++    0x61: 0x61,
++    0x62: 0x62,
++    0x63: 0x63,
++    0x64: 0x64,
++    0x65: 0x65,
++    0x66: 0x66,
++    0x67: 0x67,
++    0x68: 0x68,
++    0x69: 0x69,
++    0x6a: 0x6a,
++    0x6b: 0x6b,
++    0x6c: 0x6c,
++    0x6d: 0x6d,
++    0x6e: 0x6e,
++    0x6f: 0x6f,
++    0x70: 0x70,
++    0x71: 0x71,
++    0x72: 0x72,
++    0x73: 0x73,
++    0x74: 0x74,
++    0x75: 0x75,
++    0x76: 0x76,
++    0x77: 0x77,
++    0x78: 0x78,
++    0x79: 0x79,
++    0x7a: 0x7a,
++    0x7b: 0x7b,
++    0x7c: 0x7c,
++    0x7d: 0x7d,
++    0x7e: 0x7e,
++    0x7f: 0x2302,
++    0x80: 0x411,
++    0x81: 0x414,
++    0x82: 0x416,
++    0x83: 0x417,
++    0x84: 0x418,
++    0x85: 0x419,
++    0x86: 0x41b,
++    0x87: 0x41f,
++    0x88: 0x423,
++    0x89: 0x426,
++    0x8a: 0x427,
++    0x8b: 0x428,
++    0x8c: 0x429,
++    0x8d: 0x42a,
++    0x8e: 0x42c,
++    0x8f: 0x42d,
++    0x90: 0x3b1,
++    0x91: 0x266a,
++    0x92: 0x393,
++    0x93: 0x3c0,
++    0x94: 0x3a3,
++    0x95: 0x3c3,
++    0x96: 0x266b,
++    0x97: 0x3c4,
++    0x98: 0x1f514,
++    0x99: 0x398,
++    0x9a: 0x3a9,
++    0x9b: 0x3b4,
++    0x9c: 0x221e,
++    0x9d: 0x2665,
++    0x9e: 0x3b5,
++    0x9f: 0x2229,
++    0xa0: 0x275a,
++    0xa1: 0xa1,
++    0xa2: 0xa2,
++    0xa3: 0xa3,
++    0xa4: 0xa4,
++    0xa5: 0xa5,
++    0xa6: 0xa6,
++    0xa7: 0xa7,
++    0xa8: 0x2a0d,
++    0xa9: 0xa9,
++    0xaa: 0xaa,
++    0xab: 0xab,
++    0xac: 0x42e,
++    0xad: 0x42f,
++    0xae: 0xae,
++    0xaf: 0x2018,
++    0xb0: 0xb0,
++    0xb1: 0xb1,
++    0xb2: 0xb2,
++    0xb3: 0xb3,
++    0xb4: 0x20a7,
++    0xb5: 0x3bc,
++    0xb6: 0xb6,
++    0xb7: 0x22c5,
++    0xb8: 0x3c9,
++    0xb9: 0xb9,
++    0xba: 0xba,
++    0xbb: 0xbb,
++    0xbc: 0xbc,
++    0xbd: 0xbd,
++    0xbe: 0xbe,
++    0xbf: 0xbf,
++    0xc0: 0xc0,
++    0xc1: 0xc1,
++    0xc2: 0xc2,
++    0xc3: 0xc3,
++    0xc4: 0xc4,
++    0xc5: 0xc5,
++    0xc6: 0xc6,
++    0xc7: 0xc7,
++    0xc8: 0xc8,
++    0xc9: 0xc9,
++    0xca: 0xca,
++    0xcb: 0xcb,
++    0xcc: 0xcc,
++    0xcd: 0xcd,
++    0xce: 0xce,
++    0xcf: 0xcf,
++    0xd0: 0xd0,
++    0xd1: 0xd1,
++    0xd2: 0xd2,
++    0xd3: 0xd3,
++    0xd4: 0xd4,
++    0xd5: 0xd5,
++    0xd6: 0xd6,
++    0xd7: 0xd7,
++    0xd8: 0x3a6,
++    0xd9: 0xd9,
++    0xda: 0xda,
++    0xdb: 0xdb,
++    0xdc: 0xdc,
++    0xdd: 0xdd,
++    0xde: 0xde,
++    0xdf: 0xdf,
++    0xe0: 0xe0,
++    0xe1: 0xe1,
++    0xe2: 0xe2,
++    0xe3: 0xe3,
++    0xe4: 0xe4,
++    0xe5: 0xe5,
++    0xe6: 0xe6,
++    0xe7: 0xe7,
++    0xe8: 0xe8,
++    0xe9: 0xe9,
++    0xea: 0xea,
++    0xeb: 0xeb,
++    0xec: 0xec,
++    0xed: 0xed,
++    0xee: 0xee,
++    0xef: 0xef,
++    0xf0: 0xf0,
++    0xf1: 0xf1,
++    0xf2: 0xf2,
++    0xf3: 0xf3,
++    0xf4: 0xf4,
++    0xf5: 0xf5,
++    0xf6: 0xf6,
++    0xf7: 0xf7,
++    0xf8: 0xf8,
++    0xf9: 0xf9,
++    0xfa: 0xfa,
++    0xfb: 0xfb,
++    0xfc: 0xfc,
++    0xfd: 0xfd,
++    0xfe: 0xfe,
++    0xff: 0xff
++})
++
++### Decoding Table
++
++decoding_table_A02 = (
++    u'\x00'     #  0x0000 -> NULL
++    u'\x01'     #  0x0001 -> START OF HEADING
++    u'\x02'     #  0x0002 -> START OF TEXT
++    u'\x03'     #  0x0003 -> END OF TEXT
++    u'\x04'     #  0x0004 -> END OF TRANSMISSION
++    u'\x05'     #  0x0005 -> ENQUIRY
++    u'\x06'     #  0x0006 -> ACKNOWLEDGE
++    u'\x07'     #  0x0007 -> BELL
++    u'\x08'     #  0x0008 -> BACKSPACE
++    u'\t'       #  0x0009 -> HORIZONTAL TABULATION
++    u'\n'       #  0x000a -> LINE FEED
++    u'\x0b'     #  0x000b -> VERTICAL TABULATION
++    u'\x0c'     #  0x000c -> FORM FEED
++    u'\r'       #  0x000d -> CARRIAGE RETURN
++    u'\x0e'     #  0x000e -> SHIFT OUT
++    u'\x0f'     #  0x000f -> SHIFT IN
++
++    u'▶'        #   black right-pointing triangle
++    u'◀'        #   black left-pointing triangle
++    u'“'        #  
++    u'”'        #   
++    u'⏫'       # 
++    u'⏬'     # 
++    u'●'     # 
++    u'↲'     #  
++
++    u'↑'     #  
++    u'↓'     #  
++    u'←'     #  
++    u'→'     #  
++    u'≤'     #  
++    u'≥'     #  
++    u'▲'     #  
++    u'▼'     #  
++
++    u' '        #  0x0020 -> SPACE
++    u'!'        #  0x0021 -> EXCLAMATION MARK
++    u'"'        #  0x0022 -> QUOTATION MARK
++    u'#'        #  0x0023 -> NUMBER SIGN
++    u'$'        #  0x0024 -> DOLLAR SIGN
++    u'%'        #  0x0025 -> PERCENT SIGN
++    u'&'        #  0x0026 -> AMPERSAND
++    u"'"        #  0x0027 -> APOSTROPHE
++    u'('        #  0x0028 -> LEFT PARENTHESIS
++    u')'        #  0x0029 -> RIGHT PARENTHESIS
++    u'*'        #  0x002a -> ASTERISK
++    u'+'        #  0x002b -> PLUS SIGN
++    u','        #  0x002c -> COMMA
++    u'-'        #  0x002d -> HYPHEN-MINUS
++    u'.'        #  0x002e -> FULL STOP
++    u'/'        #  0x002f -> SOLIDUS
++
++    u'0'        #  0x0030 -> DIGIT ZERO
++    u'1'        #  0x0031 -> DIGIT ONE
++    u'2'        #  0x0032 -> DIGIT TWO
++    u'3'        #  0x0033 -> DIGIT THREE
++    u'4'        #  0x0034 -> DIGIT FOUR
++    u'5'        #  0x0035 -> DIGIT FIVE
++    u'6'        #  0x0036 -> DIGIT SIX
++    u'7'        #  0x0037 -> DIGIT SEVEN
++    u'8'        #  0x0038 -> DIGIT EIGHT
++    u'9'        #  0x0039 -> DIGIT NINE
++    u':'        #  0x003a -> COLON
++    u';'        #  0x003b -> SEMICOLON
++    u'<'        #  0x003c -> LESS-THAN SIGN
++    u'='        #  0x003d -> EQUALS SIGN
++    u'>'        #  0x003e -> GREATER-THAN SIGN
++    u'?'        #  0x003f -> QUESTION MARK
++
++    u'@'        #  0x0040 -> COMMERCIAL AT
++    u'A'        #  0x0041 -> LATIN CAPITAL LETTER A
++    u'B'        #  0x0042 -> LATIN CAPITAL LETTER B
++    u'C'        #  0x0043 -> LATIN CAPITAL LETTER C
++    u'D'        #  0x0044 -> LATIN CAPITAL LETTER D
++    u'E'        #  0x0045 -> LATIN CAPITAL LETTER E
++    u'F'        #  0x0046 -> LATIN CAPITAL LETTER F
++    u'G'        #  0x0047 -> LATIN CAPITAL LETTER G
++    u'H'        #  0x0048 -> LATIN CAPITAL LETTER H
++    u'I'        #  0x0049 -> LATIN CAPITAL LETTER I
++    u'J'        #  0x004a -> LATIN CAPITAL LETTER J
++    u'K'        #  0x004b -> LATIN CAPITAL LETTER K
++    u'L'        #  0x004c -> LATIN CAPITAL LETTER L
++    u'M'        #  0x004d -> LATIN CAPITAL LETTER M
++    u'N'        #  0x004e -> LATIN CAPITAL LETTER N
++    u'O'        #  0x004f -> LATIN CAPITAL LETTER O
++
++    u'P'        #  0x0050 -> LATIN CAPITAL LETTER P
++    u'Q'        #  0x0051 -> LATIN CAPITAL LETTER Q
++    u'R'        #  0x0052 -> LATIN CAPITAL LETTER R
++    u'S'        #  0x0053 -> LATIN CAPITAL LETTER S
++    u'T'        #  0x0054 -> LATIN CAPITAL LETTER T
++    u'U'        #  0x0055 -> LATIN CAPITAL LETTER U
++    u'V'        #  0x0056 -> LATIN CAPITAL LETTER V
++    u'W'        #  0x0057 -> LATIN CAPITAL LETTER W
++    u'X'        #  0x0058 -> LATIN CAPITAL LETTER X
++    u'Y'        #  0x0059 -> LATIN CAPITAL LETTER Y
++    u'Z'        #  0x005a -> LATIN CAPITAL LETTER Z
++    u'['        #  0x005b -> LEFT SQUARE BRACKET
++    u'\\'       #  0x005c -> REVERSE SOLIDUS
++    u']'        #  0x005d -> RIGHT SQUARE BRACKET
++    u'^'        #  0x005e -> CIRCUMFLEX ACCENT
++    u'_'        #  0x005f -> LOW LINE
++
++    u'`'        #  0x0060 -> GRAVE ACCENT
++    u'a'        #  0x0061 -> LATIN SMALL LETTER A
++    u'b'        #  0x0062 -> LATIN SMALL LETTER B
++    u'c'        #  0x0063 -> LATIN SMALL LETTER C
++    u'd'        #  0x0064 -> LATIN SMALL LETTER D
++    u'e'        #  0x0065 -> LATIN SMALL LETTER E
++    u'f'        #  0x0066 -> LATIN SMALL LETTER F
++    u'g'        #  0x0067 -> LATIN SMALL LETTER G
++    u'h'        #  0x0068 -> LATIN SMALL LETTER H
++    u'i'        #  0x0069 -> LATIN SMALL LETTER I
++    u'j'        #  0x006a -> LATIN SMALL LETTER J
++    u'k'        #  0x006b -> LATIN SMALL LETTER K
++    u'l'        #  0x006c -> LATIN SMALL LETTER L
++    u'm'        #  0x006d -> LATIN SMALL LETTER M
++    u'n'        #  0x006e -> LATIN SMALL LETTER N
++    u'o'        #  0x006f -> LATIN SMALL LETTER O
++
++    u'p'        #  0x0070 -> LATIN SMALL LETTER P
++    u'q'        #  0x0071 -> LATIN SMALL LETTER Q
++    u'r'        #  0x0072 -> LATIN SMALL LETTER R
++    u's'        #  0x0073 -> LATIN SMALL LETTER S
++    u't'        #  0x0074 -> LATIN SMALL LETTER T
++    u'u'        #  0x0075 -> LATIN SMALL LETTER U
++    u'v'        #  0x0076 -> LATIN SMALL LETTER V
++    u'w'        #  0x0077 -> LATIN SMALL LETTER W
++    u'x'        #  0x0078 -> LATIN SMALL LETTER X
++    u'y'        #  0x0079 -> LATIN SMALL LETTER Y
++    u'z'        #  0x007a -> LATIN SMALL LETTER Z
++    u'{'        #  0x007b -> LEFT CURLY BRACKET
++    u'|'        #  0x007c -> VERTICAL LINE
++    u'}'        #  0x007d -> RIGHT CURLY BRACKET
++    u'~'        #  0x007e -> TILDE
++    u'⌂'        # 
++
++    u'Б'     #  0x0080 -> LATIN CAPITAL LETTER C WITH CEDILLA
++    u'Д'     #  0x0081 -> LATIN SMALL LETTER U WITH DIAERESIS
++    u'Ж'     #  0x0082 -> LATIN SMALL LETTER E WITH ACUTE
++    u'З'     #  0x0083 -> LATIN SMALL LETTER A WITH CIRCUMFLEX
++    u'И'     #  0x0084 -> LATIN SMALL LETTER A WITH DIAERESIS
++    u'Й'     #  0x0085 -> LATIN SMALL LETTER A WITH GRAVE
++    u'Л'     #  0x0086 -> LATIN SMALL LETTER A WITH RING ABOVE
++    u'П'     #  0x0087 -> LATIN SMALL LETTER C WITH CEDILLA
++    u'У'     #  0x0088 -> LATIN SMALL LETTER E WITH CIRCUMFLEX
++    u'Ц'     #  0x0089 -> LATIN SMALL LETTER E WITH DIAERESIS
++    u'Ч'     #  0x008a -> LATIN SMALL LETTER E WITH GRAVE
++    u'Ш'     #  0x008b -> LATIN SMALL LETTER I WITH DIAERESIS
++    u'Щ'     #  0x008c -> LATIN SMALL LETTER I WITH CIRCUMFLEX
++    u'Ъ'     #  0x008d -> LATIN SMALL LETTER I WITH GRAVE
++    u'Ь'     #  0x008e -> LATIN CAPITAL LETTER A WITH DIAERESIS
++    u'Э'     #  0x008f -> LATIN CAPITAL LETTER A WITH RING ABOVE
++
++    u'α'     #  0x0090 -> LATIN CAPITAL LETTER E WITH ACUTE
++    u'♪'     #  0x0091 -> LATIN SMALL LIGATURE AE
++    u'Γ'     #  0x0092 -> LATIN CAPITAL LIGATURE AE
++    u'π'     #  0x0093 -> LATIN SMALL LETTER O WITH CIRCUMFLEX
++    u'Σ'     #  0x0094 -> LATIN SMALL LETTER O WITH DIAERESIS
++    u'σ'     #  0x0095 -> LATIN SMALL LETTER O WITH GRAVE
++    u'♫'     #  0x0096 -> LATIN SMALL LETTER U WITH CIRCUMFLEX
++    u'τ'     #  0x0097 -> LATIN SMALL LETTER U WITH GRAVE
++    u'🔔'     #  0x0098 ->  BELL
++    u'Θ'     #  0x0099 -> LATIN CAPITAL LETTER O WITH DIAERESIS
++    u'Ω'     #  0x009a -> LATIN CAPITAL LETTER U WITH DIAERESIS
++    u'δ'     #  0x009b -> CENT SIGN
++    u'∞'     #  0x009c -> POUND SIGN
++    u'♥'     #  0x009d -> YEN SIGN
++    u'ε'   #  0x009e -> PESETA SIGN
++    u'∩'   #  0x009f -> LATIN SMALL LETTER F WITH HOOK
++
++    u'❚'     #  0x00a0 -> Pause sign
++    u'¡'     #  0x00a1 -> LATIN SMALL LETTER I WITH ACUTE
++    u'¢'     #  0x00a2 -> LATIN SMALL LETTER O WITH ACUTE
++    u'£'     #  0x00a3 -> LATIN SMALL LETTER U WITH ACUTE
++    u'¤'     #  0x00a4 -> LATIN SMALL LETTER N WITH TILDE
++    u'¥'     #  0x00a5 -> LATIN CAPITAL LETTER N WITH TILDE
++    u'¦'     #  0x00a6 -> FEMININE ORDINAL INDICATOR
++    u'§'     #  0x00a7 -> MASCULINE ORDINAL INDICATOR
++    u'⨍'     #  0x00a8 -> INVERTED QUESTION MARK
++    u'©'   #  0x00a9 -> REVERSED NOT SIGN
++    u'ª'     #  0x00aa -> NOT SIGN
++    u'«'     #  0x00ab -> VULGAR FRACTION ONE HALF
++    u'Ю'     #  0x00ac -> VULGAR FRACTION ONE QUARTER
++    u'Я'     #  0x00ad -> INVERTED EXCLAMATION MARK
++    u'®'     #  0x00ae -> LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
++    u'‘'     #  0x00af -> RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
++
++    u'°'   #  0x00b0 -> LIGHT SHADE
++    u'±'   #  0x00b1 -> MEDIUM SHADE
++    u'²'   #  0x00b2 -> DARK SHADE
++    u'³'   #  0x00b3 -> BOX DRAWINGS LIGHT VERTICAL
++    u'₧'   #  0x00b4 -> BOX DRAWINGS LIGHT VERTICAL AND LEFT
++    u'μ'   #  0x00b5 -> BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
++    u'¶'   #  0x00b6 -> BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE
++    u'⋅'   #  0x00b7 -> BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE
++    u'ω'   #  0x00b8 -> BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE
++    u'¹'   #  0x00b9 -> BOX DRAWINGS DOUBLE VERTICAL AND LEFT
++    u'º'   #  0x00ba -> BOX DRAWINGS DOUBLE VERTICAL
++    u'»'   #  0x00bb -> BOX DRAWINGS DOUBLE DOWN AND LEFT
++    u'¼'   #  0x00bc -> BOX DRAWINGS DOUBLE UP AND LEFT
++    u'½'   #  0x00bd -> BOX DRAWINGS UP DOUBLE AND LEFT SINGLE
++    u'¾'   #  0x00be -> BOX DRAWINGS UP SINGLE AND LEFT DOUBLE
++    u'¿'   #  0x00bf -> BOX DRAWINGS LIGHT DOWN AND LEFT
++
++    u'À'   #  0x00c0 -> BOX DRAWINGS LIGHT UP AND RIGHT
++    u'Á'   #  0x00c1 -> BOX DRAWINGS LIGHT UP AND HORIZONTAL
++    u'Â'   #  0x00c2 -> BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
++    u'Ã'   #  0x00c3 -> BOX DRAWINGS LIGHT VERTICAL AND RIGHT
++    u'Ä'   #  0x00c4 -> BOX DRAWINGS LIGHT HORIZONTAL
++    u'Å'   #  0x00c5 -> BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
++    u'Æ'   #  0x00c6 -> BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
++    u'Ç'   #  0x00c7 -> BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE
++    u'È'   #  0x00c8 -> BOX DRAWINGS DOUBLE UP AND RIGHT
++    u'É'   #  0x00c9 -> BOX DRAWINGS DOUBLE DOWN AND RIGHT
++    u'Ê'   #  0x00ca -> BOX DRAWINGS DOUBLE UP AND HORIZONTAL
++    u'Ë'   #  0x00cb -> BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL
++    u'Ì'   #  0x00cc -> BOX DRAWINGS DOUBLE VERTICAL AND RIGHT
++    u'Í'   #  0x00cd -> BOX DRAWINGS DOUBLE HORIZONTAL
++    u'Î'   #  0x00ce -> BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL
++    u'Ï'   #  0x00cf -> BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE
++
++    u'Ð'   #  0x00d0 -> BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE
++    u'Ñ'   #  0x00d1 -> BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE
++    u'Ò'   #  0x00d2 -> BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE
++    u'Ó'   #  0x00d3 -> BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE
++    u'Ô'   #  0x00d4 -> BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE
++    u'Õ'   #  0x00d5 -> BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE
++    u'Ö'   #  0x00d6 -> BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE
++    u'×'   #  0x00d7 -> BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE
++    u'Φ'   #  0x00d8 -> BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE
++    u'Ù'   #  0x00d9 -> BOX DRAWINGS LIGHT UP AND LEFT
++    u'Ú'   #  0x00da -> BOX DRAWINGS LIGHT DOWN AND RIGHT
++    u'Û'   #  0x00db -> FULL BLOCK
++    u'Ü'   #  0x00dc -> LOWER HALF BLOCK
++    u'Ý'   #  0x00dd -> LEFT HALF BLOCK
++    u'Þ'   #  0x00de -> RIGHT HALF BLOCK
++    u'ß'   #  0x00df -> UPPER HALF BLOCK
++
++    u'à'   #  0x00e0 -> GREEK SMALL LETTER ALPHA
++    u'á'     #  0x00e1 -> LATIN SMALL LETTER SHARP S
++    u'â'   #  0x00e2 -> GREEK CAPITAL LETTER GAMMA
++    u'ã'   #  0x00e3 -> GREEK SMALL LETTER PI
++    u'ä'   #  0x00e4 -> GREEK CAPITAL LETTER SIGMA
++    u'å'   #  0x00e5 -> GREEK SMALL LETTER SIGMA
++    u'æ'     #  0x00e6 -> MICRO SIGN
++    u'ç'   #  0x00e7 -> GREEK SMALL LETTER TAU
++    u'è'   #  0x00e8 -> GREEK CAPITAL LETTER PHI
++    u'é'   #  0x00e9 -> GREEK CAPITAL LETTER THETA
++    u'ê'   #  0x00ea -> GREEK CAPITAL LETTER OMEGA
++    u'ë'   #  0x00eb -> GREEK SMALL LETTER DELTA
++    u'ì'   #  0x00ec -> INFINITY
++    u'í'   #  0x00ed -> GREEK SMALL LETTER PHI
++    u'î'   #  0x00ee -> GREEK SMALL LETTER EPSILON
++    u'ï'   #  0x00ef -> INTERSECTION
++
++    u'ð'   #  0x00f0 -> IDENTICAL TO
++    u'ñ'     #  0x00f1 -> PLUS-MINUS SIGN
++    u'ò'   #  0x00f2 -> GREATER-THAN OR EQUAL TO
++    u'ó'   #  0x00f3 -> LESS-THAN OR EQUAL TO
++    u'ô'   #  0x00f4 -> TOP HALF INTEGRAL
++    u'õ'   #  0x00f5 -> BOTTOM HALF INTEGRAL
++    u'ö'     #  0x00f6 -> DIVISION SIGN
++    u'÷'   #  0x00f7 -> ALMOST EQUAL TO
++    u'ø'     #  0x00f8 -> DEGREE SIGN
++    u'ù'   #  0x00f9 -> BULLET OPERATOR
++    u'ú'     #  0x00fa -> MIDDLE DOT
++    u'û'   #  0x00fb -> SQUARE ROOT
++    u'ü'   #  0x00fc -> SUPERSCRIPT LATIN SMALL LETTER N
++    u'ý'     #  0x00fd -> SUPERSCRIPT TWO
++    u'þ'   #  0x00fe -> BLACK SQUARE
++    u'ÿ'     #  0x00ff -> NO-BREAK SPACE
++)
++
++decoding_table_A00 = (
++    u'\x00'     #  0x0000 -> NULL
++    u'\x01'     #  0x0001 -> START OF HEADING
++    u'\x02'     #  0x0002 -> START OF TEXT
++    u'\x03'     #  0x0003 -> END OF TEXT
++    u'\x04'     #  0x0004 -> END OF TRANSMISSION
++    u'\x05'     #  0x0005 -> ENQUIRY
++    u'\x06'     #  0x0006 -> ACKNOWLEDGE
++    u'\x07'     #  0x0007 -> BELL
++    u'\x08'     #  0x0008 -> BACKSPACE
++    u'\t'       #  0x0009 -> HORIZONTAL TABULATION
++    u'\n'       #  0x000a -> LINE FEED
++    u'\x0b'     #  0x000b -> VERTICAL TABULATION
++    u'\x0c'     #  0x000c -> FORM FEED
++    u'\r'       #  0x000d -> CARRIAGE RETURN
++    u'\x0e'     #  0x000e -> SHIFT OUT
++    u'\x0f'     #  0x000f -> SHIFT IN
++
++    u'\x10'     #  0x0000 -> NULL
++    u'\x11'     #  0x0001 -> START OF HEADING
++    u'\x12'     #  0x0002 -> START OF TEXT
++    u'\x13'     #  0x0003 -> END OF TEXT
++    u'\x14'     #  0x0004 -> END OF TRANSMISSION
++    u'\x15'     #  0x0005 -> ENQUIRY
++    u'\x16'     #  0x0006 -> ACKNOWLEDGE
++    u'\x17'     #  0x0007 -> BELL
++    u'\x18'     #  0x0008 -> BACKSPACE
++    u'\x19'     #  0x0009 -> HORIZONTAL TABULATION
++    u'\x1a'     #  0x000a -> LINE FEED
++    u'\x1b'     #  0x000b -> VERTICAL TABULATION
++    u'\x1c'     #  0x000c -> FORM FEED
++    u'\x1d'     #  0x000d -> CARRIAGE RETURN
++    u'\x1e'     #  0x000e -> SHIFT OUT
++    u'\x1f'     #  0x000f -> SHIFT IN
++
++    u' '        #  0x0020 -> SPACE
++    u'!'        #  0x0021 -> EXCLAMATION MARK
++    u'"'        #  0x0022 -> QUOTATION MARK
++    u'#'        #  0x0023 -> NUMBER SIGN
++    u'$'        #  0x0024 -> DOLLAR SIGN
++    u'%'        #  0x0025 -> PERCENT SIGN
++    u'&'        #  0x0026 -> AMPERSAND
++    u"'"        #  0x0027 -> APOSTROPHE
++    u'('        #  0x0028 -> LEFT PARENTHESIS
++    u')'        #  0x0029 -> RIGHT PARENTHESIS
++    u'*'        #  0x002a -> ASTERISK
++    u'+'        #  0x002b -> PLUS SIGN
++    u','        #  0x002c -> COMMA
++    u'-'        #  0x002d -> HYPHEN-MINUS
++    u'.'        #  0x002e -> FULL STOP
++    u'/'        #  0x002f -> SOLIDUS
++
++    u'0'        #  0x0030 -> DIGIT ZERO
++    u'1'        #  0x0031 -> DIGIT ONE
++    u'2'        #  0x0032 -> DIGIT TWO
++    u'3'        #  0x0033 -> DIGIT THREE
++    u'4'        #  0x0034 -> DIGIT FOUR
++    u'5'        #  0x0035 -> DIGIT FIVE
++    u'6'        #  0x0036 -> DIGIT SIX
++    u'7'        #  0x0037 -> DIGIT SEVEN
++    u'8'        #  0x0038 -> DIGIT EIGHT
++    u'9'        #  0x0039 -> DIGIT NINE
++    u':'        #  0x003a -> COLON
++    u';'        #  0x003b -> SEMICOLON
++    u'<'        #  0x003c -> LESS-THAN SIGN
++    u'='        #  0x003d -> EQUALS SIGN
++    u'>'        #  0x003e -> GREATER-THAN SIGN
++    u'?'        #  0x003f -> QUESTION MARK
++
++    u'@'        #  0x0040 -> COMMERCIAL AT
++    u'A'        #  0x0041 -> LATIN CAPITAL LETTER A
++    u'B'        #  0x0042 -> LATIN CAPITAL LETTER B
++    u'C'        #  0x0043 -> LATIN CAPITAL LETTER C
++    u'D'        #  0x0044 -> LATIN CAPITAL LETTER D
++    u'E'        #  0x0045 -> LATIN CAPITAL LETTER E
++    u'F'        #  0x0046 -> LATIN CAPITAL LETTER F
++    u'G'        #  0x0047 -> LATIN CAPITAL LETTER G
++    u'H'        #  0x0048 -> LATIN CAPITAL LETTER H
++    u'I'        #  0x0049 -> LATIN CAPITAL LETTER I
++    u'J'        #  0x004a -> LATIN CAPITAL LETTER J
++    u'K'        #  0x004b -> LATIN CAPITAL LETTER K
++    u'L'        #  0x004c -> LATIN CAPITAL LETTER L
++    u'M'        #  0x004d -> LATIN CAPITAL LETTER M
++    u'N'        #  0x004e -> LATIN CAPITAL LETTER N
++    u'O'        #  0x004f -> LATIN CAPITAL LETTER O
++
++    u'P'        #  0x0050 -> LATIN CAPITAL LETTER P
++    u'Q'        #  0x0051 -> LATIN CAPITAL LETTER Q
++    u'R'        #  0x0052 -> LATIN CAPITAL LETTER R
++    u'S'        #  0x0053 -> LATIN CAPITAL LETTER S
++    u'T'        #  0x0054 -> LATIN CAPITAL LETTER T
++    u'U'        #  0x0055 -> LATIN CAPITAL LETTER U
++    u'V'        #  0x0056 -> LATIN CAPITAL LETTER V
++    u'W'        #  0x0057 -> LATIN CAPITAL LETTER W
++    u'X'        #  0x0058 -> LATIN CAPITAL LETTER X
++    u'Y'        #  0x0059 -> LATIN CAPITAL LETTER Y
++    u'Z'        #  0x005a -> LATIN CAPITAL LETTER Z
++    u'['        #  0x005b -> LEFT SQUARE BRACKET
++    u'¥'     #  0x00a5 -> LATIN CAPITAL LETTER N WITH TILDE
++#    u'\\'       #  0x005c -> REVERSE SOLIDUS
++    u']'        #  0x005d -> RIGHT SQUARE BRACKET
++    u'^'        #  0x005e -> CIRCUMFLEX ACCENT
++    u'_'        #  0x005f -> LOW LINE
++
++    u'`'        #  0x0060 -> GRAVE ACCENT
++    u'a'        #  0x0061 -> LATIN SMALL LETTER A
++    u'b'        #  0x0062 -> LATIN SMALL LETTER B
++    u'c'        #  0x0063 -> LATIN SMALL LETTER C
++    u'd'        #  0x0064 -> LATIN SMALL LETTER D
++    u'e'        #  0x0065 -> LATIN SMALL LETTER E
++    u'f'        #  0x0066 -> LATIN SMALL LETTER F
++    u'g'        #  0x0067 -> LATIN SMALL LETTER G
++    u'h'        #  0x0068 -> LATIN SMALL LETTER H
++    u'i'        #  0x0069 -> LATIN SMALL LETTER I
++    u'j'        #  0x006a -> LATIN SMALL LETTER J
++    u'k'        #  0x006b -> LATIN SMALL LETTER K
++    u'l'        #  0x006c -> LATIN SMALL LETTER L
++    u'm'        #  0x006d -> LATIN SMALL LETTER M
++    u'n'        #  0x006e -> LATIN SMALL LETTER N
++    u'o'        #  0x006f -> LATIN SMALL LETTER O
++
++    u'p'        #  0x0070 -> LATIN SMALL LETTER P
++    u'q'        #  0x0071 -> LATIN SMALL LETTER Q
++    u'r'        #  0x0072 -> LATIN SMALL LETTER R
++    u's'        #  0x0073 -> LATIN SMALL LETTER S
++    u't'        #  0x0074 -> LATIN SMALL LETTER T
++    u'u'        #  0x0075 -> LATIN SMALL LETTER U
++    u'v'        #  0x0076 -> LATIN SMALL LETTER V
++    u'w'        #  0x0077 -> LATIN SMALL LETTER W
++    u'x'        #  0x0078 -> LATIN SMALL LETTER X
++    u'y'        #  0x0079 -> LATIN SMALL LETTER Y
++    u'z'        #  0x007a -> LATIN SMALL LETTER Z
++    u'{'        #  0x007b -> LEFT CURLY BRACKET
++    u'|'        #  0x007c -> VERTICAL LINE
++    u'}'        #  0x007d -> RIGHT CURLY BRACKET
++    u'→'        #  0x007e -> TILDE
++    u'←'        # 
++#    u'~'        #  0x007e -> TILDE
++#    u'⌂'        # 
++
++#unused/no characters
++    u' '    #  0x0080 -> LATIN CAPITAL LETTER C WITH CEDILLA
++    u' '     #  0x0081 -> LATIN SMALL LETTER U WITH DIAERESIS
++    u' '     #  0x0082 -> LATIN SMALL LETTER E WITH ACUTE
++    u' '     #  0x0083 -> LATIN SMALL LETTER A WITH CIRCUMFLEX
++    u' '     #  0x0084 -> LATIN SMALL LETTER A WITH DIAERESIS
++    u' '     #  0x0085 -> LATIN SMALL LETTER A WITH GRAVE
++    u' '     #  0x0086 -> LATIN SMALL LETTER A WITH RING ABOVE
++    u' '     #  0x0087 -> LATIN SMALL LETTER C WITH CEDILLA
++    u' '     #  0x0088 -> LATIN SMALL LETTER E WITH CIRCUMFLEX
++    u' '     #  0x0089 -> LATIN SMALL LETTER E WITH DIAERESIS
++    u' '     #  0x008a -> LATIN SMALL LETTER E WITH GRAVE
++    u' '     #  0x008b -> LATIN SMALL LETTER I WITH DIAERESIS
++    u' '     #  0x008c -> LATIN SMALL LETTER I WITH CIRCUMFLEX
++    u' '     #  0x008d -> LATIN SMALL LETTER I WITH GRAVE
++    u' '     #  0x008e -> LATIN CAPITAL LETTER A WITH DIAERESIS
++    u' '     #  0x008f -> LATIN CAPITAL LETTER A WITH RING ABOVE
++
++#unused/no characters
++    u' '     #  0x0090 -> LATIN CAPITAL LETTER E WITH ACUTE
++    u' '     #  0x0091 -> LATIN SMALL LIGATURE AE
++    u' '     #  0x0092 -> LATIN CAPITAL LIGATURE AE
++    u' '     #  0x0093 -> LATIN SMALL LETTER O WITH CIRCUMFLEX
++    u' '     #  0x0094 -> LATIN SMALL LETTER O WITH DIAERESIS
++    u' '     #  0x0095 -> LATIN SMALL LETTER O WITH GRAVE
++    u' '     #  0x0096 -> LATIN SMALL LETTER U WITH CIRCUMFLEX
++    u' '     #  0x0097 -> LATIN SMALL LETTER U WITH GRAVE
++    u' '     #  0x0098 ->  BELL
++    u' '     #  0x0099 -> LATIN CAPITAL LETTER O WITH DIAERESIS
++    u' '     #  0x009a -> LATIN CAPITAL LETTER U WITH DIAERESIS
++    u' '     #  0x009b -> CENT SIGN
++    u' '     #  0x009c -> POUND SIGN
++    u' '     #  0x009d -> YEN SIGN
++    u' '   #  0x009e -> PESETA SIGN
++    u' '   #  0x009f -> LATIN SMALL LETTER F WITH HOOK
++
++
++#japanese letters
++    u'?'     #  0x00a0 -> Pause sign
++    u'?'     #  0x00a1 -> LATIN SMALL LETTER I WITH ACUTE
++    u'?'     #  0x00a2 -> LATIN SMALL LETTER O WITH ACUTE
++    u'?'     #  0x00a3 -> LATIN SMALL LETTER U WITH ACUTE
++    u'?'     #  0x00a4 -> LATIN SMALL LETTER N WITH TILDE
++    u'?'     #  0x00a5 -> LATIN CAPITAL LETTER N WITH TILDE
++    u'?'     #  0x00a6 -> FEMININE ORDINAL INDICATOR
++    u'?'     #  0x00a7 -> MASCULINE ORDINAL INDICATOR
++    u'?'     #  0x00a8 -> INVERTED QUESTION MARK
++    u'?'   #  0x00a9 -> REVERSED NOT SIGN
++    u'?'     #  0x00aa -> NOT SIGN
++    u'?'     #  0x00ab -> VULGAR FRACTION ONE HALF
++    u'?'     #  0x00ac -> VULGAR FRACTION ONE QUARTER
++    u'?'     #  0x00ad -> INVERTED EXCLAMATION MARK
++    u'?'     #  0x00ae -> LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
++    u'?'     #  0x00af -> RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
++
++#japanese letters
++    u'?'   #  0x00b0 -> LIGHT SHADE
++    u'?'   #  0x00b1 -> MEDIUM SHADE
++    u'?'   #  0x00b2 -> DARK SHADE
++    u'?'   #  0x00b3 -> BOX DRAWINGS LIGHT VERTICAL
++    u'?'   #  0x00b4 -> BOX DRAWINGS LIGHT VERTICAL AND LEFT
++    u'?'   #  0x00b5 -> BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
++    u'?'   #  0x00b6 -> BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE
++    u'?'   #  0x00b7 -> BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE
++    u'?'   #  0x00b8 -> BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE
++    u'?'   #  0x00b9 -> BOX DRAWINGS DOUBLE VERTICAL AND LEFT
++    u'?'   #  0x00ba -> BOX DRAWINGS DOUBLE VERTICAL
++    u'?'   #  0x00bb -> BOX DRAWINGS DOUBLE DOWN AND LEFT
++    u'?'   #  0x00bc -> BOX DRAWINGS DOUBLE UP AND LEFT
++    u'?'   #  0x00bd -> BOX DRAWINGS UP DOUBLE AND LEFT SINGLE
++    u'?'   #  0x00be -> BOX DRAWINGS UP SINGLE AND LEFT DOUBLE
++    u'?'   #  0x00bf -> BOX DRAWINGS LIGHT DOWN AND LEFT
++
++#japanese letters
++    u'?'   #  0x00c0 -> BOX DRAWINGS LIGHT UP AND RIGHT
++    u'?'   #  0x00c1 -> BOX DRAWINGS LIGHT UP AND HORIZONTAL
++    u'?'   #  0x00c2 -> BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
++    u'?'   #  0x00c3 -> BOX DRAWINGS LIGHT VERTICAL AND RIGHT
++    u'?'   #  0x00c4 -> BOX DRAWINGS LIGHT HORIZONTAL
++    u'?'   #  0x00c5 -> BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
++    u'?'   #  0x00c6 -> BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
++    u'?'   #  0x00c7 -> BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE
++    u'?'   #  0x00c8 -> BOX DRAWINGS DOUBLE UP AND RIGHT
++    u'?'   #  0x00c9 -> BOX DRAWINGS DOUBLE DOWN AND RIGHT
++    u'?'   #  0x00ca -> BOX DRAWINGS DOUBLE UP AND HORIZONTAL
++    u'?'   #  0x00cb -> BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL
++    u'?'   #  0x00cc -> BOX DRAWINGS DOUBLE VERTICAL AND RIGHT
++    u'?'   #  0x00cd -> BOX DRAWINGS DOUBLE HORIZONTAL
++    u'?'   #  0x00ce -> BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL
++    u'?'   #  0x00cf -> BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE
++
++#japanese letters
++    u'?'   #  0x00d0 -> BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE
++    u'?'   #  0x00d1 -> BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE
++    u'?'   #  0x00d2 -> BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE
++    u'?'   #  0x00d3 -> BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE
++    u'?'   #  0x00d4 -> BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE
++    u'?'   #  0x00d5 -> BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE
++    u'?'   #  0x00d6 -> BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE
++    u'?'   #  0x00d7 -> BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE
++    u'?'   #  0x00d8 -> BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE
++    u'?'   #  0x00d9 -> BOX DRAWINGS LIGHT UP AND LEFT
++    u'?'   #  0x00da -> BOX DRAWINGS LIGHT DOWN AND RIGHT
++    u'?'   #  0x00db -> FULL BLOCK
++    u'?'   #  0x00dc -> LOWER HALF BLOCK
++    u'?'   #  0x00dd -> LEFT HALF BLOCK
++    u'?'   #  0x00de -> RIGHT HALF BLOCK
++    u'?'   #  0x00df -> UPPER HALF BLOCK
++
++    u'α'   #  0x00e0 -> GREEK SMALL LETTER ALPHA
++    u'ä'     #  0x00e1 -> LATIN SMALL LETTER SHARP S
++    u'β'   #  0x00e2 -> GREEK CAPITAL LETTER GAMMA
++    u'ε'   #  0x00e3 -> GREEK SMALL LETTER PI
++    u'μ'   #  0x00e4 -> GREEK CAPITAL LETTER SIGMA
++    u'σ'   #  0x00e5 -> GREEK SMALL LETTER SIGMA
++    u'ρ'     #  0x00e6 -> MICRO SIGN
++    u'q'   #  0x00e7 -> GREEK SMALL LETTER TAU
++    u'√'   #  0x00e8 -> GREEK CAPITAL LETTER PHI
++    u'⁻'   #  0x00e9 -> ⁻ⁱ
++    u'i'   #  0x00ea -> GREEK CAPITAL LETTER OMEGA
++    u'𝄪'   #  0x00eb -> GREEK SMALL LETTER DELTA
++    u'¢'   #  0x00ec -> INFINITY
++    u'£'   #  0x00ed -> GREEK SMALL LETTER PHI
++    u'ā'   #  0x00ee -> GREEK SMALL LETTER EPSILON
++    u'ö'   #  0x00ef -> INTERSECTION
++
++    u'p'   #  0x00f0 -> IDENTICAL TO
++    u'q'     #  0x00f1 -> PLUS-MINUS SIGN
++    u'θ'   #  0x00f2 -> GREATER-THAN OR EQUAL TO
++    u'∞'   #  0x00f3 -> LESS-THAN OR EQUAL TO
++    u'Ω'   #  0x00f4 -> TOP HALF INTEGRAL
++    u'ü'   #  0x00f5 -> BOTTOM HALF INTEGRAL
++    u'Σ'     #  0x00f6 -> DIVISION SIGN
++    u'π'   #  0x00f7 -> ALMOST EQUAL TO
++    u'χ'     #  0x00f8 -> DEGREE SIGN
++    u'?'   #  0x00f9 -> BULLET OPERATOR
++    u'?'     #  0x00fa -> MIDDLE DOT
++    u'?'   #  0x00fb -> SQUARE ROOT
++    u'?'   #  0x00fc -> SUPERSCRIPT LATIN SMALL LETTER N
++    u'÷'     #  0x00fd -> SUPERSCRIPT TWO
++    u' '   #  0x00fe -> BLACK SQUARE
++    u'█'     #  0x00ff -> NO-BREAK SPACE
++)
++
++### Encoding Map
++
++encoding_map_A00 = {
++    0x0: 0x0,
++    0x1: 0x1,
++    0x2: 0x2,
++    0x3: 0x3,
++    0x4: 0x4,
++    0x5: 0x5,
++    0x6: 0x6,
++    0x7: 0x7,
++    0x8: 0x8,
++    0x9: 0x9,
++    0xa: 0xa,
++    0xb: 0xb,
++    0xc: 0xc,
++    0xd: 0xd,
++    0xe: 0xe,
++    0xf: 0xf,
++    0x10: 0x10,
++    0x11: 0x11,
++    0x12: 0x12,
++    0x13: 0x13,
++    0x14: 0x14,
++    0x15: 0x15,
++    0x16: 0x16,
++    0x17: 0x17,
++    0x18: 0x18,
++    0x19: 0x19,
++    0x1a: 0x1a,
++    0x1b: 0x1b,
++    0x1c: 0x1c,
++    0x1d: 0x1d,
++    0x1e: 0x1e,
++    0x1f: 0x1f,
++    0x20: 0x20,
++    0x21: 0x21,
++    0x22: 0x22,
++    0x23: 0x23,
++    0x24: 0x24,
++    0x25: 0x25,
++    0x26: 0x26,
++    0x27: 0x27,
++    0x28: 0x28,
++    0x29: 0x29,
++    0x2a: 0x2a,
++    0x2b: 0x2b,
++    0x2c: 0x2c,
++    0x2d: 0x2d,
++    0x2e: 0x2e,
++    0x2f: 0x2f,
++    0x30: 0x30,
++    0x31: 0x31,
++    0x32: 0x32,
++    0x33: 0x33,
++    0x34: 0x34,
++    0x35: 0x35,
++    0x36: 0x36,
++    0x37: 0x37,
++    0x38: 0x38,
++    0x39: 0x39,
++    0x3a: 0x3a,
++    0x3b: 0x3b,
++    0x3c: 0x3c,
++    0x3d: 0x3d,
++    0x3e: 0x3e,
++    0x3f: 0x3f,
++    0x40: 0x40,
++    0x41: 0x41,
++    0x42: 0x42,
++    0x43: 0x43,
++    0x44: 0x44,
++    0x45: 0x45,
++    0x46: 0x46,
++    0x47: 0x47,
++    0x48: 0x48,
++    0x49: 0x49,
++    0x4a: 0x4a,
++    0x4b: 0x4b,
++    0x4c: 0x4c,
++    0x4d: 0x4d,
++    0x4e: 0x4e,
++    0x4f: 0x4f,
++    0x50: 0x50,
++    0x51: 0x51,
++    0x52: 0x52,
++    0x53: 0x53,
++    0x54: 0x54,
++    0x55: 0x55,
++    0x56: 0x56,
++    0x57: 0x57,
++    0x58: 0x58,
++    0x59: 0x59,
++    0x5a: 0x5a,
++    0x5b: 0x5b,
++    0xa5: 0x5c,
++    0x5d: 0x5d,
++    0x5e: 0x5e,
++    0x5f: 0x5f,
++    0x60: 0x60,
++    0x61: 0x61,
++    0x62: 0x62,
++    0x63: 0x63,
++    0x64: 0x64,
++    0x65: 0x65,
++    0x66: 0x66,
++    0x67: 0x67,
++    0x68: 0x68,
++    0x69: 0x69,
++    0x6a: 0x6a,
++    0x6b: 0x6b,
++    0x6c: 0x6c,
++    0x6d: 0x6d,
++    0x6e: 0x6e,
++    0x6f: 0x6f,
++    0x70: 0x70,
++    0x71: 0x71,
++    0x72: 0x72,
++    0x73: 0x73,
++    0x74: 0x74,
++    0x75: 0x75,
++    0x76: 0x76,
++    0x77: 0x77,
++    0x78: 0x78,
++    0x79: 0x79,
++    0x7a: 0x7a,
++    0x7b: 0x7b,
++    0x7c: 0x7c,
++    0x7d: 0x7d,
++    0x2192: 0x7e,
++    0x2190: 0x7f,
++    0x3b1: 0xe0,
++    0xc4: 0xe1,
++    0xe4: 0xe1,
++    0xdf: 0xe2,
++    0x3b2: 0xe2,
++    0x3b5: 0xe3,
++    0x3bc: 0xe4,
++    0x3c3: 0xe5,
++    0x3c1: 0xe6,
++    0x70: 0xf0,
++    0x71: 0xe7,
++    0x71: 0xf1,
++    0xa2: 0xec,
++    0xa3: 0xed,
++    0xf6: 0xef,
++    0xd6: 0xef,
++    0xf7: 0xfd,
++    0xdc: 0xf5,
++    0xfc: 0xf5,
++    0x101: 0xee,
++    0x3a3: 0xf6,
++    0x3a9: 0xf4,
++    0x3b8: 0xf2,
++    0x3c0: 0xf7,
++    0x3c7: 0xf8,
++    0x207b: 0xe9,
++    0x221a: 0xe8,
++    0x221e: 0xf3,
++    0x2588: 0xff,
++    0x1d12a: 0xeb,
++}
++
++encoding_map_A02 = {
++    0x0: 0x0,
++    0x1: 0x1,
++    0x2: 0x2,
++    0x3: 0x3,
++    0x4: 0x4,
++    0x5: 0x5,
++    0x6: 0x6,
++    0x7: 0x7,
++    0x8: 0x8,
++    0x9: 0x9,
++    0xa: 0xa,
++    0xb: 0xb,
++    0xc: 0xc,
++    0xd: 0xd,
++    0xe: 0xe,
++    0xf: 0xf,
++    0x25b6: 0x10,
++    0x25c0: 0x11,
++    0x201c: 0x12,
++    0x201d: 0x13,
++    0x23eb: 0x14,
++    0x23ec: 0x15,
++    0x25cf: 0x16,
++    0x21b2: 0x17,
++    0x2191: 0x18,
++    0x2193: 0x19,
++    0x2190: 0x1a,
++    0x2192: 0x1b,
++    0x2264: 0x1c,
++    0x2265: 0x1d,
++    0x25b2: 0x1e,
++    0x25bc: 0x1f,
++    0x20: 0x20,
++    0x21: 0x21,
++    0x22: 0x22,
++    0x23: 0x23,
++    0x24: 0x24,
++    0x25: 0x25,
++    0x26: 0x26,
++    0x27: 0x27,
++    0x28: 0x28,
++    0x29: 0x29,
++    0x2a: 0x2a,
++    0x2b: 0x2b,
++    0x2c: 0x2c,
++    0x2d: 0x2d,
++    0x2e: 0x2e,
++    0x2f: 0x2f,
++    0x30: 0x30,
++    0x31: 0x31,
++    0x32: 0x32,
++    0x33: 0x33,
++    0x34: 0x34,
++    0x35: 0x35,
++    0x36: 0x36,
++    0x37: 0x37,
++    0x38: 0x38,
++    0x39: 0x39,
++    0x3a: 0x3a,
++    0x3b: 0x3b,
++    0x3c: 0x3c,
++    0x3d: 0x3d,
++    0x3e: 0x3e,
++    0x3f: 0x3f,
++    0x40: 0x40,
++    0x41: 0x41,
++    0x42: 0x42,
++    0x43: 0x43,
++    0x44: 0x44,
++    0x45: 0x45,
++    0x46: 0x46,
++    0x47: 0x47,
++    0x48: 0x48,
++    0x49: 0x49,
++    0x4a: 0x4a,
++    0x4b: 0x4b,
++    0x4c: 0x4c,
++    0x4d: 0x4d,
++    0x4e: 0x4e,
++    0x4f: 0x4f,
++    0x50: 0x50,
++    0x51: 0x51,
++    0x52: 0x52,
++    0x53: 0x53,
++    0x54: 0x54,
++    0x55: 0x55,
++    0x56: 0x56,
++    0x57: 0x57,
++    0x58: 0x58,
++    0x59: 0x59,
++    0x5a: 0x5a,
++    0x5b: 0x5b,
++    0x5c: 0x5c,
++    0x5d: 0x5d,
++    0x5e: 0x5e,
++    0x5f: 0x5f,
++    0x60: 0x60,
++    0x61: 0x61,
++    0x62: 0x62,
++    0x63: 0x63,
++    0x64: 0x64,
++    0x65: 0x65,
++    0x66: 0x66,
++    0x67: 0x67,
++    0x68: 0x68,
++    0x69: 0x69,
++    0x6a: 0x6a,
++    0x6b: 0x6b,
++    0x6c: 0x6c,
++    0x6d: 0x6d,
++    0x6e: 0x6e,
++    0x6f: 0x6f,
++    0x70: 0x70,
++    0x71: 0x71,
++    0x72: 0x72,
++    0x73: 0x73,
++    0x74: 0x74,
++    0x75: 0x75,
++    0x76: 0x76,
++    0x77: 0x77,
++    0x78: 0x78,
++    0x79: 0x79,
++    0x7a: 0x7a,
++    0x7b: 0x7b,
++    0x7c: 0x7c,
++    0x7d: 0x7d,
++    0x7e: 0x7e,
++    0x2302: 0x7f,
++    0x411: 0x80,
++    0x414: 0x81,
++    0x416: 0x82,
++    0x417: 0x83,
++    0x418: 0x84,
++    0x419: 0x85,
++    0x41b: 0x86,
++    0x41f: 0x87,
++    0x423: 0x88,
++    0x426: 0x89,
++    0x427: 0x8a,
++    0x428: 0x8b,
++    0x429: 0x8c,
++    0x42a: 0x8d,
++    0x42c: 0x8e,
++    0x42d: 0x8f,
++    0x3b1: 0x90,
++    0x266a: 0x91,
++    0x393: 0x92,
++    0x3c0: 0x93,
++    0x3a3: 0x94,
++    0x3c3: 0x95,
++    0x266b: 0x96,
++    0x3c4: 0x97,
++    0x1f514: 0x98,
++    0x398: 0x99,
++    0x3a9: 0x9a,
++    0x3b4: 0x9b,
++    0x221e: 0x9c,
++    0x2665: 0x9d,
++    0x3b5: 0x9e,
++    0x2229: 0x9f,
++    0x275a: 0xa0,
++    0xa1: 0xa1,
++    0xa2: 0xa2,
++    0xa3: 0xa3,
++    0xa4: 0xa4,
++    0xa5: 0xa5,
++    0xa6: 0xa6,
++    0xa7: 0xa7,
++    0x2a0d: 0xa8,
++    0xa9: 0xa9,
++    0xaa: 0xaa,
++    0xab: 0xab,
++    0x42e: 0xac,
++    0x42f: 0xad,
++    0xae: 0xae,
++    0x2018: 0xaf,
++    0xb0: 0xb0,
++    0xb1: 0xb1,
++    0xb2: 0xb2,
++    0xb3: 0xb3,
++    0x20a7: 0xb4,
++    0x3bc: 0xb5,
++    0xb6: 0xb6,
++    0x22c5: 0xb7,
++    0x3c9: 0xb8,
++    0xb9: 0xb9,
++    0xba: 0xba,
++    0xbb: 0xbb,
++    0xbc: 0xbc,
++    0xbd: 0xbd,
++    0xbe: 0xbe,
++    0xbf: 0xbf,
++    0xc0: 0xc0,
++    0xc1: 0xc1,
++    0xc2: 0xc2,
++    0xc3: 0xc3,
++    0xc4: 0xc4,
++    0xc5: 0xc5,
++    0xc6: 0xc6,
++    0xc7: 0xc7,
++    0xc8: 0xc8,
++    0xc9: 0xc9,
++    0xca: 0xca,
++    0xcb: 0xcb,
++    0xcc: 0xcc,
++    0xcd: 0xcd,
++    0xce: 0xce,
++    0xcf: 0xcf,
++    0xd0: 0xd0,
++    0xd1: 0xd1,
++    0xd2: 0xd2,
++    0xd3: 0xd3,
++    0xd4: 0xd4,
++    0xd5: 0xd5,
++    0xd6: 0xd6,
++    0xd7: 0xd7,
++    0x3a6: 0xd8,
++    0xd9: 0xd9,
++    0xda: 0xda,
++    0xdb: 0xdb,
++    0xdc: 0xdc,
++    0xdd: 0xdd,
++    0xde: 0xde,
++    0xdf: 0xdf,
++    0xe0: 0xe0,
++    0xe1: 0xe1,
++    0xe2: 0xe2,
++    0xe3: 0xe3,
++    0xe4: 0xe4,
++    0xe5: 0xe5,
++    0xe6: 0xe6,
++    0xe7: 0xe7,
++    0xe8: 0xe8,
++    0xe9: 0xe9,
++    0xea: 0xea,
++    0xeb: 0xeb,
++    0xec: 0xec,
++    0xed: 0xed,
++    0xee: 0xee,
++    0xef: 0xef,
++    0xf0: 0xf0,
++    0xf1: 0xf1,
++    0xf2: 0xf2,
++    0xf3: 0xf3,
++    0xf4: 0xf4,
++    0xf5: 0xf5,
++    0xf6: 0xf6,
++    0xf7: 0xf7,
++    0xf8: 0xf8,
++    0xf9: 0xf9,
++    0xfa: 0xfa,
++    0xfb: 0xfb,
++    0xfc: 0xfc,
++    0xfd: 0xfd,
++    0xfe: 0xfe,
++    0xff: 0xff
++}
++
++if __name__ == '__main__':
++    for i in range(256):
++        print "0x%x: 0x%x," % (ord(decoding_table_A00[i]),i)
+--- /dev/null
++++ piradio-3.13-0ts/logrotate.d/radiod
+@@ -0,0 +1,9 @@
++/var/log/radio.log {
++      weekly
++      missingok
++      rotate 7
++      compress
++      notifempty
++      copytruncate
++      create 600
++}

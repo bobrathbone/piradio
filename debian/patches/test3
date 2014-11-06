@@ -1,0 +1,225 @@
+Description: Test 3
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ piradio (3.13-0ts-1) unstable; urgency=low
+ .
+   * Initial release.
+Author: Tobias Schlemmer <keinstein@users.sourceforge.net>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- piradio-3.13-0ts.orig/piface_radio.py
++++ piradio-3.13-0ts/piface_radio.py
+@@ -42,8 +42,6 @@ import menu
+ UP = 0
+ DOWN = 1
+ 
+-CurrentStationFile = "/var/lib/radiod/current_station"
+-CurrentTrackFile = "/var/lib/radiod/current_track"
+ CurrentFile = CurrentStationFile
+ 
+ # Instantiate classes
+@@ -721,7 +719,9 @@ def mount_usb(lcd):
+ 
+ # Mount any remote network drive
+ def old_mount_share():
+-	if os.path.exists("/var/lib/radiod/share"):
++	if os.path.exists(config.shares):
++                log.message("using shell for python code",
++                            log.ERROR)
+ 		myshare = exec_cmd("cat /var/lib/radiod/share")
+ 		if myshare[:1] != '#':
+ 			exec_cmd(myshare)
+@@ -1100,13 +1100,12 @@ def old_checkState(radio):
+ ### Main routine ###
+ if __name__ == "__main__":
+         global daemon
+-	daemon = MyDaemon('/var/run/radiod.pid')
++	daemon = MyDaemon(config.pidfile)
+ 	if len(sys.argv) == 2:
+ 		if 'start' == sys.argv[1]:
+                         lcd.init()
+ 			daemon.start()
+ 		elif 'stop' == sys.argv[1]:
+-			os.system("service mpd stop")
+ 			daemon.stop()
+ 		elif 'restart' == sys.argv[1]:
+ 			daemon.restart()
+--- piradio-3.13-0ts.orig/display_config.py
++++ piradio-3.13-0ts/display_config.py
+@@ -12,19 +12,9 @@ import sys
+ import datetime
+ import commands
+ from time import strftime
++import config
+ from radio_class import Radio
+ 
+-# System files
+-RadioLibDir = "/var/lib/radiod"
+-CurrentStationFile = RadioLibDir + "/current_station"
+-CurrentTrackFile = RadioLibDir + "/current_track"
+-VolumeFile = RadioLibDir + "/volume"
+-TimerFile = RadioLibDir + "/timer"
+-AlarmFile = RadioLibDir + "/alarm"
+-StreamFile = RadioLibDir + "/streaming"
+-LogLevelFile=RadioLibDir + "/loglevel"
+-RssFile = "/var/lib/radiod/rss"
+-MpdPortFile = "/var/lib/radiod/mpdport"
+ 
+ alarmType = ["off", "on", "repeat", "weekdays"]
+ 
+--- /dev/null
++++ piradio-3.13-0ts/piradio.conf
+@@ -0,0 +1,22 @@
++tempdir            = '/tmp/radio_stream_files/'
++playlistsdir       = libdir + '/playlists/'
++radiodir           = libdir + '/radio/'
++stationlist        = radiodir + 'stationlist'
++distfile           = srcdir + 'station.urls'
++podcastsfile       = libdir + '/podcasts'
++currentstationfile = libdir + "/current_station"
++currenttrackfile   = libdir + "/current_track"
++volumefile         = libdir + "/volume"
++timerfile          = libdir + "/timer"
++alarmfile          = libdir + "/alarm"
++streamfile         = libdir + "/streaming"
++loglevelfile       = libdir + "/loglevel"
++rssfile            = libdir + "/rss"
++mpdportfile        = libdir + "/mpdport"
++sharefile          = libdir + "/share"
++pidfile            = '/run/piradio.pid'
++
++# logging standard io
++stdin              = '/dev/null'
++stdout             = '/dev/null'
++stderr             = '/dev/null'
+\ No newline at end of file
+--- piradio-3.13-0ts.orig/radio_daemon.py
++++ piradio-3.13-0ts/radio_daemon.py
+@@ -15,6 +15,7 @@
+ 
+ import sys, os, time, atexit
+ from signal import SIGTERM 
++import config
+ 
+ class Daemon:
+ 	"""
+@@ -22,7 +23,10 @@ class Daemon:
+ 	
+ 	Usage: subclass the Daemon class and override the run() method
+ 	"""
+-	def __init__(self, pidfile, stdin='/dev/null', stdout='/var/log/radiod.stdout', stderr='/var/log/radiod.stderr'):
++	def __init__(self, pidfile, 
++                     stdin=config.stdin, 
++                     stdout=config.stdout,
++                     stderr=config.stderr):
+ 		self.stdin = stdin
+ 		self.stdout = stdout
+ 		self.stderr = stderr
+--- /dev/null
++++ piradio-3.13-0ts/config.py
+@@ -0,0 +1,23 @@
++package      = 'piradio'
++libdir       = '/var/lib/'+package
++srcdir       = '/usr/share/'+package
++playlistsdir = libdir + '/playlists/'
++radiodir     = libdir + '/radio/'
++stationlist  = radiodir + 'stationlist'
++distfile     = srcdir + 'station.urls'
++tempdir      = '/tmp/radio_stream_files/'
++podcastsfile = libdir + '/podcasts'
++CurrentStationFile = libdir + "/current_station"
++CurrentTrackFile = libdir + "/current_track"
++VolumeFile = libdir + "/volume"
++TimerFile = libdir + "/timer"
++AlarmFile = libdir + "/alarm"
++StreamFile = libdir + "/streaming"
++LogLevelFile=libdir + "/loglevel"
++RssFile = libdir  + "/rss"
++MpdPortFile = libdir + "/mpdport"
++
++input "/etc/" + package + "/piradio.conf"
++# System files
++
++
+--- piradio-3.13-0ts.orig/rss_class.py
++++ piradio-3.13-0ts/rss_class.py
+@@ -18,13 +18,14 @@ import os
+ import time
+ import urllib2
+ from xml.dom.minidom import parseString
++import config
+ from log_class import Log
+ from translate_class import Translate
+ 
+ log = Log()
+ translate = Translate()
+ 
+-url = "/var/lib/radiod/rss"
++url = config.rssfile
+ 
+ class Rss:
+         rss = []	# Array for the RSS feed
+--- piradio-3.13-0ts.orig/log_class.py
++++ piradio-3.13-0ts/log_class.py
+@@ -15,6 +15,7 @@
+ 
+ import os
+ import logging
++import config
+ 
+ 
+ class Log:
+@@ -25,9 +26,6 @@ class Log:
+ 	DEBUG = logging.DEBUG
+ 	NONE = 0
+ 
+-	RadioLibDir = "/var/lib/radiod"
+-	LogLevelFile = RadioLibDir + "/loglevel"
+-
+ 	module = ''
+ 	level = logging.INFO
+ 
+@@ -37,9 +35,10 @@ class Log:
+ 	def init(self,module):
+ 		self.module = module
+ 		# Set up loglevel file
+-		if not os.path.isfile(self.LogLevelFile) or os.path.getsize(self.LogLevelFile) == 0:
+-			os.popen("echo INFO > " + self.LogLevelFile)
+-			os.popen("echo INFO > " + self.LogLevelFile)
++		if not os.path.isfile(config.loglevelfile) or os.path.getsize(self.LogLevelFile) == 0:
++                        f  = open(loglevelfile,"w")
++                        f.write("INFO")
++                        f.close()
+ 		self.level = self.getLevel()
+ 		return 
+ 
+--- piradio-3.13-0ts.orig/radio_class.py
++++ piradio-3.13-0ts/radio_class.py
+@@ -877,8 +877,10 @@ class Radio:
+ 		
+ 		self.search_index = self.current_id - 1
+ 		log.message("radio.setCurrentID index= " + str(self.search_index), log.DEBUG)
++		log.message("shell", log.ERROR)
+ 		self.execCommand ("echo " + str(self.current_id) + " > " + self.current_file)
+-		self.execCommand("/usr/bin/mpc status > /var/lib/radiod/status")
++		self.execCommand("/usr/bin/mpc status > " 
++                                 + config.statusfile)
+ 		name = self.getCurrentTitle()
+ 		log.message("radio.getCurrentID (" + str(self.current_id) + ") " + name, log.INFO)
+ 		return
