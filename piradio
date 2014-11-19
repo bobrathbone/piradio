@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.18 2014/08/21 12:01:07 bob Exp $
+# $Id: piradio,v 1.21 2014/11/04 19:58:43 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 3.11
+Version: 3.13
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 # Pre-Depends: <comma-separated list of packages>
 # Depends: <comma-separated list of packages>
@@ -33,6 +33,8 @@ Files:  radiod.py /home/pi/radio/
 	radio4.py /home/pi/radio/
 	rradiod.py /home/pi/radio/
 	rradio4.py /home/pi/radio/
+	rradiobp.py /home/pi/radio/
+	rradiobp4.py /home/pi/radio/
 	display_current.py /home/pi/radio/
 	display_config.py /home/pi/radio/
 	ada_lcd_class.py /home/pi/radio/
@@ -51,8 +53,10 @@ Files:  radiod.py /home/pi/radio/
 	i2c_class.py /home/pi/radio/
 	radio_class.py /home/pi/radio/
 	lcd_class.py /home/pi/radio/
+	lcd_i2c_class.py /home/pi/radio/
 	radio_daemon.py /home/pi/radio/  
 	test_lcd.py /home/pi/radio/
+	test_i2c_lcd.py /home/pi/radio/
 	test_switches.py /home/pi/radio/
 	select_daemon.sh /home/pi/radio/
 	station.urls /home/pi/radio/

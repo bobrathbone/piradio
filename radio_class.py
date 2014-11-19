@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.125 2014/08/21 06:42:18 bob Exp $
+# $Id: radio_class.py,v 1.128 2014/10/14 17:59:34 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -129,7 +129,7 @@ class Radio:
 	search_index = 0        # The current search index
 	loadnew = False         # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.11"	# Version number
+	VERSION	= "3.13"	# Version number
 
 	def __init__(self):
 		log.init('radio')
@@ -356,7 +356,6 @@ class Radio:
 
 	# Set volume (Called from the radio client or external mpd client via getVolume())
 	def setVolume(self,volume):
-		log.message("radio.setVolume " + str(volume),log.DEBUG)
 		if self.muted(): 
 			self.unmute()
 		else:
@@ -365,6 +364,7 @@ class Radio:
 			elif volume < 0:
 				 volume = 0
 
+			log.message("radio.setVolume " + str(volume),log.DEBUG)
 			self.volume = volume
 			self.execMpc(client.setvol(self.volume))
 

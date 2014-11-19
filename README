@@ -63,6 +63,16 @@ Version 3.11 changes
 Name and title of station displayed seperately on line 2 & 3 (4 line displays only) 
 Improved character translation routines (translate_class.py)
 
+Version 3.12 changes
+--------------------
+Greek to latin character translation added, improved french translation
+RSS feed improvements
+
+Version 3.13 changes
+--------------------
+2 November 2014 - Added support for Adafruit LCD Backpack interface board.
+Correct Alarm problem in Adafruit Plate code
+
 Manual
 ------
 Download from http://www.bobrathbone.com/raspberrypi/Raspberry%20PI%20Radio.pdf

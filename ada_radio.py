@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.36 2014/08/02 05:27:08 bob Exp $
+# $Id: ada_radio.py,v 1.37 2014/11/04 19:53:46 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -222,6 +222,7 @@ def get_switch_states(lcd,radio,rss):
 	interrupt = False	# Interrupt display
 	display_mode = radio.getDisplayMode()
 	input_source = radio.getSource()	
+	option = radio.getOption()
 	
 	if lcd.buttonPressed(lcd.MENU):
 		log.message("MENU switch mode=" + str(display_mode), log.DEBUG)
@@ -267,8 +268,18 @@ def get_switch_states(lcd,radio,rss):
 			radio.setDisplayMode(radio.MODE_TIME)
 
 		elif radio.optionChanged():
-			radio.setDisplayMode(radio.MODE_TIME)
-			radio.optionChangedFalse()
+			#radio.setDisplayMode(radio.MODE_TIME)
+			#radio.optionChangedFalse()
+
+                        log.message("optionChanged", log.DEBUG)
+                        if radio.alarmActive() and not radio.getTimer() and option == radio.ALARMSET:
+                                radio.setDisplayMode(radio.MODE_SLEEP)
+                                radio.mute()
+                        else:
+                                radio.setDisplayMode(radio.MODE_TIME)
+
+                        radio.optionChangedFalse()
+
 
 		elif radio.loadNew():
 			log.message("Load new  search=" + str(radio.getSearchIndex()), log.DEBUG)

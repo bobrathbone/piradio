@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio4.py,v 1.91 2014/08/21 06:42:18 bob Exp $
+# $Id: radio4.py,v 1.96 2014/11/01 08:53:04 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -199,10 +199,12 @@ class MyDaemon(Daemon):
 			elif display_mode == radio.MODE_RSS:
 				lcd.line1(todaysdate)
 				input_source = radio.getSource()
+				current_id = radio.getCurrentID()
 				if input_source == radio.RADIO:
-					lcd.line2(radio.getRadioStation())
+					station = radio.getRadioStation() + ' (' + str(current_id) + ')'
+                                        lcd.line2(station)
 				else:
-					lcd.line2("Current track:" + str(radio.getCurrentID()))
+					lcd.line2(radio.getCurrentArtist())
 				display_rss(lcd,rss)
 
 			elif display_mode == radio.MODE_SLEEP:
@@ -306,9 +308,9 @@ def get_switch_states(lcd,radio,rss):
 		display_mode = display_mode + 1
 
 		# Skip RSS mode if not available
-		if display_mode == radio.MODE_RSS and not radio.alarmActive():
+		if display_mode == radio.MODE_RSS:
 			if rss.isAvailable() and not radio.optionChanged():
-				lcd.line2("Getting RSS feed")
+				lcd.line3("Getting RSS feed")
 			else:
 				display_mode = display_mode + 1
 
@@ -377,7 +379,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_search(radio,UP)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,UP)
@@ -406,7 +408,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_search(radio,DOWN)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,DOWN)
@@ -431,7 +433,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_artist(radio,DOWN)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 				interrupt = True
 
 			elif display_mode == radio.MODE_OPTIONS:
@@ -475,7 +477,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_artist(radio,UP)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 
 			elif display_mode == radio.MODE_OPTIONS:
 				interrupt = True

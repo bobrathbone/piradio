@@ -1,6 +1,6 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.13 2014/07/21 07:56:34 bob Exp $
+# $Id: piradio.postinst,v 1.14 2014/10/05 14:18:10 bob Exp $
 
 # File locations
 DIR=/home/pi/radio
@@ -13,7 +13,7 @@ PODCASTSDIST=podcasts.dist
 
 # Display types
 LCD=3   # LCD screen (direct)
-ADA=4   # Adafruit LCD plate
+I2C=4   # Uses I2C libraries
 
 echo "Executing post install script ${0}"
 update-rc.d -f radiod defaults
@@ -48,7 +48,7 @@ if [[ ${TYPE} -eq ${LCD} ]]; then
 	sudo sed -i "s/${OLDENTRY}//g" ${BOOTCMD}
 	REBOOT=1
 
-elif [[ ${TYPE} -eq ${ADA} ]]; then
+elif [[ ${TYPE} -eq ${I2C} ]]; then
 	
 	if [[ ! -f   ${MODULES}.orig ]]; then
 		sudo cp -fp ${MODULES} ${MODULES}.orig
@@ -103,7 +103,7 @@ echo "PI Radio software successfully installed"
 echo "See /usr/share/doc/radiod/README for release information"
 echo
 
-if [[ ${TYPE} -eq ${ADA} ]]; then
+if [[ ${TYPE} -eq ${I2C} ]]; then
 	# Check to see if the python-smbus is already installed
 	dpkg -l python-smbus  > /dev/null 2>&1  
 	if [[ $? > 0 ]]; then  # Don't seperate from above

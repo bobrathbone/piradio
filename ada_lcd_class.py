@@ -3,7 +3,7 @@
 
 # LCD class for  Adafruit RGB-backlit LCD plate for Raspberry Pi.
 # Adapted by Bob Rathbone from code by Adafruit Industries.  MIT license.
-# $Id: ada_lcd_class.py,v 1.4 2013/07/02 13:16:54 bob Exp $
+# $Id: ada_lcd_class.py,v 1.5 2014/09/24 07:52:59 bob Exp $
 
 # Original code based on code from lrvick and LiquidCrystal.
 # lrvic - https://github.com/lrvick/raspi-hd44780/blob/master/hd44780.py
@@ -12,8 +12,10 @@
 from i2c_class import i2c
 from time import sleep
 from log_class import Log
+from translate_class import Translate
 
 log = Log()
+translate = Translate()
 
 class Adafruit_lcd(i2c):
 
@@ -355,7 +357,7 @@ class Adafruit_lcd(i2c):
 		if self.RawMode:
 			mytext = text
 		else:
-			mytext = self.translateChars(text)
+			mytext = translate.toLCD(text)
 
 		self.write(line)		# Set DDRAM address to 2nd line
 		self.write("                    ", True)
@@ -450,55 +452,5 @@ class Adafruit_lcd(i2c):
 	def setRawMode(self,value):
 		self.RawMode = value
 		return
-
-        # Translate special characters (umlautes etc) to LCD values
-        # See standard character patterns for LCD display
-        def translateChars(self,sp):
-                s = sp
-
-                # Currency
-                s = s.replace(chr(156), '#')       # Pound by hash
-                s = s.replace(chr(169), '(c)')     # Copyright
-
-                # Spanish french
-                s = s.replace(chr(241), 'n')       # Small tilde n
-                s = s.replace(chr(191), '?')       # Small u acute to u
-                s = s.replace(chr(224), 'a')       # Small reverse a acute to a
-                s = s.replace(chr(225), 'a')       # Small a acute to a
-                s = s.replace(chr(232), 'e')       # Small e grave to e
-                s = s.replace(chr(233), 'e')       # Small e acute to e
-                s = s.replace(chr(237), 'i')       # Small i acute to i
-                s = s.replace(chr(238), 'i')       # Small i circumflex to i
-                s = s.replace(chr(243), 'o')       # Small o acute to o
-                s = s.replace(chr(244), 'o')       # Small o circumflex to o
-                s = s.replace(chr(250), 'u')       # Small u acute to u
-                s = s.replace(chr(193), 'A')       # Capital A acute to A
-                s = s.replace(chr(201), 'E')       # Capital E acute to E
-                s = s.replace(chr(205), 'I')       # Capital I acute to I
-                s = s.replace(chr(209), 'N')       # Capital N acute to N
-                s = s.replace(chr(211), 'O')       # Capital O acute to O
-                s = s.replace(chr(218), 'U')       # Capital U acute to U
-                s = s.replace(chr(220), 'U')       # Capital U umlaut to U
-                s = s.replace(chr(231), 'c')       # Small c Cedilla
-                s = s.replace(chr(199), 'C')       # Capital C Cedilla
-
-                # German
-                s = s.replace(chr(196), "Ae")           # A umlaut
-                s = s.replace(chr(214), "Oe")           # O umlaut
-                s = s.replace(chr(220), "Ue")           # U umlaut
-
-                if self.displayUmlauts:
-                        s = s.replace(chr(223), chr(226))       # Sharp s
-                        s = s.replace(chr(246), chr(239))       # o umlaut
-                        s = s.replace(chr(228), chr(225))       # a umlaut
-                        s = s.replace(chr(252), chr(245))       # u umlaut
-
-                else:
-			s = s.replace(chr(228), "ae")       	# a umlaut
-                        s = s.replace(chr(223), "ss")           # Sharp s
-                        s = s.replace(chr(246), "oe")           # o umlaut
-                        s = s.replace(chr(252), "ue")           # u umlaut
-
-                return s
 
 # End of class
