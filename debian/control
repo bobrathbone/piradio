@@ -10,7 +10,8 @@ Homepage: http://www.bobrathbone.com
 
 Package: piradio
 Architecture: any
-Depends: mopidy, python-mpd, ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Depends: mopidy, python-mpd, python-lirc, ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Recommends: python-pifacecad, python-smbus
 Description: Raspberry PI radio
  This package provides a radio daemon using MPD
  .

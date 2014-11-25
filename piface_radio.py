@@ -33,6 +33,7 @@ import piface_lcd_class
 from piface_lcd_class import Piface_lcd
 
 # Class imports
+import config
 from radio_daemon import Daemon
 from radio_class import Radio
 from log_class import Log
@@ -42,9 +43,7 @@ import menu
 UP = 0
 DOWN = 1
 
-CurrentStationFile = "/var/lib/radiod/current_station"
-CurrentTrackFile = "/var/lib/radiod/current_track"
-CurrentFile = CurrentStationFile
+CurrentFile = config.get("Paths","stationlist")
 
 # Instantiate classes
 log = Log()
@@ -53,19 +52,25 @@ menu.log = log
 radio = Radio()
 rss = Rss()
 lcd = Piface_lcd()
-listener = False 
-interrupt = False
+listener = None
+irlistener = None
+interrupt = None
 
 # Register exit routine
 def finish():
 	lcd.clear()
-        listener.deactivate()
-        if irlistener_activated: irlistenter.deactivate()
-	radio.execCommand("umount /media  > /dev/null 2>&1")
-	radio.execCommand("umount /share  > /dev/null 2>&1")
+        if listener:
+                listener.deactivate()
+        if irlistener:
+                if irlistener_activated: irlistenter.deactivate()
+#	radio.execCommand("umount /media  > /dev/null 2>&1")
+#	radio.execCommand("umount /share  > /dev/null 2>&1")
 	lcd.line(0,0, "Radio stopped")
-        lcd.backlight_off()
+        lcd.backlight(False)
 
+
+def statuscallback(text):
+        lcd.line(0,1,text)
 
 # Daemon class
 class MyDaemon(Daemon):
@@ -85,17 +90,17 @@ class MyDaemon(Daemon):
 		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
-		message = "Radio pid " + str(os.getpid())
-		lcd.line(0,0, message)
-		lcd.line(0,1, "IP " + ipaddr)
+                # 		message = "Radio pid " + str(os.getpid())
+                # 		lcd.line(0,0, message)
+                # 		lcd.line(0,1, "IP " + ipaddr)
+                #		time.sleep(4)
                 lcd.backlight(True)
-		time.sleep(4)
-		log.message("Restarting MPD", log.INFO)
-		lcd.line(0,1, "Starting MPD")
-		radio.start()
+		log.message("Starting Radio", log.INFO)
+		lcd.line(0,0, "Starting Radio")
+		radio.start(statuscallback)
 		log.message("MPD started", log.INFO)
 
-		mpd_version = radio.execMpcCommand("version")
+		mpd_version = radio.getMpdVersion()
 		log.message(mpd_version, log.INFO)
 		lcd.line(0,0, "Radio ver "+ radio.getVersion())
 		lcd.scroll(0,1, mpd_version)
@@ -107,10 +112,11 @@ class MyDaemon(Daemon):
                 menu.set_lcd(lcd)
 		 	
 		reload(lcd,radio)
-		radio.play(get_stored_id(CurrentFile))
+		#radio.play(get_stored_id(CurrentFile))
                 menu.submenu(menu.date_play_menu())
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
 
+                atexit.register(finish)
                 listener = lcd.get_listener()
                 listener.register(lcd.BUTTON1,
                                   pifacecad.IODIR_ON,
@@ -163,9 +169,37 @@ class MyDaemon(Daemon):
                 listener.activate()
                 irlistener = pifacecad.IREventListener(
                         prog="pifacecad-radio-ts",
-                        lircrc="/home/pi/radio/radiolircrc")
+                        lircrc="/etc/lirc/radiolircrc")
                 for i in range(10):
                         irlistener.register(str(i), menu.menukeys.key)
+                irlistener.register("home",menu.menukeys.home)
+                irlistener.register("back",menu.menukeys.back)
+                irlistener.register("menu",menu.menukeys.menu)
+                irlistener.register("tv",menu.menukeys.tv)
+                irlistener.register("power",menu.menukeys.power)
+                irlistener.register("up",menu.menukeys.up)
+                irlistener.register("down",menu.menukeys.down)
+                irlistener.register("left",menu.menukeys.left)
+                irlistener.register("right",menu.menukeys.right)
+                irlistener.register("enter",menu.menukeys.enter)
+                irlistener.register("ok",menu.menukeys.ok)
+                irlistener.register("volumeup",menu.menukeys.volumeup)
+                irlistener.register("volumedown",menu.menukeys.volumedown)
+                irlistener.register("mute",menu.menukeys.mute)
+                irlistener.register("channelup",menu.menukeys.channelup)
+                irlistener.register("channeldown",menu.menukeys.channeldown)
+                irlistener.register("previous",menu.menukeys.previous)
+                irlistener.register("stop",menu.menukeys.stop)
+                irlistener.register("record",menu.menukeys.record)
+                irlistener.register("previoussong",menu.menukeys.previoussong)
+                irlistener.register("nextsong",menu.menukeys.nextsong)
+                irlistener.register("pause",menu.menukeys.pause)
+                irlistener.register("play",menu.menukeys.play)
+                irlistener.register("rewind",menu.menukeys.rewind)
+                irlistener.register("fastforward",menu.menukeys.fastforward)
+                irlistener.register("text",menu.menukeys.text)
+                irlistener.register("subtitle",menu.menukeys.subtitle)
+                        
                 try:
                         irlistener.activate()
                 except lirc.InitError:
@@ -667,30 +701,28 @@ def update_library(lcd,radio):
 	radio.loadMusic()
 	return
 
+
+def reload_lcd_callback(text):
+        lcd.line(0,1,text)
+
 # Reload if new source selected (RADIO or PLAYER)
 def reload(lcd,radio):
         lcd.lock()
 	lcd.line(0,0, "Loading:")
-	exec_cmd("/bin/umount /media")  # Unmount USB stick
-	exec_cmd("/bin/umount /share")  # Unmount network drive
+	#exec_cmd("/bin/umount /media")  # Unmount USB stick
+	#exec_cmd("/bin/umount /share")  # Unmount network drive
 
-	source = radio.getSource()
-	if source == radio.RADIO:
-		lcd.line(0,1, "Radio Stations")
-		dirList=os.listdir("/var/lib/mpd/playlists")
-		for fname in dirList:
-			log.message("Loading " + fname, log.DEBUG)
-			lcd.line(0,1, fname)
-			time.sleep(0.1)
-		radio.loadStations()
-
-	elif source == radio.PLAYER:
-		mount_usb(lcd)
-		mount_share()
-		radio.loadMusic()
-		current = radio.execMpcCommand("current")
-		if len(current) < 1:
-			update_library(lcd,radio)
+# 	source = radio.getSource()
+# 	if source == radio.RADIO:
+# 		lcd.line(0,0, "Radio Stations")
+# 		radio.loadStations(reload_lcd_callback)
+# 
+# 	elif source == radio.PLAYER:
+		# mount_usb(lcd)
+		# mount_share()
+#        current = radio.("current")
+#		if len(current) < 1:
+#			update_library(lcd,radio)
         lcd.line(0,1, "Finished")
         lcd.unlock()
 	return
@@ -722,7 +754,9 @@ def mount_usb(lcd):
 
 # Mount any remote network drive
 def old_mount_share():
-	if os.path.exists("/var/lib/radiod/share"):
+	if os.path.exists(config.shares):
+                log.message("using shell for python code",
+                            log.ERROR)
 		myshare = exec_cmd("cat /var/lib/radiod/share")
 		if myshare[:1] != '#':
 			exec_cmd(myshare)
@@ -1101,13 +1135,12 @@ def old_checkState(radio):
 ### Main routine ###
 if __name__ == "__main__":
         global daemon
-	daemon = MyDaemon('/var/run/radiod.pid')
+	daemon = MyDaemon(config.get("Paths","pidfile"))
 	if len(sys.argv) == 2:
 		if 'start' == sys.argv[1]:
                         lcd.init()
 			daemon.start()
 		elif 'stop' == sys.argv[1]:
-			os.system("service mpd stop")
 			daemon.stop()
 		elif 'restart' == sys.argv[1]:
 			daemon.restart()

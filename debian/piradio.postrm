@@ -6,6 +6,21 @@
 
 set -e
 
+# File locations
+PACKAGE=piradio
+DIR=/usr/share/${PACKAGE}
+RADIOLIB=/var/lib/${PACKAGE}
+DEFAULTFILE=/etc/default/${PACKAGE}
+INITTAB=/etc/inittab
+BOOTCMD=/boot/cmdline.txt 
+MODULES=/etc/modules
+MPDCONF=/etc/mpd.conf
+PODCASTSDIST=podcasts.dist
+LOGDIR=/var/log
+#export DEBCONF_DEBUG=developer
+PIFACE=piface_radio.py
+ADA=ada_radio.py
+
 # summary of how this script can be called:
 #        * <postrm> `remove'
 #        * <postrm> `purge'
@@ -21,13 +36,18 @@ set -e
 
 
 case "$1" in
-    purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-    ;;
+    purge)
+	$0 remove
+	rm -rf ${RADIOLIB}
+	;;
+    
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+	;;
 
     *)
         echo "postrm called with unknown argument \`$1'" >&2
         exit 1
-    ;;
+	;;
 esac
 
 # dh_installdeb will replace this with shell code automatically

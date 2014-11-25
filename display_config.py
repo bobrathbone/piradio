@@ -12,19 +12,9 @@ import sys
 import datetime
 import commands
 from time import strftime
+import config
 from radio_class import Radio
 
-# System files
-RadioLibDir = "/var/lib/radiod"
-CurrentStationFile = RadioLibDir + "/current_station"
-CurrentTrackFile = RadioLibDir + "/current_track"
-VolumeFile = RadioLibDir + "/volume"
-TimerFile = RadioLibDir + "/timer"
-AlarmFile = RadioLibDir + "/alarm"
-StreamFile = RadioLibDir + "/streaming"
-LogLevelFile=RadioLibDir + "/loglevel"
-RssFile = "/var/lib/radiod/rss"
-MpdPortFile = "/var/lib/radiod/mpdport"
 
 alarmType = ["off", "on", "repeat", "weekdays"]
 

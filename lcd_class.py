@@ -231,6 +231,7 @@ class Lcd:
 		self._byte_out(line, LCD_CMD)
 		self._string(mytext[0:self.width + 1])
 	
+                skip = True
 		if (ilen <= self.width):
 			skip = True
 

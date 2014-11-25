@@ -12,7 +12,8 @@
 # MAINFILE=ada_radio.py
 # MAINFILE=radio.py
 # MAINFILE=piface_radio.py
-MAINFILE=piface_radio.py
+# MAINFILE=piface_radio.py
+MAINFILE=
 
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS=""

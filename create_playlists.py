@@ -26,6 +26,7 @@ import os
 import sys
 import urllib2
 from xml.dom.minidom import parseString
+import config
 
 # Output errors to STDERR
 stderr = sys.stderr.write;

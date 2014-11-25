@@ -1,17 +1,12 @@
-Template: piradio/selectlcd
+Template: piradio/lcd
 Type: select
-Choices: Two line LCD with push buttons  (radiod.py),
-	 Four line LCD with push buttons (radio4.py),
-	 Two line LCD with rotary encoders  (rradiod.py),
-	 Four line LCD with rotary encoders (rradio4.py),
-	 Two line Adafruit LCD with push buttons (ada_radio.py)
-	 Two line Piface Control & Display with push buttons (piface_radio.py)
+Choices: Two line LCD with push buttons  (radiod.py), Four line LCD with push buttons (radio4.py), Two line LCD with rotary encoders  (rradiod.py), Four line LCD with rotary encoders (rradio4.py), Two line Adafruit LCD with push buttons (ada_radio.py), Two line Piface Control & Display with push buttons (piface_radio.py)
 Description: Which LCD shall be used?
  Piradio can use one of the following LCD.
  You should select the one that corresponds to your setup.
 
-Template: piradio/selectuser
-Type: text
+Template: piradio/user
+Type: string
 Default: mopidy
 Description: Under which user id shall the daemon run?
  Piradio should not be run as superuser. Depending on the user 
@@ -21,8 +16,8 @@ Description: Under which user id shall the daemon run?
  If you installed mopidy use mopidy, here.
  Otherwise choose your user id.
 
-Template: piradio/selectgroup
-Type: text
+Template: piradio/group
+Type: string
 Default: mopidy
 Description: Under which group id shall the daemon run?
  Piradio should not be run as superuser. Depending on the group id

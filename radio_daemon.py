@@ -15,6 +15,7 @@
 
 import sys, os, time, atexit
 from signal import SIGTERM 
+import config
 
 class Daemon:
 	"""
@@ -22,7 +23,10 @@ class Daemon:
 	
 	Usage: subclass the Daemon class and override the run() method
 	"""
-	def __init__(self, pidfile, stdin='/dev/null', stdout='/var/log/radiod.stdout', stderr='/var/log/radiod.stderr'):
+	def __init__(self, pidfile, 
+                     stdin=config.config.get("Logging","stdin"),
+                     stdout=config.config.get("Logging","stdout"),
+                     stderr=config.config.get("Logging","stderr")):
 		self.stdin = stdin
 		self.stdout = stdout
 		self.stderr = stderr

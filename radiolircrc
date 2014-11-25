@@ -28,6 +28,13 @@ end
 
 begin
   remote = *
+  button = key_radio
+  prog = pifacecad-radio-ts
+  config = radio
+end
+
+begin
+  remote = *
   button = key_power
   prog = pifacecad-radio-ts
   config = power
@@ -66,6 +73,13 @@ begin
   button = key_ok
   prog = pifacecad-radio-ts
   config = ok
+end
+
+begin
+  remote = *
+  button = key_enter
+  prog = pifacecad-radio-ts
+  config = enter
 end
 
 begin

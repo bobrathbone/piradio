@@ -4,15 +4,14 @@
 . /usr/share/debconf/confmodule
 
 # Do you like debian?
-db_input high piradio/selectlcd
-echo "|$RET|"
-db_go
+db_input high piradio/lcd || true
+db_go || true
 
-db_input high piradio/selectuser
-db_go
+db_input high piradio/user || true
+db_go || true
 
-db_input high piradio/selectgroup
-db_go
+db_input high piradio/group || true
+db_go || true
 
 # Check their answer.
 #db_get foo/like_debian

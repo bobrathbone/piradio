@@ -86,6 +86,18 @@ LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
 E_PULSE = 0.00005
 E_DELAY = 0.00005
 
+PLAY_SYMBOL = pifacecad.LCDBitmap(
+        [0x10, 0x18, 0x1c, 0x1e, 0x1c, 0x18, 0x10, 0x0])
+PAUSE_SYMBOL = pifacecad.LCDBitmap(
+        [0x0, 0x1b, 0x1b, 0x1b, 0x1b, 0x1b, 0x0, 0x0])
+INFO_SYMBOL = pifacecad.LCDBitmap(
+        [0x6, 0x6, 0x0, 0x1e, 0xe, 0xe, 0xe, 0x1f])
+MUSIC_SYMBOL = pifacecad.LCDBitmap(
+        [0x2, 0x3, 0x2, 0x2, 0xe, 0x1e, 0xc, 0x0])
+STOP_SYMBOL = pifacecad.LCDBitmap(
+        [0x0, 0x1F, 0x1F, 0x3F, 0x1F, 0x1F, 0x0, 0x0])
+TIME_SYMBOL = pifacecad.LCDBitmap(
+        [0x0E, 0x15, 0x15, 0x15, 0x13, 0x11, 0x0E, 0x00])
 
 # Lcd Class 
 class Piface_lcd:
@@ -94,6 +106,7 @@ class Piface_lcd:
 	displayUmlauts = True
         RawMode = False         # Test only
         ScrollSpeed = 0.3       # Default scroll speed
+        ScrollDelay = 1.5
 
         ENTER = 5
         LEFT  = 6
@@ -104,7 +117,15 @@ class Piface_lcd:
         BUTTON4     = 3
         BUTTON5     = 4
 
+        PLAY_SYMBOL_INDEX = 0
+        PAUSE_SYMBOL_INDEX = 1
+        STOP_SYMBOL_INDEX = 2
+        INFO_SYMBOL_INDEX = 3
+        MUSIC_SYMBOL_INDEX = 4
+        TIME_SYMBOL_INDEX = 5
+
         savelines = ["","","",""]
+        scrolllist = []
 
         lcdlock = threading.Lock()
 
@@ -115,11 +136,22 @@ class Piface_lcd:
                 self.cad = pifacecad.PiFaceCAD()
                 self.lcd = self.cad.lcd
                 self.width = 16
-                for i in range (0,2):
-                        self.savelines[i] = "".ljust(self.width," ")
-                self.lcd.clear()
+                self.clear()
 
                 self.lcd.backlight_on()
+                self.cad.lcd.store_custom_bitmap(self.PLAY_SYMBOL_INDEX,
+                                                 PLAY_SYMBOL)
+                self.cad.lcd.store_custom_bitmap(self.PAUSE_SYMBOL_INDEX,
+                                                 PAUSE_SYMBOL)
+                self.cad.lcd.store_custom_bitmap(self.STOP_SYMBOL_INDEX,
+                                                 STOP_SYMBOL)
+                self.cad.lcd.store_custom_bitmap(self.INFO_SYMBOL_INDEX,
+                                                 INFO_SYMBOL)
+                self.cad.lcd.store_custom_bitmap(self.MUSIC_SYMBOL_INDEX,
+                                                 MUSIC_SYMBOL)
+                self.cad.lcd.store_custom_bitmap(self.TIME_SYMBOL_INDEX,
+                                                 TIME_SYMBOL)
+
 #                 for i in range(8):
 #                         for j in range(2):
 #                                 self.lcd.set_cursor(0,j)
@@ -141,7 +173,7 @@ class Piface_lcd:
 		# self.lcd.send_command(0x01,LCD_CMD) # clear display
 		self.lcd.blink_off()
 		self.lcd.cursor_off()
-		self.lcd.clear()
+		self.clear()
                 time.sleep(0.3)
 		self.lcd.backlight_on()
 		return
@@ -161,12 +193,21 @@ class Piface_lcd:
 
 	def clear(self):
 		self.lcd.clear()
+                for i in range (0,2):
+                        self.savelines[i] = "".ljust(self.width," ")
+
 
         def backlight(self,on):
                 if (on):
                         self.lcd.backlight_on()
                 else:
                         self.lcd.backlight_off()
+
+        def display(self,on):
+                if (on):
+                        self.lcd.display_on()
+                else:
+                        self.lcd.display_off()
 
 	# Set the display width
 	def setWidth(self,width):
@@ -180,15 +221,25 @@ class Piface_lcd:
                 s = message
 		if not self.RawMode:
 			s = self.translateSpecialChars(s)
-                log.message("LCD._string: " + s, log.DEBUG)
+                # log.message("LCD._string: " + s, log.DEBUG)
                 self.lcd.write(s);
 		return
 
+        def putSymbol(self,x,y,sym):
+                self.line(x,y,"{0:c}".format(sym),1)
+
 	# Display Line 1 on LED
-	def line(self,x,y,message):
-		text = message.ljust(self.width," ")
+	def line(self,x,y,message,length = None, clear = True):
+                if not self.is_locked:
+                        error_LCD_not_locked()
+                if not length:
+                        length = self.width
+		text = message.ljust(length," ")
                 leng = len(text)
                 end = x+leng
+                if clear:
+                        self.clear_scroll(x,y,leng)
+        
                 current_line = (self.savelines[y][0:x]
                                 + text
                                 + self.savelines[y][end:self.width])
@@ -207,34 +258,58 @@ class Piface_lcd:
                 self.savelines[y] = current_line
 		return
 
+        def clear_scroll(self,x,y,length):
+                tmp= []
+                for i in range (len(self.scrolllist)):
+                        if (self.scrolllist[i][1] != y or
+                            (self.scrolllist[i][0]+self.scrolllist[i][2] <= x or
+                             self.scrolllist[i][0] >= x + length)):
+                                tmp.append(self.scrolllist[i])
+                self.scrolllist = tmp
+
 	# Scroll message on line 1
 	def scroll(self,x,y,mytext):
 		self._scroll(mytext,x,y)
 		return
 
 	# Scroll line - interrupt() breaks out routine if True
-	def _scroll(self,mytext,x,y):
+	def _scroll(self,mytext,x,y,length=None):
 		ilen = len(mytext)
+                if x >= self.width: return
+                if  not length or (x+length > self.width):
+                        length = self.width - x
 		skip = False
 
-		self.line(x,y,mytext[0:self.width + 1])
+		self.line(x,y,mytext[0:length],length)
+                if ilen <= length: return
+                padding = " ".ljust(length," ")
+                self.scrolllist.append([x,
+                                        y,
+                                        length,
+                                        padding + mytext + padding,
+                                        length,
+                                        time.time()+self.ScrollDelay])
+
+
 	
-		if (ilen <= self.width):
-			skip = True
-
-		if not skip:
-			for i in range(0, 5):
-				time.sleep(0.2)
-
-		if not skip and False:
-			for i in range(0, ilen - self.width + 1 ):
-				self._byte_out(line, LCD_CMD)
-				self._string(mytext[i:i+self.width])
-				time.sleep(self.ScrollSpeed)
-
-		if not skip:
-			for i in range(0, 5):
-				time.sleep(0.2)
+#		if (ilen <= self.width):
+#			skip = True
+#
+#                skip = True
+#
+#		if not skip:
+#			for i in range(0, 5):
+#				time.sleep(0.2)
+#
+#		if not skip and False:
+#			for i in range(0, ilen - self.width + 1 ):
+#				self._byte_out(line, LCD_CMD)
+#				self._string(mytext[i:i+self.width])
+#				time.sleep(self.ScrollSpeed)
+#
+#		if not skip:
+#			for i in range(0, 5):
+#				time.sleep(0.2)
 		return
 
         # Set Scroll line speed - Best values are 0.2 and 0.3
@@ -310,8 +385,6 @@ class Piface_lcd:
 
         def buttonPressed(self,Wert):
                 retval = self.cad.switches[Wert].value
-                print ("Buttons: ",hex(self.cad.switch_port.value))
-                print ("Button %d = %d" % (Wert,self.cad.switches[Wert].value))
                 return retval
         def get_listener(self):
                 self.listener = pifacecad.SwitchEventListener(chip=self.cad)
@@ -319,11 +392,41 @@ class Piface_lcd:
 
         def lock(self):
                 self.lcdlock.acquire()
+                self.is_locked = True
 
         def unlock(self):
+                self.is_locked = False
                 self.lcdlock.release()
 
         def heartbeat(self):
+                current_time = time.time()
+                again = True
+                while again:
+                        again = False
+                        self.lock()
+                        for i in range(len(self.scrolllist)):
+                                log.message("Heartbeat {0}/{1}".format(current_time,
+                                                                       self.scrolllist[i][5]),
+                                            log.DEBUG)
+                                if current_time >= self.scrolllist[i][5]:
+                                        again = True
+                                        self.scrolllist[i][5]+=self.ScrollSpeed
+                                        self.scrolllist[i][4]+=1
+                                        if (self.scrolllist[i][4]+self.scrolllist[i][2] 
+                                            > len(self.scrolllist[i][3])):
+                                                self.scrolllist[i][4] = 0
+                                                self.line(
+                                                        self.scrolllist[i][0],
+                                                        self.scrolllist[i][1],
+                                                        self.scrolllist[i][3][self.scrolllist[i][4]:
+                                                                              self.scrolllist[i][4]+
+                                                                              self.scrolllist[i][2]],
+                                                        self.scrolllist[i][2],
+                                                        False)
+                        self.unlock()
+                                  
+                                        
+                                  
                 return
 
 # End of Lcd class

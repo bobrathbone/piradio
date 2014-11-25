@@ -48,6 +48,7 @@ USER=mopidy
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
 DAEMON=/usr/share/$NAME/$MAINFILE
+echo DAEMON=$DAEMON
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
 
@@ -70,7 +71,7 @@ do_start()
 	#   2 if daemon could not be started
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -g $GROUP -u $USER  -- \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -g $GROUP -u $USER  -- start \
 		$DAEMON_ARGS \
 		|| return 2
 	# The above code will not work for interpreted scripts, use the next

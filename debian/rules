@@ -28,5 +28,6 @@ include /usr/share/dpkg/default.mk
 #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
 
 
-
-
+clean:
+	dh clean --with python2
+	rm -f *.pyc
