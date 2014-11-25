@@ -3,8 +3,8 @@
 # Provides:          piradio
 # Should-Start:      
 # Should-Stop:       
-# Required-Start:    $remote_fs $syslog   
-# Required-Stop:     $remote_fs $syslog 
+# Required-Start:    $remote_fs $syslog lirc mopidy
+# Required-Stop:     $remote_fs $syslog lirc mopidy
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Raspberry PI Radio Daemon

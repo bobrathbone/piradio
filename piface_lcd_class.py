@@ -99,13 +99,21 @@ STOP_SYMBOL = pifacecad.LCDBitmap(
 TIME_SYMBOL = pifacecad.LCDBitmap(
         [0x0E, 0x15, 0x15, 0x15, 0x13, 0x11, 0x0E, 0x00])
 
+def heartbeat_run(self):
+        while True:
+                self.heartbeat()
+                time.sleep(0.1)
+                
+
+
 # Lcd Class 
 class Piface_lcd:
+        _update_thread = None
 	width = LCD_WIDTH
 	# If display can support umlauts set to True else False
 	displayUmlauts = True
         RawMode = False         # Test only
-        ScrollSpeed = 0.3       # Default scroll speed
+        ScrollSpeed = 0.4       # Default scroll speed
         ScrollDelay = 1.5
 
         ENTER = 5
@@ -151,6 +159,20 @@ class Piface_lcd:
                                                  MUSIC_SYMBOL)
                 self.cad.lcd.store_custom_bitmap(self.TIME_SYMBOL_INDEX,
                                                  TIME_SYMBOL)
+        def __enter__(self):
+                self.lock()
+                return
+
+        def __exit__(self,type,value,traceback):
+                self.unlock()
+        
+        def start(self):
+                self._update_thread = threading.Thread(name="LCD-heartbeat",
+                                                       group=None,
+                                                       target = heartbeat_run,
+                                                       args = [self])
+                self._update_thread.daemon = True
+                self._update_thread.start()
 
 #                 for i in range(8):
 #                         for j in range(2):
@@ -164,7 +186,6 @@ class Piface_lcd:
 	# Initialise for either revision 1 or 2 boards
 	def init(self):
                 
-                print ("init")
 		#self.lcd.send_command(0x33)
 		#self.lcd.send_command(0x32)
 		#self.lcd.send_command(0x28) # 4bit, 2 Zeilen, 5x8-font
@@ -291,7 +312,7 @@ class Piface_lcd:
                                         time.time()+self.ScrollDelay])
 
 
-	
+
 #		if (ilen <= self.width):
 #			skip = True
 #
@@ -403,18 +424,16 @@ class Piface_lcd:
                 again = True
                 while again:
                         again = False
-                        self.lock()
-                        for i in range(len(self.scrolllist)):
-                                log.message("Heartbeat {0}/{1}".format(current_time,
-                                                                       self.scrolllist[i][5]),
-                                            log.DEBUG)
-                                if current_time >= self.scrolllist[i][5]:
-                                        again = True
-                                        self.scrolllist[i][5]+=self.ScrollSpeed
-                                        self.scrolllist[i][4]+=1
-                                        if (self.scrolllist[i][4]+self.scrolllist[i][2] 
-                                            > len(self.scrolllist[i][3])):
-                                                self.scrolllist[i][4] = 0
+                        with self.lcdlock:
+                                self.is_locked = True
+                                for i in range(len(self.scrolllist)):
+                                        if current_time >= self.scrolllist[i][5]:
+                                                again = True
+                                                self.scrolllist[i][5]+=self.ScrollSpeed
+                                                self.scrolllist[i][4]+=1
+                                                if (self.scrolllist[i][4]+self.scrolllist[i][2]
+                                                    > len(self.scrolllist[i][3])):
+                                                        self.scrolllist[i][4] = 0
                                                 self.line(
                                                         self.scrolllist[i][0],
                                                         self.scrolllist[i][1],
@@ -423,10 +442,7 @@ class Piface_lcd:
                                                                               self.scrolllist[i][2]],
                                                         self.scrolllist[i][2],
                                                         False)
-                        self.unlock()
-                                  
-                                        
-                                  
+                                self.is_locked = False
                 return
 
 # End of Lcd class

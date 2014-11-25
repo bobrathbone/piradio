@@ -16,12 +16,16 @@ configdefaults = {
     'DEFAULT':{
         'package': package
     },
+    
     'Paths': {
         'pidfile': '/var/run/'+package+'.pid',
+        'playlist': '/var/lib/'+package+'/playlists',
+        'mountpoints': '/home/pi/Musik/media'
     },
     'Server': {
         'host': 'localhost',
-        'port': '6600'
+        'port': '6600',
+        'update_database_cmd': '/usr/bin/mopidy local update'
     },
     'Logging': {
         'level' : 'INFO',
@@ -29,6 +33,17 @@ configdefaults = {
         'stdin': '/dev/null',
         'stdout': '/dev/null',
         'stderr': '/dev/null',
+    },
+    'Settings': {
+        'playlist_format' : '%Y-%m-%d_%X',
+        'playlist_type': 'm3u',
+        'mount_command': "mount -t '{0}' -o user=pi '{1}' '{2}'",
+        'umount_command': "umount '{0}'",
+        'mount_devices':'/dev/sd*', 
+        'mount_label': "/sbin/blkid -s LABEL -o value '{0}'",
+        'mount_type': "/sbin/blkid -s TYPE -o value '{0}'",
+        'mount_UUID': "/sbin/blkid -s UUID -o value '{0}'",
+        'mount_devtypes': 'ext2:ext3:ext4:fat:vfat'
     }
 }
 

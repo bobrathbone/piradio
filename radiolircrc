@@ -12,11 +12,26 @@ begin
   config = back
 end
 
+
+begin
+  remote = *
+  button = key_clear
+  prog = pifacecad-radio-ts
+  config = clear
+end
+
 begin
   remote = *
   button = key_menu
   prog = pifacecad-radio-ts
   config = menu
+end
+
+begin
+  remote = *
+  button = key_setup
+  prog = pifacecad-radio-ts
+  config = setup
 end
 
 begin
@@ -87,6 +102,7 @@ begin
   button = key_volumeup
   prog = pifacecad-radio-ts
   config = volumeup
+  repeat = 1
 end
 
 begin
@@ -94,6 +110,7 @@ begin
   button = key_volumedown
   prog = pifacecad-radio-ts
   config = volumedown
+  repeat = 1
 end
 
 begin

@@ -24,6 +24,7 @@ import time
 import string
 import datetime 
 import atexit
+import signal
 import shutil
 import threading
 import lirc
@@ -65,8 +66,10 @@ def finish():
                 if irlistener_activated: irlistenter.deactivate()
 #	radio.execCommand("umount /media  > /dev/null 2>&1")
 #	radio.execCommand("umount /share  > /dev/null 2>&1")
+        lcd.lock()
 	lcd.line(0,0, "Radio stopped")
         lcd.backlight(False)
+        lcd.unlock()
 
 
 def statuscallback(text):
@@ -95,6 +98,7 @@ class MyDaemon(Daemon):
                 # 		lcd.line(0,1, "IP " + ipaddr)
                 #		time.sleep(4)
                 lcd.backlight(True)
+                lcd.start()
 		log.message("Starting Radio", log.INFO)
 		lcd.line(0,0, "Starting Radio")
 		radio.start(statuscallback)
@@ -111,99 +115,31 @@ class MyDaemon(Daemon):
                 menu.set_radio(radio)
                 menu.set_lcd(lcd)
 		 	
-		reload(lcd,radio)
+		#reload(lcd,radio)
 		#radio.play(get_stored_id(CurrentFile))
                 menu.submenu(menu.date_play_menu())
-		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
+                menu.addCallbacks(radio)
 
                 atexit.register(finish)
+                def killhandler (signum,frame):
+                        finish()
+                        sys.exit(0)
+                signal.signal(signal.SIGTERM, killhandler)
+                signal.signal(signal.SIGINT, killhandler)
+                
                 listener = lcd.get_listener()
-                listener.register(lcd.BUTTON1,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.button1)
-                listener.register(lcd.BUTTON2,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.button2)
-                listener.register(lcd.BUTTON3,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.button3)
-                listener.register(lcd.BUTTON4,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.button4)
-                listener.register(lcd.BUTTON5,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.button5)
-                listener.register(lcd.LEFT,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.leftswitch)
-                listener.register(lcd.RIGHT,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.rightswitch)
-                listener.register(lcd.ENTER,
-                                  pifacecad.IODIR_ON,
-                                  menu.menukeys.leftrightbutton)
-                listener.register(lcd.BUTTON1,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.button1_off)
-                listener.register(lcd.BUTTON2,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.button2_off)
-                listener.register(lcd.BUTTON3,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.button3_off)
-                listener.register(lcd.BUTTON4,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.button4_off)
-                listener.register(lcd.BUTTON5,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.button5_off)
-                listener.register(lcd.LEFT,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.leftswitch_off)
-                listener.register(lcd.RIGHT,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.rightswitch_off)
-                listener.register(lcd.ENTER,
-                                  pifacecad.IODIR_OFF,
-                                  menu.menukeys.leftrightbutton_off)
+                menu.register_buttons(listener)
                 listener.activate()
+
                 irlistener = pifacecad.IREventListener(
                         prog="pifacecad-radio-ts",
                         lircrc="/etc/lirc/radiolircrc")
-                for i in range(10):
-                        irlistener.register(str(i), menu.menukeys.key)
-                irlistener.register("home",menu.menukeys.home)
-                irlistener.register("back",menu.menukeys.back)
-                irlistener.register("menu",menu.menukeys.menu)
-                irlistener.register("tv",menu.menukeys.tv)
-                irlistener.register("power",menu.menukeys.power)
-                irlistener.register("up",menu.menukeys.up)
-                irlistener.register("down",menu.menukeys.down)
-                irlistener.register("left",menu.menukeys.left)
-                irlistener.register("right",menu.menukeys.right)
-                irlistener.register("enter",menu.menukeys.enter)
-                irlistener.register("ok",menu.menukeys.ok)
-                irlistener.register("volumeup",menu.menukeys.volumeup)
-                irlistener.register("volumedown",menu.menukeys.volumedown)
-                irlistener.register("mute",menu.menukeys.mute)
-                irlistener.register("channelup",menu.menukeys.channelup)
-                irlistener.register("channeldown",menu.menukeys.channeldown)
-                irlistener.register("previous",menu.menukeys.previous)
-                irlistener.register("stop",menu.menukeys.stop)
-                irlistener.register("record",menu.menukeys.record)
-                irlistener.register("previoussong",menu.menukeys.previoussong)
-                irlistener.register("nextsong",menu.menukeys.nextsong)
-                irlistener.register("pause",menu.menukeys.pause)
-                irlistener.register("play",menu.menukeys.play)
-                irlistener.register("rewind",menu.menukeys.rewind)
-                irlistener.register("fastforward",menu.menukeys.fastforward)
-                irlistener.register("text",menu.menukeys.text)
-                irlistener.register("subtitle",menu.menukeys.subtitle)
+                menu.register_irkeys(irlistener)
                         
                 try:
                         irlistener.activate()
                 except lirc.InitError:
-                        log.message("Could not initialise IR, radio running without IR contorls.",log.WARNING)
+                        log.message("Could not initialise IR, radio running without IR controls.",log.WARNING)
                         irlistener_activated = False
                 else:
                         irlistener_activated = True
@@ -720,6 +656,7 @@ def reload(lcd,radio):
 # 	elif source == radio.PLAYER:
 		# mount_usb(lcd)
 		# mount_share()
+        radio.reloadPlayList()
 #        current = radio.("current")
 #		if len(current) < 1:
 #			update_library(lcd,radio)
