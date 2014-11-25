@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_daemon.sh,v 1.7 2014/06/22 12:10:15 bob Exp $
+# $Id: select_daemon.sh,v 1.8 2014/10/05 14:18:10 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -19,11 +19,11 @@ DAEMON=radiod.py
 INIT=/etc/init.d/radiod
 # Display types
 LCD=3	# LCD screen (direct)
-ADA=4	# Adafruit LCD plate
+I2C=4	# Requires I2C libraries
 PIFACE=5 # piface radio
 
 echo
-echo "Radio daemon and board revision selection"
+echo "Radio daemon selection"
 echo
 echo "Select the radio daemon to be installed 1-5:"
 echo
@@ -33,6 +33,8 @@ echo "3) Two line LCD with rotary encoders  (rradiod.py)"
 echo "4) Four line LCD with rotary encoders (rradio4.py)"
 echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
 echo "6) Two line Piface Control & Display with push buttons (piface_radio.py)"
+echo "7) Two line LCD with I2C backpack and rotary encoders (rradiobp.py)"
+echo "8) Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)"
 echo "x) Exit"
 echo -n "Select version: "
 
@@ -42,26 +44,41 @@ do
 		DAEMON=radiod.py
 		TYPE=${LCD}
 		break
+
 	elif [[ ${ans} == '2' ]]; then
 		DAEMON=radio4.py
 		TYPE=${LCD}
 		break
+
 	elif [[ ${ans} == '3' ]]; then
 		DAEMON=rradiod.py
 		TYPE=${LCD}
 		break
+
 	elif [[ ${ans} == '4' ]]; then
 		DAEMON=rradio4.py
 		TYPE=${LCD}
 		break
+
 	elif [[ ${ans} == '5' ]]; then
 		DAEMON=ada_radio.py
-		TYPE=${ADA}
+		TYPE=${I2C}
 		break
-	elif [[ ${ans} == '5' ]]; then
+	elif [[ ${ans} == '6' ]]; then
 		DAEMON=piface_radio.py
 		TYPE=${PIFACE}
 		break
+
+	elif [[ ${ans} == '7' ]]; then
+		DAEMON=rradiobp.py
+		TYPE=${I2C}
+		break
+
+	elif [[ ${ans} == '8' ]]; then
+		DAEMON=rradiobp4.py
+		TYPE=${I2C}
+		break
+
 	elif [[ ${ans} == 'x' ]]; then
 		exit 0
 	else

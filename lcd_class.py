@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class.py,v 1.22 2014/08/29 10:25:14 bob Exp $
+# $Id: lcd_class.py,v 1.25 2014/09/24 07:47:41 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -22,11 +22,10 @@
 #             The authors shall not be liable for any loss or damage however caused.
 #
 
-
-
 import os
 import time
 import RPi.GPIO as GPIO
+from translate_class import Translate
 
 # The wiring for the LCD is as follows:
 # 1 : GND
@@ -77,11 +76,12 @@ E_PULSE = 0.00005
 E_DELAY = 0.00005
 
 
+translate = Translate()
+
 # Lcd Class 
 class Lcd:
 	width = LCD_WIDTH
 	# If display can support umlauts set to True else False
-	displayUmlauts = True
         RawMode = False         # Test only
         ScrollSpeed = 0.3       # Default scroll speed
 	lcd_d4 = LCD_D4_27	# Default for revision 2 boards 
@@ -90,7 +90,7 @@ class Lcd:
 		return
 
 	# Initialise for either revision 1 or 2 boards
-	def init(self,revision):
+	def init(self,revision=2):
         # LED outputs
 		if revision == 1:
 			self.lcd_d4 = LCD_D4_21
@@ -174,7 +174,7 @@ class Lcd:
 	def _string(self,message):
 		s = message.ljust(self.width," ")
 		if not self.RawMode:
-			s = self.translateSpecialChars(s)
+			s = translate.toLCD(s)
 		for i in range(self.width):
 			self._byte_out(ord(s[i]),LCD_CHR)
 		return
@@ -272,61 +272,5 @@ class Lcd:
         def setRawMode(self,value):
                 self.RawMode = value
                 return
-
-	# Display umlats if tro elese oe ae etc
-        def displayUmlauts(self,value):
-                self.displayUmlauts = value
-                return
-
-	# Translate special characters (umlautes etc) to LCD values
-	# See standard character patterns for LCD display
-	def translateSpecialChars(self,sp):
-		s = sp
-
-                # Currency
-                s = s.replace(chr(156), '#')       # Pound by hash
-                s = s.replace(chr(169), '(c)')     # Copyright
-
-                # Spanish french
-                s = s.replace(chr(241), 'n')       # Small tilde n
-                s = s.replace(chr(191), '?')       # Small u acute to u
-                s = s.replace(chr(224), 'a')       # Small a grave to a
-                s = s.replace(chr(225), 'a')       # Small a acute to a
-                s = s.replace(chr(226), 'a')       # Small a circumflex to a
-                s = s.replace(chr(232), 'e')       # Small e grave to e
-                s = s.replace(chr(233), 'e')       # Small e acute to e
-                s = s.replace(chr(234), 'e')       # Small e circumflex to e
-                s = s.replace(chr(237), 'i')       # Small i acute to i
-                s = s.replace(chr(238), 'i')       # Small i circumflex to i
-                s = s.replace(chr(243), 'o')       # Small o acute to o
-                s = s.replace(chr(244), 'o')       # Small o circumflex to o
-                s = s.replace(chr(250), 'u')       # Small u acute to u
-                s = s.replace(chr(193), 'A')       # Capital A acute to A
-                s = s.replace(chr(201), 'E')       # Capital E acute to E
-                s = s.replace(chr(205), 'I')       # Capital I acute to I
-                s = s.replace(chr(209), 'N')       # Capital N acute to N
-                s = s.replace(chr(211), 'O')       # Capital O acute to O
-                s = s.replace(chr(218), 'U')       # Capital U acute to U
-                s = s.replace(chr(220), 'U')       # Capital U umlaut to U
-                s = s.replace(chr(231), 'c')       # Small c Cedilla
-                s = s.replace(chr(199), 'C')       # Capital C Cedilla
-
-                # German
-                s = s.replace(chr(196), "Ae")           # A umlaut
-                s = s.replace(chr(214), "Oe")           # O umlaut
-                s = s.replace(chr(220), "Ue")           # U umlaut
-
-                if self.displayUmlauts:
-                        s = s.replace(chr(223), chr(226))       # Sharp s
-                        s = s.replace(chr(246), chr(239))       # o umlaut
-                        s = s.replace(chr(228), chr(225))       # a umlaut
-                        s = s.replace(chr(252), chr(245))       # u umlaut
-                else:
-                        s = s.replace(chr(228), "ae")           # a umlaut
-                        s = s.replace(chr(223), "ss")           # Sharp s
-                        s = s.replace(chr(246), "oe")           # o umlaut
-                        s = s.replace(chr(252), "ue")           # u umlaut
-		return s
-
 
 # End of Lcd class

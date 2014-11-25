@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 #
-# $Id: rss_class.py,v 1.18 2014/04/08 13:26:51 bob Exp $
+# $Id: rss_class.py,v 1.21 2014/09/10 12:49:54 bob Exp $
 # Raspberry Pi RSS feed class
 #
 # Author : Bob Rathbone
@@ -25,6 +25,18 @@ from translate_class import Translate
 log = Log()
 translate = Translate()
 
+
+# Tags to strip out
+tags = ['<h1>', '</h1>',
+	'<h2>', '</h2>',
+	'<h3>', '</h3>',
+	'<h4>', '</h4>',
+	'<p>', '</p>', '<p/>',
+	'<br>', '</br>','<br/>',
+	'<strong>', '</strong>',
+	'<title>', '</title>',
+	'<description>', '</description>',
+	]
 
 class Rss:
         rss = []	# Array for the RSS feed
@@ -61,6 +73,7 @@ class Rss:
 			line = self.rss.pop()
 			self.length -= 1
 			feed = translate.all(line)
+			feed = feed.lstrip('"')
 			log.message(feed,log.DEBUG)
 		return feed
 
@@ -73,7 +86,7 @@ class Rss:
 		rss = []
                 if os.path.isfile(url):
 			rss_feed = self.exec_cmd("cat " + url)
-			log.message("Getting RSS feed: " + rss_feed,log.DEBUG)
+			log.message("Getting RSS feed: " + rss_feed,log.INFO)
 			file = urllib2.urlopen(rss_feed)
 			data = file.read()
 			file.close()
@@ -83,24 +96,53 @@ class Rss:
 			for news in dom.getElementsByTagName('*'):
 				display = False
 				line = news.toxml()
+				line = line.replace("&lt;", "<")	# Replace special string
+				line = line.replace("&gt;", ">")
+				
+				msg =  "LINE:" + line
 				line = line.lstrip(' ')
 				if (line.find("VIDEO:") != -1):
 					continue
 				if (line.find("AUDIO:") != -1):
 					continue
-				if (line.find("<title>") == 0):
+				if (line.find("<rss") != -1):
+					continue
+				if (line.find("<item") != -1):
+					continue
+				if (line.find("<image") == 0):
+					continue
+
+				if (line.find("<title>") >= 0):
 					display= True
-				if (line.find("<description>") == 0):
+				if (line.find("<description>") >= 0):
 					display= True
+
 				if display:
+					title = ''
+					description = ''
 					line = line.rstrip(' ')
-					line = line.replace("<title>", "")
-					line = line.replace("</title>", "")
-					line = line.replace("<description>", "")
-					line = line.replace("</description>", "")
 					line = line.replace("![CDATA[", "")
 					line = line.replace("]]>", "")
-					rss.append(line)
+
+					if (line.find("<description>") == 0):
+						description = line.split("</description>", 2)[0]
+						description = self._strip_string(description, "<img", "</img>")
+						description = self._strip_string(description, "<a href", "</a>")
+						description = self._strip_string(description, "<br ", "</br>")
+
+					if (line.find("<title>") >= 0):
+						title = line.split("</title>", 2)[0]
+
+					if len(title) > 0:
+						for tag in tags:	# Strip out HTML tags
+							title = title.replace(tag, "")
+						rss.append(title)
+
+					if len(description) > 0:
+						for tag in tags:	# Strip out HTML tags
+							description = description.replace(tag, "")
+						rss.append(description)
+
 					self.feed_available = True
 		rss.reverse()
 		return rss
@@ -110,5 +152,25 @@ class Rss:
 		p = os.popen(cmd)
 		result = p.readline().rstrip('\n')
 		return result
+
+	# Strip string (between tags)
+	def _strip_string(self, text, s_start, s_end):
+		new_text = text
+		
+		try:
+			while new_text.find(s_start) > 0:
+				idx_start = new_text.find(s_start)
+				replace_str = new_text[idx_start:]
+				idx_end = replace_str.find(s_end)
+				if idx_end < 0:
+					idx_end = replace_str.find("/>")
+					len2 = 2	
+				else:
+					len2 = len(s_end)
+				replace_str = replace_str[0:idx_end + len2]
+				new_text =  new_text.replace(replace_str,'')
+		except:
+			new_text = text
+		return new_text
 
 # End of class

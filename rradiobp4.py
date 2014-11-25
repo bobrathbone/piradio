@@ -2,9 +2,9 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# Rotary encoder version 4 x 20 character LCD version
+# Rotary encoder version 4 x 20 character I2C LCD interface
 #
-# $Id: rradio4.py,v 1.45 2014/09/10 13:47:38 bob Exp $
+# $Id: rradiobp4.py,v 1.1 2014/10/05 08:37:59 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -34,7 +34,7 @@ import traceback
 # Class imports
 from radio_daemon import Daemon
 from radio_class import Radio
-from lcd_class import Lcd
+from lcd_i2c_class import lcd_i2c
 from log_class import Log
 from rss_class import Rss
 from rotary_class import RotaryEncoder
@@ -61,7 +61,7 @@ CurrentFile = CurrentStationFile
 
 log = Log()
 radio = Radio()
-lcd = Lcd()
+lcd = lcd_i2c()
 rss = Rss()
 
 # Signal SIGTERM handler
@@ -95,6 +95,7 @@ class MyDaemon(Daemon):
 
 		boardrevision = radio.getBoardRevision()
 		lcd.init(boardrevision)
+		lcd.backlight(True)
 		lcd.setWidth(20)
 		lcd.line1("Radio version " + radio.getVersion())
 		time.sleep(0.5)

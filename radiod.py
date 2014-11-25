@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radiod.py,v 1.79 2014/08/13 10:19:41 bob Exp $
+# $Id: radiod.py,v 1.80 2014/11/01 08:53:04 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -357,7 +357,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_search(radio,UP)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,UP)
@@ -387,7 +387,7 @@ def get_switch_states(lcd,radio,rss):
 					scroll_search(radio,DOWN)
 					display_search(lcd,radio)
 					time.sleep(wait)
-					wait = 0.2
+					wait = 0.1
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,DOWN)
@@ -413,7 +413,7 @@ def get_switch_states(lcd,radio,rss):
                                         scroll_artist(radio,DOWN)
                                         display_search(lcd,radio)
                                         time.sleep(wait)
-                                        wait = 0.2
+                                        wait = 0.1
                                 interrupt = True
 
 			else:
@@ -450,7 +450,7 @@ def get_switch_states(lcd,radio,rss):
                                         scroll_artist(radio,UP)
                                         display_search(lcd,radio)
                                         time.sleep(wait)
-                                        wait = 0.2
+                                        wait = 0.1
 				interrupt = True
 			else:
 				# Increase volume
