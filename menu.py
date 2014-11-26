@@ -1784,8 +1784,9 @@ class rss_menu(menu):
     def displayMode(self):
         self.display_time(10,0)
 	rss_line = rss.getFeed()
-	lcd.setScrollSpeed(0.2) # Display rss feeds a bit quicker
-	lcd.scroll(0, 1, rss_line)
+        with lcd:
+            lcd.setScrollSpeed(0.2) # Display rss feeds a bit quicker
+            lcd.scroll(0, 1, rss_line)
 
 class sleep_menu(menu):
     def get_parent_menu(self):
