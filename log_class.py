@@ -10,11 +10,12 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+#	     The authors shall not be liable for any loss or damage however caused.
 #
 
 import os
 import logging
+import config
 
 
 class Log:
@@ -25,23 +26,17 @@ class Log:
 	DEBUG = logging.DEBUG
 	NONE = 0
 
-	RadioLibDir = "/var/lib/radiod"
-	LogLevelFile = RadioLibDir + "/loglevel"
-
 	module = ''
 	level = logging.INFO
 
-        def __init__(self):
-                return 
+	def __init__(self):
+		return 
 
 	def init(self,module):
 		self.module = module
-                # Set up loglevel file
-                if not os.path.isfile(self.LogLevelFile) or os.path.getsize(self.LogLevelFile) == 0:
-                        os.popen("echo INFO > " + self.LogLevelFile)
-			os.popen("echo INFO > " + self.LogLevelFile)
+		# Set up loglevel file
 		self.level = self.getLevel()
-                return 
+		return 
 
 	def message(self,message,level):
 		# Set up logging, level can be INFO, WARNING, ERROR, DEBUG or NONE
@@ -70,25 +65,18 @@ class Log:
 		return
 
 	# Get the log level from the configuration file
-        def getLevel(self):
-                self.loglevel = logging.INFO
-                if os.path.isfile(self.LogLevelFile):
-                        try:
-                                p = os.popen("cat " + self.LogLevelFile)
-                                strLogLevel = p.readline().rstrip('\n')
-                                if strLogLevel == "DEBUG":
-                                        self.loglevel = logging.DEBUG
-                                elif strLogLevel == "WARNING":
-                                        self.loglevel = logging.WARNING
-                                elif strLogLevel == "ERROR":
-                                        self.loglevel = logging.ERROR
-                                elif strLogLevel == "NONE":
-                                        self.loglevel = self.NONE
-
-                        except ValueError:
-                                self.loglevel = logging.INFO
-
-                return self.loglevel
+	def getLevel(self):
+		self.loglevel = logging.INFO
+		strLogLevel = config.config.get("Logging","level")
+                if strLogLevel == "DEBUG":
+                        self.loglevel = logging.DEBUG
+                elif strLogLevel == "WARNING":
+                        self.loglevel = logging.WARNING
+                elif strLogLevel == "ERROR":
+                        self.loglevel = logging.ERROR
+                elif strLogLevel == "NONE":
+                        self.loglevel = self.NONE
+		return self.loglevel
 
 # End of log class
 

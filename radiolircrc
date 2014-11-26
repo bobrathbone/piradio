@@ -1,0 +1,282 @@
+begin
+  remote = *
+  button = key_home
+  prog = pifacecad-radio-ts
+  config = home
+end
+
+begin
+  remote = *
+  button = key_back
+  prog = pifacecad-radio-ts
+  config = back
+end
+
+
+begin
+  remote = *
+  button = key_clear
+  prog = pifacecad-radio-ts
+  config = clear
+end
+
+begin
+  remote = *
+  button = key_menu
+  prog = pifacecad-radio-ts
+  config = menu
+end
+
+begin
+  remote = *
+  button = key_setup
+  prog = pifacecad-radio-ts
+  config = setup
+end
+
+begin
+  remote = *
+  button = key_tv
+  prog = pifacecad-radio-ts
+  config = tv
+end
+
+begin
+  remote = *
+  button = key_radio
+  prog = pifacecad-radio-ts
+  config = radio
+end
+
+begin
+  remote = *
+  button = key_power
+  prog = pifacecad-radio-ts
+  config = power
+end
+
+begin
+  remote = *
+  button = key_up
+  prog = pifacecad-radio-ts
+  config = up
+end
+
+begin
+  remote = *
+  button = key_down
+  prog = pifacecad-radio-ts
+  config = down
+end
+
+begin
+  remote = *
+  button = key_left
+  prog = pifacecad-radio-ts
+  config = left
+end
+
+begin
+  remote = *
+  button = key_right
+  prog = pifacecad-radio-ts
+  config = right
+end
+
+begin
+  remote = *
+  button = key_ok
+  prog = pifacecad-radio-ts
+  config = ok
+end
+
+begin
+  remote = *
+  button = key_enter
+  prog = pifacecad-radio-ts
+  config = enter
+end
+
+begin
+  remote = *
+  button = key_volumeup
+  prog = pifacecad-radio-ts
+  config = volumeup
+  repeat = 1
+end
+
+begin
+  remote = *
+  button = key_volumedown
+  prog = pifacecad-radio-ts
+  config = volumedown
+  repeat = 1
+end
+
+begin
+  remote = *
+  button = key_mute
+  prog = pifacecad-radio-ts
+  config = mute
+end
+
+begin
+  remote = *
+  button = key_channelup
+  prog = pifacecad-radio-ts
+  config = channelup
+end
+
+begin
+  remote = *
+  button = key_channeldown
+  prog = pifacecad-radio-ts
+  config = channeldown
+end
+
+begin
+  remote = *
+  button = key_previous
+  prog = pifacecad-radio-ts
+  config = previous
+end
+
+begin
+  remote = *
+  button = key_stop
+  prog = pifacecad-radio-ts
+  config = stop
+end
+
+begin
+  remote = *
+  button = key_record
+  prog = pifacecad-radio-ts
+  config = record
+end
+
+begin
+  remote = *
+  button = key_previoussong
+  prog = pifacecad-radio-ts
+  config = previoussong
+end
+
+begin
+  remote = *
+  button = key_nextsong
+  prog = pifacecad-radio-ts
+  config = nextsong
+end
+
+begin
+  remote = *
+  button = key_pause
+  prog = pifacecad-radio-ts
+  config = pause
+end
+
+begin
+  remote = *
+  button = key_play
+  prog = pifacecad-radio-ts
+  config = play
+end
+
+begin
+  remote = *
+  button = key_rewind
+  prog = pifacecad-radio-ts
+  config = rewind
+end
+
+begin
+  remote = *
+  button = key_fastforward
+  prog = pifacecad-radio-ts
+  config = fastforward
+end
+
+begin
+  remote = *
+  button = key_text
+  prog = pifacecad-radio-ts
+  config = text
+end
+
+begin
+  remote = *
+  button = key_subtitle
+  prog = pifacecad-radio-ts
+  config = subtitle
+end
+
+begin
+  remote = *
+  button = key_0
+  prog = pifacecad-radio-ts
+  config = 0
+end
+
+begin
+  remote = *
+  button = key_1
+  prog = pifacecad-radio-ts
+  config = 1
+end
+
+begin
+  remote = *
+  button = key_2
+  prog = pifacecad-radio-ts
+  config = 2
+end
+
+begin
+  remote = *
+  button = key_3
+  prog = pifacecad-radio-ts
+  config = 3
+end
+
+begin
+  remote = *
+  button = key_4
+  prog = pifacecad-radio-ts
+  config = 4
+end
+
+begin
+  remote = *
+  button = key_5
+  prog = pifacecad-radio-ts
+  config = 5
+end
+
+begin
+  remote = *
+  button = key_6
+  prog = pifacecad-radio-ts
+  config = 6
+end
+
+begin
+  remote = *
+  button = key_7
+  prog = pifacecad-radio-ts
+  config = 7
+end
+
+begin
+  remote = *
+  button = key_8
+  prog = pifacecad-radio-ts
+  config = 8
+end
+
+begin
+  remote = *
+  button = key_9
+  prog = pifacecad-radio-ts
+  config = 9
+end

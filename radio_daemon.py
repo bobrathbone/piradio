@@ -15,6 +15,7 @@
 
 import sys, os, time, atexit
 from signal import SIGTERM 
+import config
 
 class Daemon:
 	"""
@@ -22,7 +23,10 @@ class Daemon:
 	
 	Usage: subclass the Daemon class and override the run() method
 	"""
-	def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+	def __init__(self, pidfile, 
+                     stdin=config.config.get("Logging","stdin"),
+                     stdout=config.config.get("Logging","stdout"),
+                     stderr=config.config.get("Logging","stderr")):
 		self.stdin = stdin
 		self.stdout = stdout
 		self.stderr = stderr
@@ -34,29 +38,29 @@ class Daemon:
 		Programming in the UNIX Environment" for details (ISBN 0201563177)
 		http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
 		"""
-		try: 
-			pid = os.fork() 
-			if pid > 0:
-				# exit first parent
-				sys.exit(0) 
-		except OSError, e: 
-			sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-			sys.exit(1)
+                try: 
+                        pid = os.fork() 
+                        if pid > 0:
+                                # exit first parent
+                                sys.exit(0) 
+                except OSError as e: 
+                        sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
+                        sys.exit(1)
 	
 		# decouple from parent environment
 		os.chdir("/") 
 		os.setsid() 
 		os.umask(0) 
 	
-		# do second fork
-		try: 
-			pid = os.fork() 
-			if pid > 0:
-				# exit from second parent
-				sys.exit(0) 
-		except OSError, e: 
-			sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-			sys.exit(1) 
+                # do second fork
+                try: 
+                        pid = os.fork() 
+                        if pid > 0:
+                                # exit from second parent
+                                sys.exit(0) 
+                except OSError as e: 
+                        sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
+                        sys.exit(1) 
 	
 		# redirect standard file descriptors
 		sys.stdout.flush()
@@ -67,7 +71,8 @@ class Daemon:
 		os.dup2(si.fileno(), sys.stdin.fileno())
 		os.dup2(so.fileno(), sys.stdout.fileno())
 		os.dup2(se.fileno(), sys.stderr.fileno())
-	
+                print >> sys.stderr,time.asctime()
+
 		# write pidfile
 		atexit.register(self.delpid)
 		pid = str(os.getpid())
@@ -84,9 +89,10 @@ class Daemon:
 		try:
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
-			pf.close()
+                        pf.close()
 		except IOError:
 			pid = None
+                        print ("no pid")
 	
 		if pid:
 			message = "pidfile %s already exist. Daemon already running?\n"
@@ -101,7 +107,7 @@ class Daemon:
 		"""
 		Stop the daemon
 		"""
-		# Get the pid from the pidfile
+# Get the pid from the pidfile
 		try:
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
@@ -121,15 +127,14 @@ class Daemon:
 				os.kill(pid, SIGTERM)
 				time.sleep(0.2)
 				count -= 1
-			sys.exit(0)
 
-		except OSError, err:
+		except OSError as err:
 			err = str(err)
 			if err.find("No such process") > 0:
 				if os.path.exists(self.pidfile):
 					os.remove(self.pidfile)
 			else:
-				print str(err)
+				print (str(err))
 				sys.exit(1)
 
 	def restart(self):

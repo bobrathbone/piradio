@@ -1,0 +1,130 @@
+Description: 1st try to get piradio running
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ piradio (3.13-0ts-1) unstable; urgency=low
+ .
+   * Initial release.
+Author: Tobias Schlemmer <keinstein@users.sourceforge.net>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- piradio-3.13-0ts.orig/piface_radio.py
++++ piradio-3.13-0ts/piface_radio.py
+@@ -163,7 +163,7 @@ class MyDaemon(Daemon):
+                 listener.activate()
+                 irlistener = pifacecad.IREventListener(
+                         prog="pifacecad-radio-ts",
+-                        lircrc="/home/pi/radio/radiolircrc")
++                        lircrc="/etc/lirc/radiolircrc")
+                 for i in range(10):
+                         irlistener.register(str(i), menu.menukeys.key)
+                 try:
+@@ -667,6 +667,10 @@ def update_library(lcd,radio):
+ 	radio.loadMusic()
+ 	return
+ 
++
++def reload_lcd_callback(text):
++        lcd.line(0,1,text)
++
+ # Reload if new source selected (RADIO or PLAYER)
+ def reload(lcd,radio):
+         lcd.lock()
+@@ -676,13 +680,8 @@ def reload(lcd,radio):
+ 
+ 	source = radio.getSource()
+ 	if source == radio.RADIO:
+-		lcd.line(0,1, "Radio Stations")
+-		dirList=os.listdir("/var/lib/mpd/playlists")
+-		for fname in dirList:
+-			log.message("Loading " + fname, log.DEBUG)
+-			lcd.line(0,1, fname)
+-			time.sleep(0.1)
+-		radio.loadStations()
++		lcd.line(0,0, "Radio Stations")
++		radio.loadStations(reload_lcd_callback)
+ 
+ 	elif source == radio.PLAYER:
+ 		mount_usb(lcd)
+--- piradio-3.13-0ts.orig/radio_class.py
++++ piradio-3.13-0ts/radio_class.py
+@@ -27,7 +27,7 @@ from translate_class import Translate
+ from mpd import MPDClient
+ 
+ # System files
+-RadioLibDir = "/var/lib/radiod"
++RadioLibDir = "/var/lib/piradio"
+ CurrentStationFile = RadioLibDir + "/current_station"
+ CurrentTrackFile = RadioLibDir + "/current_track"
+ VolumeFile = RadioLibDir + "/volume"
+@@ -166,21 +166,21 @@ class Radio:
+ 			self.execCommand ("echo off > " + StreamFile)
+ 
+ 		# Create mount point for USB stick link it to the music directory
+-		if not os.path.isfile("/media"):
+-			self.execCommand("mkdir -p /media")
+-			if not os.path.ismount("/media"):
+-				self.execCommand("chown pi:pi /media")
+-			self.execCommand("ln -f -s /media /var/lib/mpd/music")
+-
+-		# Create mount point for networked music library (NAS)
+-		if not os.path.isfile("/share"):
+-			self.execCommand("mkdir -p /share")
+-			if not os.path.ismount("/share"):
+-				self.execCommand("chown pi:pi /share")
+-			self.execCommand("ln -f -s /share /var/lib/mpd/music")
+-
+-		self.execCommand("chown -R pi:pi " + RadioLibDir)
+-		self.execCommand("chmod -R 764 " + RadioLibDir)
++# 		if not os.path.isfile("/media"):
++# 			self.execCommand("mkdir -p /media")
++# 			if not os.path.ismount("/media"):
++# 				self.execCommand("chown pi:pi /media")
++# 			self.execCommand("ln -f -s /media /var/lib/piradio/music")
++# 
++# 		# Create mount point for networked music library (NAS)
++# 		if not os.path.isfile("/share"):
++# 			self.execCommand("mkdir -p /share")
++# 			if not os.path.ismount("/share"):
++# 				self.execCommand("chown pi:pi /share")
++# 			self.execCommand("ln -f -s /share /var/lib/mpd/music")
++# 
++# 		self.execCommand("chown -R pi:pi " + RadioLibDir)
++# 		self.execCommand("chmod -R 764 " + RadioLibDir)
+ 		self.current_file = CurrentStationFile
+ 		self.current_id = self.getStoredID(self.current_file)
+                 
+@@ -1077,15 +1077,16 @@ class Radio:
+ 		return
+ 
+ 	# Load radio stations
+-	def loadStations(self):
++	def loadStations(self,callback):
+ 		log.message("radio.loadStations", log.DEBUG)
+ 		self.execMpc(client.clear())
+ 
+-		dirList = os.listdir("/var/lib/mpd/playlists")
++		dirList = os.listdir("/var/lib/piradio/playlists")
+ 		for fname in dirList:
+ 			cmd = "load \"" + fname.strip("\n") + "\""
+ 			log.message(cmd, log.DEBUG)
+ 			fname = fname.strip("\n")
++                        callback(fname)
+ 			try:
+ 				self.execMpc(client.load(fname))
+ 			except:

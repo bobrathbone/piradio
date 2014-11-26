@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Do you like debian?
+db_input high piradio/lcd || true
+db_go || true
+
+db_input high piradio/user || true
+db_go || true
+
+db_input high piradio/group || true
+db_go || true
+
+# Check their answer.
+#db_get foo/like_debian
+#if [ "$RET" = "false" ]; then
+    # Poor misguided one..
+#    db_input high foo/why_debian_is_great || true
+#    db_go
+#fi

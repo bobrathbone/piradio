@@ -20,6 +20,7 @@ INIT=/etc/init.d/radiod
 # Display types
 LCD=3	# LCD screen (direct)
 I2C=4	# Requires I2C libraries
+PIFACE=5 # piface radio
 
 echo
 echo "Radio daemon selection"
@@ -31,8 +32,9 @@ echo "2) Four line LCD with push buttons (radio4.py)"
 echo "3) Two line LCD with rotary encoders  (rradiod.py)"
 echo "4) Four line LCD with rotary encoders (rradio4.py)"
 echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
-echo "6) Two line LCD with I2C backpack and rotary encoders (rradiobp.py)"
-echo "7) Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)"
+echo "6) Two line Piface Control & Display with push buttons (piface_radio.py)"
+echo "7) Two line LCD with I2C backpack and rotary encoders (rradiobp.py)"
+echo "8) Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)"
 echo "x) Exit"
 echo -n "Select version: "
 
@@ -62,13 +64,17 @@ do
 		DAEMON=ada_radio.py
 		TYPE=${I2C}
 		break
-
 	elif [[ ${ans} == '6' ]]; then
+		DAEMON=piface_radio.py
+		TYPE=${PIFACE}
+		break
+
+	elif [[ ${ans} == '7' ]]; then
 		DAEMON=rradiobp.py
 		TYPE=${I2C}
 		break
 
-	elif [[ ${ans} == '7' ]]; then
+	elif [[ ${ans} == '8' ]]; then
 		DAEMON=rradiobp4.py
 		TYPE=${I2C}
 		break

@@ -14,7 +14,7 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+#	     The authors shall not be liable for any loss or damage however caused.
 #
 
 import os
@@ -22,55 +22,411 @@ import sys
 import string
 import time,datetime
 import re
+import config
+import threading
+import copy
+import inspect
+import traceback
 from log_class import Log
 from translate_class import Translate
 from mpd import MPDClient
+import mpd
+import socket
+
+def _(text): text
 
 # System files
-RadioLibDir = "/var/lib/radiod"
-CurrentStationFile = RadioLibDir + "/current_station"
-CurrentTrackFile = RadioLibDir + "/current_track"
-VolumeFile = RadioLibDir + "/volume"
-TimerFile = RadioLibDir + "/timer" 
-AlarmFile = RadioLibDir + "/alarm" 
-StreamFile = RadioLibDir + "/streaming"
-MpdPortFile = RadioLibDir + "/mpdport"
-BoardRevisionFile = RadioLibDir + "/boardrevision"
+# RadioLibDir = "/var/lib/piradio"
+# CurrentStationFile = RadioLibDir + "/current_station"
+# CurrentTrackFile = RadioLibDir + "/current_track"
+# VolumeFile = RadioLibDir + "/volume"
+# TimerFile = RadioLibDir + "/timer" 
+# AlarmFile = RadioLibDir + "/alarm" 
+# StreamFile = RadioLibDir + "/streaming"
+# MpdPortFile = RadioLibDir + "/mpdport"
+# BoardRevisionFile = RadioLibDir + "/boardrevision"
 
 log = Log()
 translate = Translate()
 
-Mpd = "/usr/bin/mpd"	# Music Player Daemon
-Mpc = "/usr/bin/mpc"	# Music Player Client
-client = MPDClient()	# Create the MPD client
+#Mpd = "/usr/bin/mpd"	# Music Player Daemon
+#Mpc = "/usr/bin/mpc"	# Music Player Client
+client = MPDClient(use_unicode = True)	# Create the MPD client
+client.timeout = None
 
+def radioStateUpdater(state):
+        log.message("radioStateUpdater: " + unicode(state),
+                    log.DEBUG)
+        while True:
+                time.sleep(state._check_interval)
+#                log.message("radioStateUpdater",log.DEBUG)
+                if state._terminate:
+                        state._terminate += 1
+                        state.unidle()
+                        return
+                state.update()
+
+class RadioState(threading.Thread):
+        _radio = None
+
+        _playlist = None
+        _playlist_time = 0
+        _state = None
+        _state_time = 0
+        _check_interval = 0.1
+        _update_interval = 10
+        _currentsong = None
+        _outputs = None
+
+        _client = None
+        _update_client = None
+        _lock = None
+        _change_lock = None
+        _changed = {}
+
+        _thread = None
+        _terminate = 0 # 1 stop updater, 2 return
+        _running = False
+
+        _callbacks = {
+        }
+
+        callback_init = {
+                'status'          : 'update_status',
+                'database'        : 'database_changed',
+                'update'          : 'update_changed',
+                'stored_playlist' : 'stored_playlist_changed',
+                'playlist'        : 'playlist_changed',
+                'player'          : 'player_changed',
+                'mixer'           : 'mixer_changed',
+                'output'          : 'output_changed',
+                'options'         : 'options_changed'
+        }
+        def __init__(self):
+                super(RadioState,self).__init__(group=None,name="MPD-idle")
+                for key in RadioState.callback_init:
+                        value = RadioState.callback_init[key]
+                        self.addCallback(key,getattr(self,value))
+                self._lock = threading.Lock()
+                self._change_lock = threading.Lock()
+                self.setDaemon(True)
+                self._thread = threading.Thread(name="MPD-updater",
+                                                group = None,
+                                                target=radioStateUpdater,
+                                                args=(self,))
+
+        def start(self):
+                self._client = self.connect()
+                self._update_client = self.connect()
+                self._fetch_status()
+                self._fetch_playlist()
+                self._fetch_currentsong()
+                self._thread.start()
+                super(RadioState,self).start()
+
+        def run(self):
+                self._running = True
+                while self._running:
+                        if self._terminate:
+                                _thread.join()
+                                return
+                        changes = self.execMpdCmd(self._client,lambda(client): client.idle())
+                        log.message("RadioState changed: " + unicode(changes),
+                                    log.DEBUG)
+                        if changes:
+                                with self._change_lock:
+                                        for change in changes:
+                                                self._changed[change] = True
+
+        def addCallback(self,change,cb):
+                if change in self._callbacks:
+                        self._callbacks[change].append(cb)
+                else:
+                        self._callbacks[change]=[cb]
+                log.message("added callback: " + unicode(self._callbacks),
+                            log.DEBUG)
+
+        def get_callbacks(self):
+                return self._callbacks
+        
+        
+        def connect(self):
+                client = MPDClient(use_unicode = True)
+                host = config.get("Server","host")
+                port = config.get("Server","port")
+                connection = False
+		while not connection:
+			try:
+				client.timeout = None
+				client.idletimeout = None
+                                log.message("connecting to {0}:{1}".format(host,port),
+                                            log.DEBUG)
+                                log.message("types: {0}:{1}".format(type(host),type(port)),
+                                            log.DEBUG)
+				client.connect(host, str(port))
+                                log.message("connected",log.DEBUG)
+                                
+				log.message("Connected to MPD at {0}:{1}".format(host,port), log.INFO)
+				connection = True
+			except Exception as e:
+				log.message("Failed to connect to MPD on {0}:{1}".\
+                                            format(config.get("Server","host"),
+                                                   config.get("Server","port")),
+                                            log.ERROR)
+                                log.message(unicode(e),log.ERROR)
+                                connection = False
+				time.sleep(2)	# Wait for interrupt in the case of a shutdown
+
+                return client
+
+	# Execute MPC comnmand using mpd library - Connect client if required
+	def execMpdCmd(self,client, cmd, repeat=True):
+                log.message("RadioState: execMpdCmd ({0},{1})".
+                            format(inspect.getsource(cmd),repeat),log.DEBUG)
+                if not client:
+                        log.message("Client not set", log.ERROR)
+                        log.message(string.join(traceback.format_stack()),log.ERROR)
+                ok = False
+                ret = None
+                while repeat and not ok:
+                        try:
+                                log.message("RadioState: executing command",
+                                            log.DEBUG)
+                                ret = cmd(client)
+                                ok = True
+                        except mpd.ConnectionError:
+                                log.message("RadioState: connection lost",
+                                            log.WARNING)
+                                try:
+                                        client.disconnect()
+                                        log.message("RadioState: connection was active",
+                                                    log.ERROR)
+                                except mpd.ConnectionError:
+                                        pass
+                                ok = False
+
+                        except socket.timeout:
+                                log.message("RadioState: connection timeout",
+                                            log.ERROR)
+                                client.timeout=client.timeout+60
+                                try:
+                                        client.disconnect()
+                                except mpd.ConnectionError:
+                                        pass
+                                ok = False
+                log.message("RadioState: execMpdCmd end", log.DEBUG)
+                return ret
+
+        def unidle(self):
+                self.execMpdCmd(self._client,lambda(client): client.unidle())
+
+
+        def update(self):
+                do_repeat = True
+                with self._change_lock:
+                        while do_repeat:
+                                do_repeat = False
+                                if (self._state_time + self._update_interval < time.time()):
+                                        self._changed['status'] = True
+                                try : 
+                                        for change in self._changed:
+                                                if self._changed[change]:
+                                                        if change in self._callbacks:
+                                                                self._change_lock.release()
+                                                                try:
+                                                                        for cb in self._callbacks[change]:
+                                                                                cb()
+
+                                                                except Exception as e:
+                                                                        self._change_lock.acquire()
+                                                                        raise
+
+                                                                self._change_lock.acquire()
+                                                        else:
+                                                                log.message("Unknown MPD change: " + change,
+                                                                    log.WARNING)
+                                                        self._changed[change] = False
+                                except RuntimeError as e:
+                                        do_repeat=True
+                                        log.message(unicode(e),log.ERROR)
+                                        log.message(string.join(traceback.format_stack()),log.ERROR)
+
+        def _fetch_status(self):
+                with self._lock:
+                        self._state = self.execMpdCmd(self._update_client,
+                                                      lambda(client): client.status())
+                        self._state_time = time.time()
+                        log.message("MPD state: " + unicode(self._state),
+                                    log.DEBUG)
+
+                        if 'song' in self._state:
+                                songid = int(self._state['song'])
+                        else:
+                                songid = None
+
+                if songid is not None:
+                        oldsong = int(config.libget('Current Track',
+                                                    'id'))
+                        if songid != oldsong:
+                                config.libset('Current Track',
+                                              'id',
+                                              str(songid))
+                                config.save_libconfig()
+
+        def update_status(self):
+                self._fetch_status()
+
+        def get_status(self):
+                with self._lock:
+                        return copy.deepcopy(self._state)
+
+        def get_status_time(self):
+                with self._lock:
+                        return copy.deepcopy(self._state_time)
+
+        def get_status_field(self,field):
+                with self._lock:
+                        if field in self._state:
+                                return copy.deepcopy(self._state[field])
+                        else: return None
+
+        def _fetch_currentsong(self):
+                with self._lock:
+                        self._currentsong = self.execMpdCmd(self._update_client,
+                                                            lambda(client): client.currentsong())
+                        log.message("MPD current song: " + unicode(self._currentsong),
+                                    log.DEBUG)
+
+        def get_currentsong(self):
+                with self._lock:
+                        return copy.deepcopy(self._currentsong)
+
+        def _fetch_playlist(self):
+                with self._lock:
+                        self._playlist = self.execMpdCmd(self._update_client,
+                                                         lambda(client): client.playlistinfo())
+                        self._playlist_time = time.time()
+                        log.message("MPD current song: " + unicode(self._playlist),
+                                    log.DEBUG)
+
+        def get_playlist(self):
+                with self._lock:
+                        return copy.deepcopy(self._playlist)
+                
+        def get_playlist_time(self):
+                with self._lock:
+                        return copy.deepcopy(self._playlist_time)
+
+        def get_playlist_entry(self,index):
+                with self._lock:
+                        if index < 0 or index >= len(self._playlist):
+                                return None
+                        return copy.deepcopy(self._playlist[index])
+
+        def _fetch_outputs(self):
+                with self._lock:
+                        self._outputs = self.execMpdCmd(self._update_client,
+                                                        lambda(client): client.outputs())
+        def get_outputs(self):
+                with self._lock:
+                        return copy.deepcopy(self._outputs)
+                                    
+        def database_changed(self):
+                return
+        def update_changed(self):
+                self._fetch_status()
+                return
+        def stored_playlist_changed(self):
+                return
+        def playlist_changed(self):
+                self._fetch_status()
+                self._fetch_playlist()
+                self._fetch_currentsong()
+                return
+        def player_changed(self):
+                self._fetch_status()
+                self._fetch_currentsong()
+                return
+        def mixer_changed(self):
+                self._fetch_status()
+                return
+        def output_changed(self):
+                self._fetch_outputs()
+                return
+        def options_changed(self):
+                self._fetch_status()
+                return
+
+        # queries
+        def has_playlist(self):
+                with self._lock:
+                        return bool(len(self._playlist))
+
+        def is_updating(self):
+                with self._lock:
+                        return 'updatings_db' in self._state
+
+        def get_volume(self):
+                with self._lock:
+                        if 'volume' in self._state:
+                                return self._state['volume']
+                        else: return None
+
+        def force_volume(self,volume):
+                with self._lock:
+                        if self._state is not None:
+                                self._state['volume'] = volume
+
+        def get_random(self):
+                with self._lock:
+                        if 'random' in self._state:
+                                return bool(int(self._state['random']))
+                        else: return None
+
+        def get_repeat(self):
+                with self._lock:
+                        if 'repeat' in self._state:
+                                return bool(int(self._state['repeat']))
+                        else: return None
+                
+        def get_consume(self):
+                with self._lock:
+                        if 'consume' in self._state:
+                                return bool(int(self._state['consume']))
+                        else: return None
+
+        def get_current_id(self):
+                with self._lock:
+                        if self._currentsong and \
+                           'pos' in self._currentsong:
+                                return int(self._currentsong['pos'])
+                        else: return None
+        def get_output(self,output_id):
+                with self._lock:
+                        if not self._outputs: return None
+                        for output in self._outputs:
+                                if int(output['outputid']) == output_id:
+                                        return output
+                        return None
+
+        def get_playlistlength(self):
+                with self._lock:
+                        if 'playlistlength' in self._state:
+                                return int(self._state['playlistlength'])
+                        else: return None
+
+        def get_elapsed_time(self):
+                with self._lock:
+                        if 'elapsed' in self._state:
+                                return float(self._state['elapsed']) \
+                                        + time.time() - self._state_time
+                        else: return None
+                                
+
+                
 class Radio:
-	# Input source
-	RADIO = 0
-	PLAYER = 1
-
-	# Player options
-	RANDOM = 0
-	CONSUME = 1
-	REPEAT = 2
-	TIMER = 3
-	ALARM = 4
-	ALARMSET = 5
-	STREAMING = 6
-	RELOADLIB = 7
-	OPTION_LAST = RELOADLIB
-
-	# Display Modes
-	MODE_TIME = 0
-	MODE_SEARCH  = 1
-	MODE_SOURCE  = 2
-	MODE_OPTIONS  = 3
-	MODE_RSS  = 4
-	MODE_IP  = 5
-	MODE_LAST = MODE_IP	# Last one a user can select
-	MODE_SLEEP = 6		# Sleep after timer or waiting for alarm
-	MODE_SHUTDOWN = -1
-
+        _radiostate = None
+        
 	# Alarm definitions
 	ALARM_OFF = 0
 	ALARM_ON = 1
@@ -85,175 +441,120 @@ class Radio:
 	ONEDAYMINS = 1440	# Day in minutes
 
 	boardrevision = 2 # Raspberry board version type
-	mpdport = 6600  # MPD port number
-	volume = 80	# Volume level 0 - 100%
-	pause = False   # Is radio state "pause"
-	playlist = []	# Play list (tracks or radio stations)
-	current_id = 1	# Currently playing track or station
-	source = RADIO	# Source RADIO or Player
-	reload = False	# Reload radio stations or player playlists
-	option = ''     # Any option you wish
-	artist = ""	# Artist (Search routines)
 	error = False 	# Stream error handling
 	errorStr = ""   # Error string
-	switch = 0	# Switch just pressed
 	updateLib = False    # Reload radio stations or player
-	numevents = 0	     # Number of events recieved for a rotary switch
-	volumeChange = False	# Volume change flag (external clients)
-
-	display_mode = MODE_TIME	# Display mode
-	display_artist = False		# Display artist (or tracck) flag
-	current_file = ""  		# Currently playing track or station
-	option_changed = False		# Option changed
-	channelChanged = True		# Used to display title
-	
-	# MPD Options
-	random = False	# Random play
-	repeat = False	# Repeat play
-	consume = False	# Consume tracks
 
 	# Clock and timer options
 	timer = False	  # Timer on
 	timerValue = 30   # Timer value in minutes
 	timeTimer = 0  	  # The time when the Timer was activated in seconds 
-	volumetime = 0	  # Last volume check time
 
 	alarmType = ALARM_OFF	# Alarm on
-	alarmTime = "0:7:00"    # Alarm time default type,hours,minutes
+        alarmDay = 0     # Alarm time default type,hours,minutes
+        alarmHour = 7
+        alarmMinute = 0
 	alarmTriggered = False	# Alarm fired
 
-	stationName = ''		# Radio station name
-	stationTitle = ''		# Radio station title
-
-	option = RANDOM         # Player option
-	search_index = 0        # The current search index
-	loadnew = False         # Load new track from search
+	search_index = 0	# The current search index
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.13"	# Version number
+	VERSION	= "3.13-ts"	# Version number
+
+        last_playlist = {
+                'type':'radio',
+                'path':None,
+                'id':0
+        }
+        mute_volume = 0
+
+        connection_lock = threading.Lock()
 
 	def __init__(self):
 		log.init('radio')
-
-		# Set up MPD port file
-		if not os.path.isfile(MpdPortFile) or os.path.getsize(MpdPortFile) == 0:
-		        self.execCommand ("echo 6600 > " + MpdPortFile)
-
-		if not os.path.isfile(CurrentStationFile):
-			self.execCommand ("mkdir -p " + RadioLibDir )
-
-		# Set up current radio station file
-		if not os.path.isfile(CurrentStationFile) or os.path.getsize(CurrentStationFile) == 0:
-		        self.execCommand ("echo 1 > " + CurrentStationFile)
-
-		# Set up current track file
-		if not os.path.isfile(CurrentTrackFile) or os.path.getsize(CurrentTrackFile) == 0:
-		        self.execCommand ("echo 1 > " + CurrentTrackFile)
-
-		# Set up volume file
-		if not os.path.isfile(VolumeFile) or os.path.getsize(VolumeFile) == 0:
-		        self.execCommand ("echo 75 > " + VolumeFile)
-
-		# Set up timer file
-		if not os.path.isfile(TimerFile) or os.path.getsize(TimerFile) == 0:
-		        self.execCommand ("echo 30 > " + TimerFile)
-
-		# Set up Alarm file
-		if not os.path.isfile(AlarmFile) or os.path.getsize(AlarmFile) == 0:
-		        self.execCommand ("echo 0:7:00 > " + AlarmFile)
-
-		# Set up Streaming (Icecast) file
-		if not os.path.isfile(StreamFile) or os.path.getsize(StreamFile) == 0:
-		        self.execCommand ("echo off > " + StreamFile)
-
-		# Create mount point for USB stick link it to the music directory
-		if not os.path.isfile("/media"):
-			self.execCommand("mkdir -p /media")
-			if not os.path.ismount("/media"):
-				self.execCommand("chown pi:pi /media")
-			self.execCommand("ln -f -s /media /var/lib/mpd/music")
-
-		# Create mount point for networked music library (NAS)
-		if not os.path.isfile("/share"):
-			self.execCommand("mkdir -p /share")
-			if not os.path.ismount("/share"):
-				self.execCommand("chown pi:pi /share")
-			self.execCommand("ln -f -s /share /var/lib/mpd/music")
-
-		self.execCommand("chown -R pi:pi " + RadioLibDir)
-		self.execCommand("chmod -R 764 " + RadioLibDir)
-		self.current_file = CurrentStationFile
-		self.current_id = self.getStoredID(self.current_file)
+                self._radiostate = RadioState()
+                self._playlist_types = {
+                        'playlist'  : lambda(path): self.loadPlaylist(path,True),
+                        'directory' : self.changeDir,
+                        'radio'     : lambda (dummy): self.load_radio()
+                }
 
 	# Start the MPD daemon
-	def start(self):
+	def start(self, callback=None):
 		# Start the player daemon
-		self.execCommand("service mpd start")
+		#self.execCommand("service mpd start")
 		# Connect to MPD
+                self._radiostate.start()
 		self.boardrevision = self.getBoardRevision()
 		self.mpdport = self.getMpdPort()
-		self.connect(self.mpdport)
-		client.clear()
-		self.randomOff()
-		self.randomOff()
-		self.consumeOff()
-		self.repeatOff()
-		self.current_id = self.getStoredID(self.current_file)
-		log.message("radio.start current ID " + str(self.current_id), log.DEBUG)
-		self.volume = self.getStoredVolume()
-		self.setVolume(self.volume)
+		self.connect(callback)
+
 		self.timeTimer = int(time.time())
 		self.timerValue = self.getStoredTimer()
-		self.alarmTime = self.getStoredAlarm()
-		sType,sHours,sMinutes = self.alarmTime.split(':')
-		self.alarmType = int(sType)
 		self.streaming = self.getStoredStreaming()
-		if self.streaming:
-			self.streamingOn()
-		else:
-			self.streamingOff()
+		self.setStreaming(self.streaming)
+
+                if not self._radiostate.has_playlist():
+                        volume = self.getStoredVolume()
+                        self.setVolume(volume)
+                        self.setRandom(config.libget_boolean("Settings","random"))
+                        last_playlist = {}
+                        last_playlist['type']  = config.libget("Current Track",
+                                                               "type")
+                        last_playlist['path']  = config.libget("Current Track",
+                                                               "path")
+                        last_playlist['id'] = config.libget("Current Track",
+                                                               "id")
+                        last_update = self._radiostate.get_status_time()
+                        log.message("last playlist: " + unicode(last_playlist),
+                                    log.DEBUG)
+                        log.message("_playlist_types: " + unicode(self._playlist_types),
+                                    log.DEBUG)
+                        self._playlist_types[last_playlist['type']](last_playlist['path'])
+                        while last_update >= self._radiostate.get_status_time():
+                                time.sleep(0.001)
+                        self.play(last_playlist['id'])
 		return
 
-
-	# Connect to MPD
-	def connect(self,port):
+	def connect(self,callback=None):
 		global client
 		connection = False
-		retry = 2
-		while retry > 0:
-			client = MPDClient()	# Create the MPD client
+                host = config.get("Server","host")
+                port = config.get("Server","port")
+		while not connection:
 			try:
-				client.timeout = 10
+                                if callback:
+                                        callback("Connect to MPD")
+				client.timeout = 60
 				client.idletimeout = None
-				client.connect("localhost", port)
-				log.message("Connected to MPD port " + str(port), log.INFO)
+                                log.message("connecting to {0}:{1}".format(host,port),
+                                            log.DEBUG)
+                                log.message("types: {0}:{1}".format(type(host),type(port)),
+                                            log.DEBUG)
+				client.connect(host, str(port))
+                                log.message("connected",log.DEBUG)
+                                client.status() # do something to ensure the server is online
+                                if callback:
+                                        callback("Connected")
+				log.message("Connected to MPD at {0}:{1}".format(host,port), log.INFO)
 				connection = True
-				retry = 0
-			except:
-				log.message("Failed to connect to MPD on port " + str(port), log.ERROR)
-				time.sleep(0.5)	# Wait for interrupt in the case of a shutdown
-				log.message("Restarting MPD",log.DEBUG)
-				if retry < 2:
-					self.execCommand("service mpd restart") 
-				else:
-					self.execCommand("service mpd start") 
-				time.sleep(2)	# Give MPD time to restart
-				retry -= 1
+			except Exception as e:
+				log.message("Failed to connect to MPD on {0}:{1}".\
+                                            format(config.get("Server","host"),
+                                                   config.get("Server","port")),
+                                            log.ERROR)
+                                log.message(unicode(e),log.ERROR)
+                                if callback:
+                                        callback("Waiting for MPD")
+                                connection = False
+				time.sleep(2)	# Wait for interrupt in the case of a shutdown
 
-		return connection
+                return connection
 
-	# Input Source RADIO, NETWORK or PLAYER
-	def getSource(self):
-		return self.source
+        def addUpdateCallback(self, change, callback):
+                self._radiostate.addCallback(change, callback)
 
-	def setSource(self,source):
-		self.source = source
-
-	# Reload playlists flag
-	def getReload(self):
-		return self.reload
-
-	def setReload(self,reload):
-		self.reload = reload
+        def getUpdateCallbacks(self):
+                return self._radiostate.get_callbacks(self)
 
 	# Reload music library flag
 	def getUpdateLibrary(self):
@@ -264,14 +565,6 @@ class Radio:
 
 	def setUpdateLibOff(self):
 		self.updateLib = False
-
-	# Load new track flag
-	def loadNew(self):
-		return self.loadnew
-
-	def setLoadNew(self,loadnew):
-		self.loadnew = loadnew
-		return
 
 	# Get the Raspberry pi board version from /proc/cpuinfo
 	def getBoardRevision(self):
@@ -285,191 +578,112 @@ class Radio:
 		self.boardrevision = revision
 		log.message("Board revision " + str(self.boardrevision), log.INFO)
 		return self.boardrevision
-
+                                  
 	# Get the MPD port number
 	def getMpdPort(self):
-		port = 6600
-		if os.path.isfile(MpdPortFile):
-			try:
-				port = int(self.execCommand("cat " + MpdPortFile) )
-			except ValueError:
-				port = 6600
-		else:
-			log.message("Error reading " + MpdPortFile, log.ERROR)
+                try:
+                        port = int(config.get("Server","port") )
+                except:
+                        port = 6600
+			log.message("Error reading mpd port", log.ERROR)
 
 		return port
 
-	# Get options (synchronise with external mpd clients)
-	def getOptions(self,stats):
-		try:
-			random = int(stats.get("random"))
-			if random == 1:
-				self.random = True
-			else:
-				self.random = False
-
-			repeat = int(stats.get("repeat"))
-			if repeat == 1:
-				self.repeat = True
-			else:
-				self.repeat = False
-
-			consume = int(stats.get("consume"))
-			if consume == 1:
-				self.consume = True
-			else:
-				self.consume = False
-
-		except:
-			log.message("radio.getOptions get error" + MpdPortFile, log.ERROR)
-		return
-
-	# Get volume and check if it has been changed by any MPD external client
-	# Slug MPD calls to no more than  per 0.5 second
 	def getVolume(self):
-		volume = 0
-		try:
-			now = time.time()	
-			if now > self.volumetime + 0.5:
-				stats = self.getStats()
-				volume = int(stats.get("volume"))
-				self.volumetime = time.time()
-			else:
-				volume = self.volume
-		except:
-			log.message("radio.getVolume failed", log.ERROR)
-			volume = 0
-		if volume == str("None"):
-			volume = 0
-
-		if volume != self.volume:
-			log.message("radio.getVolume external client changed volume " + str(volume),log.DEBUG)
-			self.setVolume(volume)
-			self.volumeChange = True
-		return self.volume
-
-	# Check for volume change
-	def volumeChanged(self):
-		volumeChange = self.volumeChange
-		self.volumeChange = False
-		return volumeChange
+                vol = self._radiostate.get_volume()
+                log.message("Volume got: {0}".format(vol),
+                            log.DEBUG)
+                return int(vol)
 
 	# Set volume (Called from the radio client or external mpd client via getVolume())
 	def setVolume(self,volume):
-		if self.muted(): 
-			self.unmute()
-		else:
-			if volume > 100:
-				 volume = 100
-			elif volume < 0:
-				 volume = 0
-
-			log.message("radio.setVolume " + str(volume),log.DEBUG)
-			self.volume = volume
-			self.execMpc(client.setvol(self.volume))
-
-			# Don't change stored volume (Needed for unmute function)
-			if not self.muted():
-				self.storeVolume(self.volume)
-		return self.volume
+                self._radiostate.force_volume(volume)
+                self.execMpc(lambda: client.setvol(volume))
+                if (volume): self.storeVolume(volume)
+		return
 
 
 	# Increase volume 
-	def increaseVolume(self):
+	def increaseVolume(self, count = 1):
 		if self.muted(): 
 			self.unmute()
-		self.volume = self.volume + 1
-		self.setVolume(self.volume)
-		return  self.volume
+                volume = int(self.getVolume())
+                volume = volume + count
+                self.setVolume(volume)
+                return volume
 
 	# Decrease volume 
-	def decreaseVolume(self):
+	def decreaseVolume(self, count = 1):
 		if self.muted(): 
 			self.unmute()
-		self.volume = self.volume - 1
-		self.setVolume(self.volume)
-		return  self.volume
+                volume = int(self.getVolume())
+                volume = volume - count
+                self.setVolume(volume)
+                return volume
 
 	# Mute sound functions (Also stops MPD if not streaming)
 	def mute(self):
 		log.message("radio.mute streaming=" + str(self.streaming),log.DEBUG)
-		self.execMpc(client.setvol(0))
-		self.volume = 0
-		self.execMpc(client.pause(1))
+                if not self.streaming:
+                        self.doPause()
+		self.execMpc(lambda: client.setvol(0))
 		return
 
 	# Unmute sound fuction, get stored volume
 	def unmute(self):
-		self.volume = self.getStoredVolume()
-		log.message("radio.unmute volume=" + str(self.volume),log.DEBUG)
-		self.execMpc(client.pause(0))
-		self.execMpc(client.setvol(self.volume))
-		return self.volume
+		volume = self.getStoredVolume()
+		log.message("radio.unmute volume=" + str(volume),log.DEBUG)
+                self.setVolume(volume)
+                self.doPlay()
+		return volume
 
 	def muted(self):
-		muted = True
-		if self.volume > 0:
-			muted = False
-		return muted
+		return not bool(self.getVolume())
 
 	# Get the stored volume
 	def getStoredVolume(self):
 		volume = 75
-		if os.path.isfile(VolumeFile):
-			try:
-				volume = int(self.execCommand("cat " + VolumeFile) )
-			except ValueError:
-				volume = 75
-		else:
-			log.message("Error reading " + VolumeFile, log.ERROR)
+                try:
+                        volume = int(config.libget('Settings','volume'))
+                except:
+                        volume = 75
+			log.message("Error reading volume", log.ERROR)
 
 		return volume
 
 	# Store volume in volume file
-        def storeVolume(self,volume):
-		self.execCommand ("echo " + str(volume) + " > " + VolumeFile)
+	def storeVolume(self,volume):
+		config.libset('Settings','volume',str(volume))
+                config.save_libconfig()
 		return
 
 	# Random
 	def getRandom(self):
-		return self.random
+		return self._radiostate.get_random()
 
-	def randomOn(self):
-		self.random = True
-		self.execMpc(client.random(1))
-		return
-
-	def randomOff(self):
-		self.random = False
-		self.execMpc(client.random(0))
+	def setRandom(self, value):
+		self.execMpc(lambda: client.random(int(value)))
+                config.libset('Settings','random',str(value))
+                config.save_libconfig()
 		return
 
 	# Repeat
 	def getRepeat(self):
-		return self.repeat
+		return self._radiostate.get_repeat()
 
-	def repeatOn(self):
-		self.repeat = True
-		self.execMpc(client.repeat(1))
-		return
-
-	def repeatOff(self):
-		self.repeat = False
-		self.execMpc(client.repeat(0))
+	def setRepeat(self, value):
+		self.execMpc(lambda: client.repeat(int(value)))
+                config.libset('Settings','repeat',str(value))
+                config.save_libconfig()
 		return
 
 	# Consume
 	def getConsume(self):
-		return self.consume
+		return self._radiostate.get_consume()
 
-	def consumeOn(self):
-		self.consume = True
-		self.execMpc(client.consume(1))
-		return
-
-	def consumeOff(self):
-		self.consume = False
-		self.execMpc(client.consume(0))
+	def setConsume(self, value):
+		self.execMpc(lambda: client.consume(int(value)))
+                config.libset('Settings','consume',str(value))
 		return
 
 	# Timer functions
@@ -523,6 +737,7 @@ class Radio:
 		if self.timerValue > self.ONEDAYMINS:
 			self.timerValue = self.ONEDAYMINS
 		self.timeTimer = int(time.time())
+                self.storeTimer(timerValue)
 		return self.timerValue
 
 	def decrementTimer(self,dec):
@@ -533,23 +748,23 @@ class Radio:
 			self.timerValue = 0	
 			self.timer = False
 		self.timeTimer = int(time.time())
+                self.storeTimer(timerValue)
 		return self.timerValue
 
 	# Get the stored timer value
 	def getStoredTimer(self):
 		timerValue = 0
-		if os.path.isfile(TimerFile):
-			try:
-				timerValue = int(self.execCommand("cat " + TimerFile) )
-			except ValueError:
-				timerValue = 30
-		else:
-			log.message("Error reading " + TimerFile, log.ERROR)
-		return timerValue
+                try:
+                        timerValue = int(config.libget("Settings",'timer'))
+                except:
+                        timerValue = 30
+                        log.message("Error reading Timer", log.ERROR)
+                return timerValue
 
 	# Store timer time in timer file
-        def storeTimer(self,timerValue):
-		self.execCommand ("echo " + str(timerValue) + " > " + TimerFile)
+	def storeTimer(self,timerValue):
+                config.libset("Settings",'timer',str(timerValue))
+                config.save_libconfig()
 		return
 
 	# Radio Alarm Functions
@@ -573,13 +788,8 @@ class Radio:
 		if self.alarmType > self.ALARM_OFF:
 			self.alarmTime = self.getStoredAlarm()
 		
-		sType,sHours,sMinutes = self.alarmTime.split(':')
-		hours = int(sHours)
-		minutes = int(sMinutes)
-		self.alarmTime = '%d:%d:%02d' % (self.alarmType,hours,minutes)
-		self.storeAlarm(self.alarmTime)
-
-		return self.alarmType
+		self.storeAlarm()
+		return
 
 	# Switch off the alarm unless repeat or days of the week
 	def alarmOff(self):
@@ -589,31 +799,29 @@ class Radio:
 
 	# Increment alarm time
 	def incrementAlarm(self,inc):
-		sType,sHours,sMinutes = self.alarmTime.split(':')
-		hours = int(sHours)
-		minutes = int(sMinutes) + inc
-		if minutes >= 60:
-			minutes = minutes - 60 
-			hours += 1
-		if hours >= 24:
-			hours = 0
-		self.alarmTime = '%d:%d:%02d' % (self.alarmType,hours,minutes)
-		self.storeAlarm(self.alarmTime)
-		return '%d:%02d' % (hours,minutes) 
+                self.alarmMinute -= inc
+		if self.alarmMinute > 60:
+                        (hours,minutes) = divmod(self.alarmMinute,60)
+			self.alarmMinute = minutes
+                        self.alarmHour += hours
+		if self.alarmHour > 23:
+			self.alarmHour = 0
+		self.storeAlarm()
 
 	# Decrement alarm time
 	def decrementAlarm(self,dec):
-		sType,sHours,sMinutes = self.alarmTime.split(':')
-		hours = int(sHours)
-		minutes = int(sMinutes) - dec
-		if minutes < 0:
-			minutes = minutes + 60 
-			hours -= 1
-		if hours < 0:
-			hours = 23
-		self.alarmTime = '%d:%d:%02d' % (self.alarmType,hours,minutes)
-		self.storeAlarm(self.alarmTime)
-		return '%d:%02d' % (hours,minutes) 
+                self.alarmMinute -= dec
+		if self.alarmMinute < 0:
+                        (hours,minutes) = divmod(-self.alarmMinute,60)
+			self.alarmMinute = 60 - minutes
+                        if minutes:
+                                self.alarmHour -= hours + 1
+                        else:
+                                self.alarmHour -= hours
+		if self.alarmHour < 0:
+			self.alarmHour = 23
+		self.storeAlarm()
+		return
 
 	# Fire alarm if current hours/mins matches time now
 	def alarmFired(self):
@@ -621,11 +829,8 @@ class Radio:
 		fireAlarm = False
 		if self.alarmType > self.ALARM_OFF:
 			sType,sHours,sMinutes = self.alarmTime.split(':')
-			type = int(sType)
-			hours = int(sHours)
-			minutes = int(sMinutes)
 			t1 = datetime.datetime.now()
-			t2 = datetime.time(hours, minutes)
+			t2 = datetime.time(self.alarmHour, self.alarmMinute)
 			weekday =  t1.today().weekday()
 
 			if t1.hour == t2.hour and t1.minute == t2.minute and not self.alarmTriggered:
@@ -647,27 +852,40 @@ class Radio:
 
 	# Get the stored alarm value
 	def getStoredAlarm(self):
-		alarmValue = '' 
-		if os.path.isfile(AlarmFile):
-			try:
-				alarmValue = self.execCommand("cat " + AlarmFile)
-			except ValueError:
-				alarmValue = "0:7:00"
-		else:
-			log.message("Error reading " + AlarmFile, log.ERROR)
-		return alarmValue
+                try:
+                        alarmType = config.libget('Settings','alarm_type')
+                except:
+                        alarmType = 0
+			log.message("Error reading alarm day", log.ERROR)
+                try:
+                        alarmHour = config.libget('Settings','alarm_hour')
+                except:
+                        alarmHour = 7
+			log.message("Error reading alarm hour", log.ERROR)
+                try:
+                        alarmMinute = config.libget('Settings','alarm_minute')
+                except:
+                        alarmMinute = 0
+			log.message("Error reading alarm day", log.ERROR)
+                return
 
 	# Store alarm time in alarm file
-        def storeAlarm(self,alarmString):
-		self.execCommand ("echo " + alarmString + " > " + AlarmFile)
+	def storeAlarm(self):
+                config.libset('Settings','alarm_type',unicode(self.alarmType))
+                config.libset('Settings','alarm_hour',unicode(self.alarmHour))
+                config.libset('Settings','alarm_minute',unicode(self.alarmMinute))
+                config.save_libconfig()
 		return
 
 	# Get the actual alarm time
 	def getAlarmTime(self):
-		sType,sHours,sMinutes = self.alarmTime.split(':')
-		hours = int(sHours)
-		minutes = int(sMinutes)
-		return '%d:%02d' % (hours,minutes) 
+                if self.alarmDay:
+                        return '{0}d {1}:{2}'.format(self.alarmDay,
+                                                     self.alarmHour,
+                                                     self.alarmMinute)
+                else:
+                        return '{0}:{1}'.format(self.alarmHour,
+                                                self.alarmMinute)
 		
 	# Get the alarm type
 	def getAlarmType(self):
@@ -675,64 +893,40 @@ class Radio:
 		
 	# Get the stored streaming value
 	def getStoredStreaming(self):
-		streamValue = "off" 
-		streaming = False
-		if os.path.isfile(StreamFile):
-			try:
-				streamValue = self.execCommand("cat " + StreamFile)
-			except ValueError:
-				streamValue = "off"
-		else:
-			log.message("Error reading " + StreamFile, log.ERROR)
-
-		if streamValue == "on":
-			streaming = True	
-		else:
+                try:
+                        streaming = config.libget_boolean('Settings',
+                                                          'streaming')
+                except Exception as e:
 			streaming = False	
-
+			log.message("Error reading streaming parameter: "
+                                    + unicode(e), log.ERROR)
 		return streaming
 
 	# Toggle streaming on off
 	# Stream number is 2 
 	def toggleStreaming(self):
-		if self.streamingAvailable():
-			if self.streaming:
-				self.streamingOff()
-			else:
-				self.streamingOn()
-		else:
-			self.streaming = False
-			self.storeStreaming("off")
+		return self.setStreaming(not self.getStreaming())
 
-		return self.streaming
-
-	# Switch on Icecast2 streaming
-	def streamingOn(self):
-		output_id = 2
-		self.streaming = True
-		self.execCommand("service icecast2 start")
-		self.execMpcCommand("enable " + str(output_id))
-		self.storeStreaming("on")
-		self.streamingStatus()
-		return self.streaming
-
-	# Switch off Icecast2 streaming
-	def streamingOff(self):
-		output_id = 2
-		self.streaming = False
-		self.execMpcCommand("disable " + str(output_id))
-		self.execCommand("service icecast2 stop")
-		self.storeStreaming("off")
-		self.streamingStatus()
-		return self.streaming
+        def setStreaming(self, on = True):
+                if self.streamingAvailable():
+                        output_id = 2
+                        if on:
+                                self.execCommand("service icecast2 start")
+                        else:
+                                self.execCommand("service icecast2 stop")
+                        output = self._radiostate.get_output(output_id)
+                        if output:
+                                if on:
+                                        self.execMpc(lambda: client.enableoutput(output_id))
+                                else: 
+                                        self.execMpc(lambda: client.disableoutput(output_id))
+		self.storeStreaming(on)
+		return
 
 	# Display streaming status
-	def streamingStatus(self):
-		status = self.execCommand("mpc outputs | grep -i stream")
-		if len(status)<1:
-			status = "No Icecast streaming"
-		log.message(status, log.INFO)
-		return
+	def getStreaming(self):
+                output_id = 2
+                return self._radiostate.get_output(output_id)
 
 	# Check if icecast streaming installed
 	def streamingAvailable(self):
@@ -740,46 +934,9 @@ class Radio:
 		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 	# Store stram on or off in streaming file
-        def storeStreaming(self,onoff):
-		self.execCommand ("echo " + onoff + " > " + StreamFile)
-		return
-
-	# Get the streaming value
-	def getStreaming(self):
-		return self.streaming
-
-	# Option changed 
-	def optionChanged(self):
-		return self.option_changed
-
-	def optionChangedTrue(self):
-		self.option_changed = True
-		return
-
-	def optionChangedFalse(self):
-		self.option_changed = False
-		return
-
-	# Set  and get Display mode
-	def getDisplayMode(self):
-		return self.display_mode
-
-	# Mode string for debugging
-	def getDisplayModeString(self):
-		sMode = ["MODE_TIME", "MODE_SEARCH", "MODE_SOURCE",
-			 "MODE_OPTIONS", "MODE_RSS", "MODE_IP", "MODE_SLEEP"] 
-		return sMode[self.display_mode]
-
-	def setDisplayMode(self,display_mode):
-		self.display_mode = display_mode
-		return
-	
-	# Set any option you like here 
-	def getOption(self):
-		return self.option
-
-	def setOption(self,option):
-		self.option = option
+	def storeStreaming(self,onoff):
+                config.libset('Settings','streaming',str(onoff))
+                config.save_libconfig()
 		return
 	
 	# Execute system command
@@ -787,34 +944,46 @@ class Radio:
 		p = os.popen(cmd)
 		return  p.readline().rstrip('\n')
 
-	# Execute MPC comnmand via OS
-	# Some commands are easier using mpc and don't have 
-	# an effect adverse on performance
-	def execMpcCommand(self,cmd):
-		return self.execCommand(Mpc + " " + cmd)
-
 	# Execute MPC comnmand using mpd library - Connect client if required
-	def execMpc(self,cmd):
-		try:
-			ret = cmd
-		except:
-			log.message("execMpc exception", log.ERROR)
-			if self.connect(self.mpdport):
-				ret = cmd
-		return ret
+	def execMpc(self,cmd, repeat=True):
+                log.message("Radio: execMpc ({0},{1})".
+                            format(inspect.getsource(cmd),repeat),log.DEBUG)
+                with self.connection_lock:
+                        ok = False
+                        ret = None
+                        while repeat:
+                                try:
+                                        log.message("executing command",log.DEBUG)
+                                        ret = cmd()
+                                        repeat = False
+                                except mpd.ConnectionError:
+                                        log.message("execMpc: connection lost", log.ERROR)
+                                        try:
+                                                client.disconnect()
+                                        except mpd.ConnectionError:
+                                                pass
+                                                if self.connect():
+                                                        ret = cmd()
+                                        repeat = False
+
+                                except socket.timeout:
+                                        log.message("execMpc: connection timeout", log.ERROR)
+                                        client.timeout=client.timeout+60
+                                        try:
+                                                client.disconnect()
+                                        except mpd.ConnectionError:
+                                                pass
+                                        if self.connect():
+                                                ret = cmd()
+                log.message("Radio: execMpc end", log.DEBUG)
+                return ret
+
+        def getCurrentId(self):
+                return self._radiostate.get_current_id()
 
 	# Get the ID  of the currently playing track or station ID
-	def getCurrentID(self):
-		try:
-			currentsong = self.getCurrentSong()
-			currentid = int(currentsong.get("pos")) + 1
-			if self.current_id != currentid:
-				log.message("radio.getCurrentID New ID " + str(currentid), log.DEBUG)
-				self.current_id = currentid
-				self.execCommand ("echo " + str(currentid) + " > " + self.current_file)
-		except:
-			self.current_id = 0
-		return self.current_id
+	def getCurrentSong(self):
+                return self._radiostate.get_currentsong()
 
 	# Check to see if an error occured
 	def gotError(self):
@@ -825,392 +994,285 @@ class Radio:
 		self.error = False
 		return self.errorStr
 
-	# See if any error
-	def checkStatus(self):
-		try:
-			status = client.status()
-			self.errorStr = str(status.get("error"))
-			if  self.errorStr != "None":
-				if not self.error:
-					self.errorStr = (self.errorStr 
-						+ " (Station " + str(self.current_id) + ")")
-					log.message(self.errorStr, log.DEBUG)
-				self.error = True
-			else:
-				self.errorStr = ""
-		except:
-			log.message("checkStatus exception", log.ERROR)
-			self.errorStr = "Status exception"
-		return self.error
-
-	# Get the progress of the currently playing track
-	def getProgress(self):
-		line = self.execMpcCommand("status | grep \"\[playing\]\" ")
-		lineParts = line.split('/',1)
-		if len(lineParts) >= 2:
-			line = lineParts[1]
-			while line.find('  ') > 0:
-				line = line.replace('  ', ' ')
-			lineParts = line.split(' ')
-			progress = lineParts[1] + ' ' + lineParts[2]	
-		else:
-			progress =  ''
-		return progress
-		
-	# Set the new ID  of the currently playing track or station (Also set search index)
-	def setCurrentID(self,newid):
-		log.message("radio.setCurrentID " + str(newid), log.DEBUG)
-		self.current_id = newid
-
-		# If an error (-1) reset to 1
-		if self.current_id <= 0:
-			self.current_id = 1
-			log.message("radio.setCurrentID reset to " + str(self.current_id), log.DEBUG)
-
-		# Don't allow an ID greater than the playlist length
-		if self.current_id >= len(self.playlist):
-			self.current_id = len(self.playlist)
-			log.message("radio.setCurrentID reset to" + str(self.current_id), log.DEBUG)
-		
-		self.search_index = self.current_id - 1
-		log.message("radio.setCurrentID index= " + str(self.search_index), log.DEBUG)
-		self.execCommand ("echo " + str(self.current_id) + " > " + self.current_file)
-		self.execCommand("/usr/bin/mpc status > /var/lib/radiod/status")
-		name = self.getCurrentTitle()
-		log.message("radio.getCurrentID (" + str(self.current_id) + ") " + name, log.INFO)
-		return
-
 	# Get stats array
-	def getStats(self):
-		try:
-			stats = client.status()
-		except:
-			log.message("radio.getStats failed", log.ERROR)
+	def getStatus(self):
+                return self._radiostate.get_status()
+        def getStatusTime(self):
+                return self._radiostate.get_status_time()
+        def getStatusField(self,field):
+                return self._radiostate.get_status_field(field)
+        def getElapsedTime(self):
+                return self._radiostate.get_elapsed_time()
 
-		self.getOptions(stats)	# Get options 
-		return stats
-
-	# Get current state (play or pause) 
-	# Slug this to only allow one per second
-	def getState(self):
-		state = "play"
-		try:
-			stats = self.getStats()
-			state = str(stats.get("state"))
-		except:
-			log.message("radio.getState failed", log.ERROR)
-			state = "unknown"
-
-		if state == "pause":
-			self.pause = True
-		else:
-			self.pause = False
-			
-		return state
-
-	# Get paused state
-	def paused(self):
-		self.getState()
-		return self.pause
 
 	# Get current song information (Only for use within this module)
 	def getCurrentSong(self):
-		try:
-			currentsong = self.execMpc(client.currentsong())
-		except:
-			# Try re-connect and status
-			try:
-				if self.connect(self.mpdport):
-					currentsong = self.execMpc(client.currentsong())
-			except:
-				log.message("radio.getCurrentSong failed", log.ERROR)
-		return currentsong
-
-	# Get the currently playing radio station from mpd 
-	# This is usually from "name"but some stations use the "title" field
-	def getRadioStation(self):
-		currentsong = self.getCurrentSong()
-		try:
-			name = str(currentsong.get("name"))
-		except:
-			name = "No name"
-		# If no name returned check that the file name is returned OK 
-		# and use name from the search index
-		if name == "None":
-			try:
-				time.sleep(0.2)
-				currentsong.get("file")
-				name = self.getStationName(self.search_index) 
-			except:
-				name = "Bad stream (" + str(self.current_id) + ")"
-
-		self.stationName = translate.escape(name)
-		return self.stationName
-
-	# Get the title of the currently playing station or track from mpd 
-	def getCurrentTitle(self):
-		try:
-			currentsong = self.getCurrentSong()
-			title = str(currentsong.get("title"))
-			#log.message("Title: " + title, log.DEBUG)
-			title = translate.escape(title)
-		except:
-			title = ''
-
-		if title == 'None':
-			title = ''
-
-		try:
-			genre = str(currentsong.get("genre"))
-		except:
-			genre = ''
-		if genre == 'None':
-			genre = ''
-
-		# If the title contained the station name blank it out
-		if title == self.stationName:
-			title = ''
-
-		if title == '':
-			# Usually used if this is a podcast
-			if len(genre) > 0:
-				title = genre	
-		if self.channelChanged and len(title) > 0: 
-			log.message( "Title: "+ title,log.INFO)
-			self.channelChanged = False
-
-		return title
-
-	# Get the currently playing radio station from mpd 
- 	# Returns the same format as the mpc current command
-	# Used for two line displays only
-	def getCurrentStation(self):
-		name = self.getRadioStation() + ' (' + str(self.current_id) + ')'
-		title = self.getCurrentTitle()
-		if len(title) > 0:
-			currentPlaying = name + ": " + title
-		else:
-			currentPlaying = name
-		self.checkStatus()
-		return currentPlaying
-
-	# Get the name of the current artist mpd (Music librarry only)
-	def getCurrentArtist(self):
-		try:
-			currentsong = self.getCurrentSong()
-			title = str(currentsong.get("title"))
-			title = translate.escape(title)
-			artist = str(currentsong.get("artist"))
-		except:
-			artist = "Unknown artist!"
-		if str(artist) == 'None':
-			artist = "Unknown artist"
-		return artist
+                return self._radiostate.get_currentsong()
 
 	# Get the last ID stored in /var/lib/radiod
 	def getStoredID(self,current_file):
-		current_id = 0
-		if os.path.isfile(self.current_file):
-			current_id = 1
-			try:
-				current_id = int(self.execCommand("cat " + self.current_file) )
-			except ValueError:
-				current_id = 1
-		else:
-			log.message("Error reading " + self.current_file, log.ERROR)
+                current_id = config.libget('Current Track','id')
 
-		if current_id <= 0:
-			current_id = 1
+		if current_id < 0:
+			current_id = 0
 		return current_id
 
 	# Change radio station up
 	def channelUp(self):
-		new_id = self.getCurrentID() + 1
+		new_id = self.getCurrentId()
+                if new_id == None:
+                        new_id = 0
+                else:
+                        new_id += 1
 		log.message("radio.channelUp " + str(new_id), log.DEBUG)
-		if new_id > len(self.playlist):
-			new_id = 1
+		if new_id >= self._radiostate.get_playlistlength():
+			new_id = 0
 			self.play(new_id)
 		else:
-			self.execMpc(client.next())
+			self.execMpc(lambda: client.next())
 				
-		new_id = self.getCurrentID()
-		self.setCurrentID(new_id)
-
-		# If any error MPD will skip to next channel
-		self.checkStatus()
-		self.channelChanged = True
 		return new_id
 
 	# Change radio station down
 	def channelDown(self):
-		new_id = self.getCurrentID() - 1
+		new_id = self.getCurrentId()
+                if new_id == None:
+                        new_id = 0
+                else:
+                        new_id -= 1
 		log.message("radio.channelDown " + str(new_id), log.DEBUG)
-		if new_id <= 0:
-			new_id = len(self.playlist)
+		if new_id < 0:
+			new_id = self._radiostate.get_playlistlength() - 1
 			self.play(new_id)
 		else:
-			self.execMpc(client.previous())
+			self.execMpc(lambda: client.previous())
 
-		new_id = self.getCurrentID()
-		self.setCurrentID(new_id)
-
-		# Check if error if so try next channel down
-		if self.checkStatus():
-			new_id -= 1
-			if new_id <= 0:
-				new_id = len(self.playlist)
-			self.play(new_id)
-		self.channelChanged = True
 		return new_id
 
-	# Toggle the input source (Reload is done when Reload requested)
-	def toggleSource(self):
-		if self.source == self.RADIO:
-			self.source = self.PLAYER
-
-		elif self.source == self.PLAYER:
-			self.source = self.RADIO
-
-		return
-
 	# Load radio stations
-	def loadStations(self):
-		log.message("radio.loadStations", log.DEBUG)
-		self.execMpc(client.clear())
-
-		dirList = os.listdir("/var/lib/mpd/playlists")
-		for fname in dirList:
-			cmd = "load \"" + fname.strip("\n") + "\""
-			log.message(cmd, log.DEBUG)
-			fname = fname.strip("\n")
-			try:
-				self.execMpc(client.load(fname))
-			except:
-				log.message("Failed to load playlist " + fname, log.ERROR)
-
+	def startRadio(self):
+		log.message("radio.startRadio", log.DEBUG)
+                self.load_radio()
 		self.randomOff()
 		self.consumeOff()
 		self.repeatOff()
-		self.playlist = self.createPlayList()
-		self.current_file = CurrentStationFile
-		self.current_id = self.getStoredID(self.current_file)
-		self.play(self.current_id)
-		self.search_index = self.current_id - 1
-		self.source = self.RADIO
+                log.message("This is somehow wrong: We must store also the menu path",
+                            log.ERROR)
+		current_id = config.libget('Radio','current')
+		self.play(current_id)
+		self.search_index = current_id
 		return
+        
+        def load_radio(self):
+		self.execMpc(lambda: client.clear())
+                radiopath = config.libget('Radio','place_uri')
+                radiotype = config.libget('Radio','place_type')
+                if not radiopath or not radiotype: return
+                try:
+                        if radiotype == 'directory':
+                                self.changeDir(radiopath)
+                        elif radiotype == 'playlist':
+                                self.loadPlaylist(radiopath)
+                except Exception as e:
+                        log.message('top_menu.load_radio: Exception: '+unicode(e),
+                                    log.ERROR)
+                        log.message(string.join(traceback.format_stack()),log.ERROR)
+                        
+        def save_current_dir(self, dirtype, entryid, path = None):
+                config.libset('Current Track','type',dirtype)
+                if path is not None:
+                        config.libset('Current Track','path',path)
+                config.libset('Current Track','id',str(entryid))
+                config.save_libconfig()
 
+                        
+        def listNode(self,path):
+                try:
+                        retval =  self.execMpc(lambda: client.lsinfo(path))
+                except mpd.CommandError as error:
+                        retval = []
+                return retval
+                
 	# Load music library 
-	def loadMusic(self):
-		log.message("radio.loadMusic", log.DEBUG)
-		self.execMpcCommand("stop")
-		self.execMpcCommand("clear")
-		directory = "/var/lib/mpd/music/"
-
-		dirList=os.listdir(directory)
-		for fname in dirList:
-			fname = fname.strip("\n")
-			path = directory +  fname
-			nfiles = len(os.listdir(path))
-			if nfiles > 0:
-				cmd = "add \"" + fname + "\""
-				log.message(cmd,log.DEBUG)
-				log.message(str(nfiles) + " files/directories found",log.DEBUG)
-				try:
-					self.execMpcCommand(cmd)
-				except:
-					log.message("Failed to load music directory " + fname, log.ERROR)
-			else:
-				log.message(path + " is empty", log.INFO)
-
-		self.playlist = self.createPlayList()
-		self.current_file = CurrentTrackFile
-		self.current_id = self.getStoredID(self.current_file)
-
-		# Old playlists may have been longer.
-		length = len(self.playlist)
-		if self.current_id > length:
-			self.current_id = 1
-			log.message("radio.loadMusic ID " + str(self.current_id), log.DEBUG)
-
-		# Important use mpc not python-mpd calls as these give problems
-		if length > 0:
-			log.message("radio.loadMusic play " + str(self.current_id), log.DEBUG)
-			self.execMpcCommand("play " + str(self.current_id))
-			self.search_index = self.current_id - 1
-			self.execMpcCommand("random on")
-			self.execMpcCommand("repeat off")
-			self.execMpcCommand("consume off")
-			self.random = True  # Random play
-			self.repeat = False  # Repeat play
-			self.consume = False # Consume tracks
-		else:
-			log.message("radio.loadMusic playlist length =  " + str(length), log.ERROR)
-
-		log.message("radio.loadMusic complete", log.DEBUG)
-		return length
+#	def loadMusic(self):
+#                return
+# 		log.message("radio.loadMusic", log.DEBUG)
+# 		self.execMpcCommand("stop")
+# 		self.execMpcCommand("clear")
+# 		directory = "/var/lib/mpd/music/"
+# 
+# 		dirList=os.listdir(directory)
+# 		for fname in dirList:
+# 			fname = fname.strip("\n")
+# 			path = directory +  fname
+# 			nfiles = len(os.listdir(path))
+# 			if nfiles > 0:
+# 				cmd = "add \"" + fname + "\""
+# 				log.message(cmd,log.DEBUG)
+# 				log.message(str(nfiles) + " files/directories found",log.DEBUG)
+# 				try:
+# 					self.execMpcCommand(cmd)
+# 				except:
+# 					log.message("Failed to load music directory " + fname, log.ERROR)
+# 			else:
+# 				log.message(path + " is empty", log.INFO)
+# 
+# 		self.playlist = self.createPlayList()
+# 		self.current_file = CurrentTrackFile
+# 		self.current_id = self.getStoredID(self.current_file)
+# 
+# 		# Old playlists may have been longer.
+# 		length = len(self.playlist)
+# 		if self.current_id > length:
+# 			self.current_id = 1
+# 			log.message("radio.loadMusic ID " + str(self.current_id), log.DEBUG)
+# 
+# 		# Important use mpc not python-mpd calls as these give problems
+# 		if length > 0:
+# 			log.message("radio.loadMusic play " + str(self.current_id), log.DEBUG)
+# 			self.execMpcCommand("play " + str(self.current_id))
+# 			self.search_index = self.current_id - 1
+# 			self.execMpcCommand("random on")
+# 			self.execMpcCommand("repeat off")
+# 			self.execMpcCommand("consume off")
+# 			self.random = True  # Random play
+# 			self.repeat = False  # Repeat play
+# 			self.consume = False # Consume tracks
+# 		else:
+# 			log.message("radio.loadMusic playlist length =  " + str(length), log.ERROR)
+# 
+# 		log.message("radio.loadMusic complete", log.DEBUG)
+#		return length
 
 	# Update music library 
 	def updateLibrary(self):
 		log.message("radio.updateLibrary", log.DEBUG)
-		self.execMpcCommand("-w update")
-		self.setUpdateLibOff()
+		self.execMpc(lambda: client.update())
 		return
 
-	# Play a new track using search index
-	def playNew(self,index):
-		self.setLoadNew(False)
-		self.play(index + 1)
-		return
+        def changePlaylist(self,path):
+                self.load_playlist(path)
+                config.libset("Current Track","type",'playlist');
+                config.libset("Current Track","path",path);
+                return;
+
+        def loadPlaylist(self,path, wait = False):
+                length = self._radiostate.get_playlistlength()
+                log.message("Clearing playlist of length {0}".
+                            format(length), log.DEBUG)
+                if length:
+                        self.execMpc(lambda: client.clear())
+                        while wait:
+                                if not self._radiostate.get_playlistlength():
+                                        break
+                                time.sleep(0.001)
+                if wait:
+                        playlist_time = time.time()
+                        log.message("Starting load at {0}".
+                                    format(playlist_time),
+                                    log.DEBUG)
+                try:
+                        self.execMpc(lambda: client.load(path))
+                except:
+                        log.message("Failed to load Radio playlist",
+                                    log.WARNING)
+                log.message("Waiting for playlist change.",
+                            log.DEBUG)
+                if wait:
+                        
+                        while (playlist_time > self._radiostate.get_playlist_time()):
+                                time.sleep(0.001)
+                return
+
+        # change into a directory
+        def changeDir(self, path):
+                log.message("radio.changeDir: " + path, log.DEBUG)
+                config.libset("Current Track","type",'directory');
+                config.libset("Current Track","path",path);
+                last_changed = time.time()
+                retval = self.load_directory(path);
+                while last_changed >= \
+                      self._radiostate.get_playlist_time():
+                        time.sleep(0.001);
+                return retval
+
+        def load_directory(self,path):
+                self.execMpc(lambda: client.clear())
+                try:
+                        return self.execMpc(lambda: client.add(path))
+                except:
+                        log.message("Failed to load Radio playlist",
+                                    log.WARNING)
+                return None
+
+                
+        def playNode(self,node):
+                if 'file' in node:
+                        index = 0
+                        for i in self.getPlayList():
+                                if 'file' in i:
+                                        if i['file'] == node['file']:
+                                                self.play(index)
+                                                return index
+                                index += 1
+                self.play(0)
+
+        def doPlay(self):
+                self.play(self.getCurrentId())
+
+        def doStop(self):
+                self.execMpc(lambda: client.stop())
+
+        def doPause(self):
+                res = self.execMpc(lambda: client.pause())
+                log.message("pause: " + unicode(res), log.DEBUG)
 
 	# Play a track number  (Starts at 1)
 	def play(self,number):
+                maxnumber = self._radiostate.get_playlistlength()
+                if not maxnumber:
+                        return;
 		log.message("radio.play " + str(number), log.DEBUG)
-		log.message("radio.play Playlist len " + str(len(self.playlist)), log.DEBUG)
-		if number > 0 and number <= len(self.playlist):
-			self.current_id = number
-			self.setCurrentID(self.current_id)
-		else:	
+		if number < 0 or \
+                   number >= maxnumber :
 			log.message("play invalid station/track number "+ str(number), log.ERROR)
-			self.setCurrentID(1)
+                        number = 0
 
 		# Client play function starts at 0 not 1
-		log.message("play station/track number "+ str(self.current_id), log.DEBUG)
-		self.execMpc(client.play(self.current_id-1))
-		self.checkStatus()
+		log.message("play station/track number "+ str(number), log.DEBUG)
+		self.execMpc(lambda: client.play(number))
 		return
 
 	# Clear streaming and other errors
 	def clearError(self):
 		log.message("clearError()", log.DEBUG)
-		client.clearerror()
+		self.execMpc(lambda: client.clearerror())
 		self.errorStr = ""
 		self.error = False 
 		return
 
+        def addToStoredPlaylist(self,path,list_path):
+                log.message("addtostoredplaylist", log.DEBUG)
+                self.execMpc(lambda: client.playlistadd(list_path,path))
+
+        def listPlaylists(self,path):
+                return self.execMpc(lambda: client.listplaylists())
+
+        def listPlaylist(self,path):
+                return self.execMpc(lambda: client.listplaylistinfo(path))
+
+
 	# Get list of tracks or stations
 	def getPlayList(self):
-		return self.playlist
+		return self._radiostate.get_playlist()
 
-	# Create list of tracks or stations
-	def createPlayList(self):
-		log.message("radio.createPlaylist", log.DEBUG)
-		list = []
-		line = ""
-		cmd = "playlist"	
-		p = os.popen(Mpc + " " + cmd)
-		while True:
-			line =  p.readline().strip('\n')
-			if line.__len__() < 1:
-				break
-			line = translate.escape(line)
-			list.append(line)
-		self.playlist = list
-		log.message("radio.createPlaylist length " + str(len(self.playlist)), log.DEBUG)
-		return self.playlist
+	# Get list of tracks or stations
+	def getPlayListEntry(self,index):
+		return self._radiostate.get_playlist_entry(index)
 
 	# Get the length of the current list
 	def getListLength(self):
-		return len(self.playlist)	
+		return self._radiostate.get_playlistlength()
 
 	# Display artist True or False
 	def displayArtist(self):
@@ -1219,6 +1281,10 @@ class Radio:
 	def setDisplayArtist(self,dispArtist):
 		self.display_artist = dispArtist
 
+        def updateSearchIndex(self):
+                index = _radiostate.get_current_id()
+                setSearchIndex(index)
+                
 	# Set Search index
 	def getSearchIndex(self):
 		return self.search_index
@@ -1228,83 +1294,27 @@ class Radio:
 		return
 
 	# Get Radio station name by Index
-	def getStationName(self,index):
-		if self.source == self.RADIO:
-			station = "No stations found"
-		else:
-			station = "No tracks found"
-		if len(self.playlist) > 0:
+	def getStation(self,index):
+                station = { 'message': _("Empty playlist.") }
+                if len(self.playlist) > index:
 			station = self.playlist[index] 
-		return station
-
-	# Get track name by Index
-	def getTrackNameByIndex(self,index):
-		if len(self.playlist) < 1:
-			track = "No tracks"
-		else:
-			sections = self.playlist[index].split(' - ')
-			leng = len(sections)
-			if leng > 1:
-				track = sections[1]
-			else:
-				track = "No track"
-			track = translate.escape(track)
-		if str(track) == 'None':
-			track = "Unknown track"
-		return track
-
-	# Get artist name by Index
-	def getArtistName(self,index):
-		if len(self.playlist) < 1:
-			artist = "No playlists"
-		else:
-			sections = self.playlist[index].split(' - ')
-			leng = len(sections)
-			if leng > 1:
-				artist = sections[0]
-			else:
-				artist = "Unknown artist"
-			artist = translate.escape(artist)
-		return artist
-
-	# Switch store and retrieval routines
-	def setSwitch(self,switch):
-		self.switch = switch
-		return
-
-	def getSwitch(self):
-		return self.switch
-
-	# Routines for storing rotary encoder events
-	def incrementEvent(self):
-		self.numevents += 1
-		return self.numevents
-	
-	def decrementEvent(self):
-		self.numevents -= 1
-		if self.numevents < 0:
-			self.numevents = 0
-		return self.numevents
-	
-	def getEvents(self):
-		return self.numevents
-	
-	def resetEvents(self):
-		self.numevents = 0
-		return self.numevents
+                return station
 	
 	# Version number
 	def getVersion(self):
 		return self.VERSION
 
+        def getMpdVersion(self):
+                return self.execMpc(lambda: client.mpd_version)
+
 # End of Radio Class
 
 ### Test routine ###
 if __name__ == "__main__":
-	print "Test radio_class.py"
+	print ("Test radio_class.py")
 	radio = Radio()
-	print  "Version",radio.getVersion()
-	print "Board revision", radio.getBoardRevision()
+	print  ("Version",radio.getVersion())
+	print ("Board revision", radio.getBoardRevision())
 
 	# Start radio and load the radio stations
 	radio.start()
@@ -1312,50 +1322,50 @@ if __name__ == "__main__":
 	radio.play(1)
 	current_id = radio.getCurrentID()
 	index = current_id - 1
-	print "Current ID ", current_id 
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Current ID ", current_id )
+	print ("Station",current_id,":", radio.getStationName(index))
 
 	# Test volume controls
-	print "Stored volume", radio.getStoredVolume()
+	print ("Stored volume", radio.getStoredVolume())
 	radio.setVolume(75)
 	radio.increaseVolume()
 	radio.decreaseVolume()
 	radio.getVolume()
 	time.sleep(5)
-	print "Mute"
+	print ("Mute")
 	radio.mute()
 	time.sleep(3)
-	print "Unmute"
+	print ("Unmute")
 	radio.unmute()
-	print "Volume", radio.getVolume()
+	print ("Volume", radio.getVolume())
 	time.sleep(5)
 
 	# Test channel functions
 	current_id = radio.channelUp()
-	print "Channel up"
+	print ("Channel up")
 	index = current_id - 1
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Station",current_id,":", radio.getStationName(index))
 	time.sleep(5)
 	current_id = radio.channelDown()
-	print "Channel down"
+	print ("Channel down")
 	index = current_id - 1
-	print "Station",current_id,":", radio.getStationName(index)
+	print ("Station",current_id,":", radio.getStationName(index))
 
 	# Check library load
-	print "Load music library"
+	print ("Load music library")
 	radio.loadMusic()
 
 	# Check state
-	print "Paused  " +  str(radio.paused())
+	print ("Paused  " +  str(radio.paused()))
 
 	# Check timer
-	print "Set Timer 1 minute"
+	print ("Set Timer 1 minute")
 	radio.timerValue = 1
 	radio.timerOn()
 
 	while not radio.fireTimer():
 		time.sleep(1)
-	print "Timer fired"
+	print ("Timer fired")
 
 	# Exit 
 	sys.exit(0)

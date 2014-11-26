@@ -1,0 +1,10 @@
+*~
+*.pyc
+*.debhelper
+\#*\#
+.\#*
+.pc
+debian/piradio
+debian/piradio.substvars
+debian/piradio.debhelper.log
+debian/files

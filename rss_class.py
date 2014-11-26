@@ -18,13 +18,13 @@ import os
 import time
 import urllib2
 from xml.dom.minidom import parseString
+import config
 from log_class import Log
 from translate_class import Translate
 
 log = Log()
 translate = Translate()
 
-url = "/var/lib/radiod/rss"
 
 # Tags to strip out
 tags = ['<h1>', '</h1>',
@@ -44,9 +44,19 @@ class Rss:
 	feed_available = False
 
 	def __init__(self):
+                global url
 		log.init('radio')
-                if os.path.isfile(url):
-			self.feed_available = True
+                if not config.config.has_section("RSS"):
+			self.feed_available = False
+                elif not config.config.has_option("RSS","file"):
+			self.feed_available = False
+                else:
+                        url = config.config.get("RSS","file")
+                        print ("RSS URL: " + url,log.DEBUG)
+                        if os.path.isfile(url):
+                                self.feed_available = True
+                        else:
+                                self.feed_available = False
 		return    
 
 	# Gets the next RSS entry from the rss array

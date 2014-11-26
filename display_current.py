@@ -16,12 +16,14 @@
 #             The authors shall not be liable for any loss or damage however caused.
 #
 
+import config
 from mpd import MPDClient
 client = MPDClient()    # Create the MPD client
 
 client.timeout = 10
 client.idletimeout = None
-client.connect("localhost", 6600)
+client.connect(config.get("Server","host"),
+               config.get("Server","port"))
 
 currentsong = client.currentsong()
 
