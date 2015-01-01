@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.128 2014/10/14 17:59:34 bob Exp $
+# $Id: radio_class.py,v 1.130 2014/12/31 10:39:01 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -33,6 +33,7 @@ CurrentTrackFile = RadioLibDir + "/current_track"
 VolumeFile = RadioLibDir + "/volume"
 TimerFile = RadioLibDir + "/timer" 
 AlarmFile = RadioLibDir + "/alarm" 
+DateFormatFile = RadioLibDir + "/dateformat" 
 StreamFile = RadioLibDir + "/streaming"
 MpdPortFile = RadioLibDir + "/mpdport"
 BoardRevisionFile = RadioLibDir + "/boardrevision"
@@ -117,6 +118,7 @@ class Radio:
 	timerValue = 30   # Timer value in minutes
 	timeTimer = 0  	  # The time when the Timer was activated in seconds 
 	volumetime = 0	  # Last volume check time
+	dateFormat = ""   # Date format
 
 	alarmType = ALARM_OFF	# Alarm on
 	alarmTime = "0:7:00"    # Alarm time default type,hours,minutes
@@ -129,7 +131,7 @@ class Radio:
 	search_index = 0        # The current search index
 	loadnew = False         # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.13"	# Version number
+	VERSION	= "3.14"	# Version number
 
 	def __init__(self):
 		log.init('radio')
@@ -160,6 +162,10 @@ class Radio:
 		# Set up Alarm file
 		if not os.path.isfile(AlarmFile) or os.path.getsize(AlarmFile) == 0:
 		        self.execCommand ("echo 0:7:00 > " + AlarmFile)
+
+		# Set up date format file
+		if not os.path.isfile(DateFormatFile) or os.path.getsize(DateFormatFile) == 0:
+		        self.execCommand ("echo %H:%M %d/%m/%Y > " + DateFormatFile)
 
 		# Set up Streaming (Icecast) file
 		if not os.path.isfile(StreamFile) or os.path.getsize(StreamFile) == 0:
@@ -203,6 +209,7 @@ class Radio:
 		self.setVolume(self.volume)
 		self.timeTimer = int(time.time())
 		self.timerValue = self.getStoredTimer()
+		self.dateFormat = self.getStoredDateFormat()
 		self.alarmTime = self.getStoredAlarm()
 		sType,sHours,sMinutes = self.alarmTime.split(':')
 		self.alarmType = int(sType)
@@ -673,6 +680,22 @@ class Radio:
 	def getAlarmType(self):
 		return  self.alarmType
 		
+	# Get the stored date format
+	def getStoredDateFormat(self):
+		dateFormat = '' 
+		if os.path.isfile(DateFormatFile):
+			try:
+				dateFormat = self.execCommand("cat " + DateFormatFile)
+			except ValueError:
+				dateFormat = "%H:%M %d/%m/%Y"
+		else:
+			log.message("Error reading " + DateFormatFile, log.ERROR)
+		return dateFormat
+
+	# Get the date format
+	def getDateFormat(self):
+		return self.dateFormat
+
 	# Get the stored streaming value
 	def getStoredStreaming(self):
 		streamValue = "off" 

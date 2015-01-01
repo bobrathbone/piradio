@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radiod.py,v 1.80 2014/11/01 08:53:04 bob Exp $
+# $Id: radiod.py,v 1.81 2014/12/30 12:15:57 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -966,7 +966,8 @@ def displayShutdown(lcd):
 
 # Display time and timer/alarm
 def displayTime(lcd,radio):
-	todaysdate = strftime("%H:%M %d/%m/%Y")
+	dateFormat = radio.getDateFormat()
+	todaysdate = strftime(dateFormat)
 	timenow = strftime("%H:%M")
 	message = todaysdate
 	if radio.getTimer():

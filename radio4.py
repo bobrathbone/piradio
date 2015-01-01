@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio4.py,v 1.96 2014/11/01 08:53:04 bob Exp $
+# $Id: radio4.py,v 1.97 2014/12/30 12:15:56 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -165,7 +165,8 @@ class MyDaemon(Daemon):
 
 			display_mode = radio.getDisplayMode()
 			lcd.setScrollSpeed(0.3) # Scroll speed normal
-			todaysdate = strftime("%H:%M %d/%m/%Y")
+			dateFormat = radio.getDateFormat()
+			todaysdate = strftime(dateFormat)
 			ipaddr = exec_cmd('hostname -I')
 
 			# Shutdown command issued

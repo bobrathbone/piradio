@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character LCD version
 #
-# $Id: rradio4.py,v 1.45 2014/09/10 13:47:38 bob Exp $
+# $Id: rradio4.py,v 1.46 2014/12/30 12:15:57 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -144,7 +144,9 @@ class MyDaemon(Daemon):
 			display_mode = radio.getDisplayMode()
 			
 			lcd.setScrollSpeed(0.3) # Scroll speed normal
-			todaysdate = strftime("%H:%M %d/%m/%Y")
+			dateFormat = radio.getDateFormat()
+			todaysdate = strftime(dateFormat)
+
 			ipaddr = exec_cmd('hostname -I')
 
 			# Shutdown command issued

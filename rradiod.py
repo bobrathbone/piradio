@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 # Rotary encoder version
-# $Id: rradiod.py,v 1.44 2014/08/21 13:33:46 bob Exp $
+# $Id: rradiod.py,v 1.45 2014/12/30 12:15:57 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -138,7 +138,9 @@ class MyDaemon(Daemon):
 
 			display_mode = radio.getDisplayMode()
 			lcd.setScrollSpeed(0.3) # Scroll speed normal
-			todaysdate = strftime("%H:%M %d/%m/%Y")
+			dateFormat = radio.getDateFormat()
+			todaysdate = strftime(dateFormat)
+
 			ipaddr = exec_cmd('hostname -I')
 
 		       # Shutdown command issued
@@ -964,7 +966,8 @@ def displayShutdown(lcd):
 
 # Display time and timer/alarm
 def displayTime(lcd,radio):
-	todaysdate = strftime("%H:%M %d/%m/%Y")
+	dateFormat = radio.getDateFormat()
+	todaysdate = strftime(dateFormat)
 	timenow = strftime("%H:%M")
 	message = todaysdate
 	if radio.getTimer():

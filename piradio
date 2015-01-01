@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.21 2014/11/04 19:58:43 bob Exp $
+# $Id: piradio,v 1.22 2014/12/30 12:15:56 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 3.13
+Version: 3.14
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 # Pre-Depends: <comma-separated list of packages>
 # Depends: <comma-separated list of packages>
