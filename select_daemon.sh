@@ -33,6 +33,7 @@ echo "4) Four line LCD with rotary encoders (rradio4.py)"
 echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
 echo "6) Two line LCD with I2C backpack and rotary encoders (rradiobp.py)"
 echo "7) Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)"
+echo "8) Two line piface LCD with push buttons (radio_piface.py)"
 echo "x) Exit"
 echo -n "Select version: "
 
@@ -72,6 +73,11 @@ do
 		DAEMON=rradiobp4.py
 		TYPE=${I2C}
 		break
+
+        elif [[ ${ans} == '8' ]]; then
+                DAEMON=radio_piface.py
+                TYPE=${LCD}
+                break
 
 	elif [[ ${ans} == 'x' ]]; then
 		exit 0
