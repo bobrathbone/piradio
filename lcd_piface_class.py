@@ -5,14 +5,12 @@
 # Raspberry Pi Internet Radio
 # using a Piface backlit LCD plate
 #
-# Author : Patrick Zacharias
-# Site   : N/A
+# Author : Bob Rathbone
+# Site   : http://bobrathbone.com
+# Modified by Patrick Zacharias for use with PiFace
 #
 # From original LCD routines : piface.co.uk
 # Site   : http://piface.github.io/pifacecad
-#
-# Based on Bob Rathbone's LCD class
-# Bob Rathbone's site	: http://bobrathbone.com
 #
 # To use this program you need pifacecommon and pifacecad installed
 # for their respective Python versions
@@ -107,13 +105,10 @@ class Lcd:
 #		self.cad = pifacecad.pifacecad()
 		return
 
-#        self.cad = pifacecad.pifacecad()
-	# Initialise for either revision 1 or 2 boards
-	def init(self,revision=2):
+	def init(self):
 	# LED outputs
 		self.cad = pifacecad.PiFaceCAD()
 		# set up cad
-		#self.self.cad = cad
 		self.cad.lcd.blink_off()
 		self.cad.lcd.cursor_off()
 		self.cad.lcd.backlight_on()
@@ -121,7 +116,6 @@ class Lcd:
 		self.cad.lcd.store_custom_bitmap(PLAY_SYMBOL_INDEX, PLAY_SYMBOL)
 		self.cad.lcd.store_custom_bitmap(PAUSE_SYMBOL_INDEX, PAUSE_SYMBOL)
 		self.cad.lcd.store_custom_bitmap(INFO_SYMBOL_INDEX, INFO_SYMBOL)
-#		self.self.cad = self.cad
 		return
 
 

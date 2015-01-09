@@ -4,11 +4,9 @@
 # using a Piface backlit LCD plate for Raspberry Pi.
 # $Id: radio_piface.py,v 1.37 2015/01/03 19:53:46 patrick Exp $
 #
-# Author : Patrick Zacharias 
-# based on Bob Rathbone's Adafruit code
-# Site   : N/A
-# 
-# Bob Rathbone's site: http://bobrathbone.com
+# Author : Bob Rathbone 
+# Modified by Patrick Zacharias for use with PiFace.
+# Site   : http://bobrathbone.com
 #
 # This program uses  Music Player Daemon 'mpd'and it's client 'mpc' 
 # See http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
@@ -87,7 +85,7 @@ class MyDaemon(Daemon):
 
 		# Display daemon pid on the LCD
 		message = "Radio pid " + str(os.getpid())
-		lcd.init(1)
+		lcd.init()
 		lcd.line1(message)
 		lcd.line2("IP " + ipaddr)
 		time.sleep(4)
