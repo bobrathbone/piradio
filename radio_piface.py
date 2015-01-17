@@ -885,7 +885,8 @@ def display_sleep(lcd,radio):
 
 # Display time and timer/alarm
 def displayTime(lcd,radio):
-	todaysdate = strftime("%H:%M %d/%m/%Y")
+	dateFormat = radio.getDateFormat()
+	todaysdate = strftime(dateFormat)
 	timenow = strftime("%H:%M")
 	message = todaysdate
 	if radio.getTimer():
@@ -894,6 +895,11 @@ def displayTime(lcd,radio):
 			message = message + " " + radio.getAlarmTime()
 	lcd.line1(message)
 	return
+
+# Display time and timer/alarm 
+def displayTime(lcd,radio): 
+	dateFormat = radio.getDateFormat() 
+	todaysdate = strftime(dateFormat)
 
 # Display wake up message
 def displayWakeUpMessage(lcd):
