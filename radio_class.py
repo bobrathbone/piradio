@@ -265,8 +265,10 @@ class RadioState(threading.Thread):
                                 songid = None
 
                 if songid is not None:
-                        oldsong = int(config.libget('Current Track',
-                                                    'id'))
+                        oldsong = config.libget('Current Track',
+                                                'id')
+                        oldsong = int(oldsong) if oldsong != 'None' else None
+
                         if songid != oldsong:
                                 config.libset('Current Track',
                                               'id',
