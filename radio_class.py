@@ -214,6 +214,25 @@ class RadioState(threading.Thread):
                                 except mpd.ConnectionError:
                                         pass
                                 ok = False
+
+                        except socket.error, e:
+				log.message("Connection to MPD lost: ".\
+                                            str(e),
+                                            log.ERROR)
+                                if isinstance(e.args, tuple):
+                                        if e[0] == errno.EPIPE:
+                                                try:
+                                                        client.disconnect()
+                                                except mpd.ConnectionError:
+                                                        pass
+                                                ok = False
+                                        else:
+                                                # determine and handle different error
+                                                pass
+                                else:
+                                        client.disconnect()
+                                break
+
                 log.message("RadioState: execMpdCmd end", log.DEBUG)
                 return ret
 
@@ -977,6 +996,24 @@ class Radio:
                                                 pass
                                         if self.connect():
                                                 ret = cmd()
+                                except socket.error, e:
+                                        log.message("Connection to MPD lost: ".\
+                                                    str(e),
+                                                    log.ERROR)
+                                        if isinstance(e.args, tuple):
+                                                if e[0] == errno.EPIPE:
+                                                        try:
+                                                                client.disconnect()
+                                                        except mpd.ConnectionError:
+                                                                pass
+                                                        ok = False
+                                                else:
+                                                        # determine and handle different error
+                                                        pass
+                                        else:
+                                                client.disconnect()
+                                        break
+
                 log.message("Radio: execMpc end", log.DEBUG)
                 return ret
 
