@@ -623,27 +623,27 @@ class menu(object):
 
     def formatfile(self,node):
         if (node['title']):
-            fmt = '{0} ({1})'
+            fmt = u'{0} ({1})'
         else:
-            msg = ""
-            fmt = '{1}'
+            msg = u""
+            fmt = u'{1}'
 
         if (node['artist']):
-            fmt2 = '{0}'
+            fmt2 = u'{0}'
         else:
-            fmt2 = ''
+            fmt2 = u''
 
         if (node['album']):
             if (len(fmt2)):
-                fmt2 += ': {1}'
+                fmt2 += u': {1}'
             else:
-                fmt2 = '{1}'
+                fmt2 = u'{1}'
 
         if (node['track']):
             if (len(fmt2)):
-                fmt2 += ': {2}'
+                fmt2 += u': {2}'
             else:
-                fmt2 = '{2}'
+                fmt2 = u'{2}'
         msg2 = fmt2.format(node['artist'],
                            node['album'],
                            node['track'])
