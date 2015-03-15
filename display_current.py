@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Diagnostic to Raspberry Pi Display current stream using MPD library
-# $Id: display_current.py,v 1.6 2014/05/19 08:59:03 bob Exp $
+# $Id: display_current.py,v 1.7 2015/01/21 19:44:18 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -45,6 +45,8 @@ print ""
 stats = client.stats()
 for text in stats:
 	print text + ": " + str(stats.get(text))
+
+print "Bit rate", status.get('bitrate')
 
 # End of program
 

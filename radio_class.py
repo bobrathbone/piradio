@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.130 2014/12/31 10:39:01 bob Exp $
+# $Id: radio_class.py,v 1.137 2015/03/05 19:20:03 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -22,24 +22,25 @@ import sys
 import string
 import time,datetime
 import re
+import ConfigParser
 from log_class import Log
 from translate_class import Translate
 from mpd import MPDClient
 
 # System files
+ConfigFile = "/etc/radiod.conf"
 RadioLibDir = "/var/lib/radiod"
 CurrentStationFile = RadioLibDir + "/current_station"
 CurrentTrackFile = RadioLibDir + "/current_track"
 VolumeFile = RadioLibDir + "/volume"
 TimerFile = RadioLibDir + "/timer" 
 AlarmFile = RadioLibDir + "/alarm" 
-DateFormatFile = RadioLibDir + "/dateformat" 
 StreamFile = RadioLibDir + "/streaming"
-MpdPortFile = RadioLibDir + "/mpdport"
 BoardRevisionFile = RadioLibDir + "/boardrevision"
 
 log = Log()
 translate = Translate()
+config = ConfigParser.ConfigParser()
 
 Mpd = "/usr/bin/mpd"	# Music Player Daemon
 Mpc = "/usr/bin/mpc"	# Music Player Client
@@ -107,6 +108,7 @@ class Radio:
 	current_file = ""  		# Currently playing track or station
 	option_changed = False		# Option changed
 	channelChanged = True		# Used to display title
+	configOK = False		# Do we have a configuration file
 	
 	# MPD Options
 	random = False	# Random play
@@ -118,7 +120,7 @@ class Radio:
 	timerValue = 30   # Timer value in minutes
 	timeTimer = 0  	  # The time when the Timer was activated in seconds 
 	volumetime = 0	  # Last volume check time
-	dateFormat = ""   # Date format
+	dateFormat = "%H:%M %d/%m/%Y"   # Date format
 
 	alarmType = ALARM_OFF	# Alarm on
 	alarmTime = "0:7:00"    # Alarm time default type,hours,minutes
@@ -131,14 +133,10 @@ class Radio:
 	search_index = 0        # The current search index
 	loadnew = False         # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "3.14"	# Version number
+	VERSION	= "4.1"		# Version number
 
 	def __init__(self):
 		log.init('radio')
-
-		# Set up MPD port file
-		if not os.path.isfile(MpdPortFile) or os.path.getsize(MpdPortFile) == 0:
-		        self.execCommand ("echo 6600 > " + MpdPortFile)
 
 		if not os.path.isfile(CurrentStationFile):
 			self.execCommand ("mkdir -p " + RadioLibDir )
@@ -163,10 +161,6 @@ class Radio:
 		if not os.path.isfile(AlarmFile) or os.path.getsize(AlarmFile) == 0:
 		        self.execCommand ("echo 0:7:00 > " + AlarmFile)
 
-		# Set up date format file
-		if not os.path.isfile(DateFormatFile) or os.path.getsize(DateFormatFile) == 0:
-		        self.execCommand ("echo %H:%M %d/%m/%Y > " + DateFormatFile)
-
 		# Set up Streaming (Icecast) file
 		if not os.path.isfile(StreamFile) or os.path.getsize(StreamFile) == 0:
 		        self.execCommand ("echo off > " + StreamFile)
@@ -190,13 +184,18 @@ class Radio:
 		self.current_file = CurrentStationFile
 		self.current_id = self.getStoredID(self.current_file)
 
-	# Start the MPD daemon
+	# Set up radio configuration and start the MPD daemon
 	def start(self):
+		if not os.path.isfile(ConfigFile) or os.path.getsize(ConfigFile) == 0:
+			log.message("Missing configuration file " + ConfigFile, log.ERROR)
+		else:
+			self.configOK = True	# Must be set before calling getConfig()
+			self.getConfig()
+
 		# Start the player daemon
 		self.execCommand("service mpd start")
 		# Connect to MPD
 		self.boardrevision = self.getBoardRevision()
-		self.mpdport = self.getMpdPort()
 		self.connect(self.mpdport)
 		client.clear()
 		self.randomOff()
@@ -209,7 +208,6 @@ class Radio:
 		self.setVolume(self.volume)
 		self.timeTimer = int(time.time())
 		self.timerValue = self.getStoredTimer()
-		self.dateFormat = self.getStoredDateFormat()
 		self.alarmTime = self.getStoredAlarm()
 		sType,sHours,sMinutes = self.alarmTime.split(':')
 		self.alarmType = int(sType)
@@ -247,6 +245,40 @@ class Radio:
 				retry -= 1
 
 		return connection
+
+	# Get configuration options
+	def getConfig(self):
+		section = 'RADIOD'
+
+		if not self.configOK:
+			return
+
+		# Get options
+		config.read(ConfigFile)
+		try:
+			options =  config.options(section)
+			for option in options:
+				parameter = config.get(section,option)
+				msg = "Config option: " + option + " = " + parameter 
+				log.message(msg,log.DEBUG)
+
+				if option == 'loglevel':
+					next
+
+				elif option == 'mpdport':
+					self.mpdport = parameter
+
+				elif option == 'dateformat':
+					self.dateFormat = parameter
+				else:
+					msg = "Invalid option " + option + ' in section ' \
+						+ section + ' in ' + ConfigFile
+					log.message(msg,log.ERROR)
+
+		except ConfigParser.NoSectionError:
+			msg = ConfigParser.NoSectionError(section),'in',ConfigFile
+			log.message(msg,log.ERROR)
+		return
 
 	# Input Source RADIO, NETWORK or PLAYER
 	def getSource(self):
@@ -682,15 +714,7 @@ class Radio:
 		
 	# Get the stored date format
 	def getStoredDateFormat(self):
-		dateFormat = '' 
-		if os.path.isfile(DateFormatFile):
-			try:
-				dateFormat = self.execCommand("cat " + DateFormatFile)
-			except ValueError:
-				dateFormat = "%H:%M %d/%m/%Y"
-		else:
-			log.message("Error reading " + DateFormatFile, log.ERROR)
-		return dateFormat
+		return self.dateFormat
 
 	# Get the date format
 	def getDateFormat(self):
@@ -1030,6 +1054,15 @@ class Radio:
 			artist = "Unknown artist"
 		return artist
 
+	# Get bit rate - aways returns 0 in diagnostic mode 
+	def getBitRate(self):
+		try:
+			status = client.status()
+			bitrate = int(status.get('bitrate'))
+		except:
+			bitrate = -1
+		return bitrate
+
 	# Get the last ID stored in /var/lib/radiod
 	def getStoredID(self,current_file):
 		current_id = 0
@@ -1102,6 +1135,7 @@ class Radio:
 		self.execMpc(client.clear())
 
 		dirList = os.listdir("/var/lib/mpd/playlists")
+		dirList.sort()
 		for fname in dirList:
 			cmd = "load \"" + fname.strip("\n") + "\""
 			log.message(cmd, log.DEBUG)
@@ -1130,6 +1164,7 @@ class Radio:
 		directory = "/var/lib/mpd/music/"
 
 		dirList=os.listdir(directory)
+		dirList.sort()
 		for fname in dirList:
 			fname = fname.strip("\n")
 			path = directory +  fname
@@ -1337,6 +1372,7 @@ if __name__ == "__main__":
 	index = current_id - 1
 	print "Current ID ", current_id 
 	print "Station",current_id,":", radio.getStationName(index)
+	print "Bitrate", radio.getBitRate()
 
 	# Test volume controls
 	print "Stored volume", radio.getStoredVolume()
@@ -1352,7 +1388,6 @@ if __name__ == "__main__":
 	radio.unmute()
 	print "Volume", radio.getVolume()
 	time.sleep(5)
-
 	# Test channel functions
 	current_id = radio.channelUp()
 	print "Channel up"

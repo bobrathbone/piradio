@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio
-# using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.38 2015/02/20 09:08:18 bob Exp $
+# using a Piface backlit LCD plate for Raspberry Pi.
+# $Id: radio_piface.py,v 1.2 2015/01/21 19:44:18 bob Exp $
 #
-# Author : Bob Rathbone
-# Site   : http://www.bobrathbone.com
+# Author : Patrick Zacharias 
+# based on Bob Rathbone's Adafruit code
+# Site   : N/A
 # 
+# Bob Rathbone's site: http://bobrathbone.com
+#
 # This program uses  Music Player Daemon 'mpd'and it's client 'mpc' 
 # See http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 #
@@ -18,6 +21,7 @@
 #
 
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -25,7 +29,7 @@ import string
 import datetime 
 import atexit
 import shutil
-from ada_lcd_class import Adafruit_lcd
+from lcd_piface_class import Lcd
 from time import strftime
 
 # Class imports
@@ -45,16 +49,33 @@ CurrentFile = CurrentStationFile
 log = Log()
 radio = Radio()
 rss = Rss()
-lcd = Adafruit_lcd()
+lcd = Lcd()
 
-# Register exit routine
-def finish():
-	lcd.clear()
-	radio.execCommand("umount /media  > /dev/null 2>&1")
-	radio.execCommand("umount /share  > /dev/null 2>&1")
+# Signal SIGTERM handler
+def signalHandler(signal,frame):
+	global lcd
+	global log
+	radio.execCommand("umount /media > /dev/null 2>&1")
+	radio.execCommand("umount /share > /dev/null 2>&1")
+	pid = os.getpid()
+	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped")
+	lcd.line2("")
+	lcd.line3("")
+	lcd.line4("")
+	GPIO.cleanup()
+	sys.exit(0)
 
-atexit.register(finish)
+# Signal SIGTERM handler
+def signalSIGUSR1(signal,frame):
+	global log
+	global radio
+	log.message("Radio got SIGUSR1", log.INFO)
+	display_mode = radio.getDisplayMode() + 1
+	if display_mode > radio.MODE_LAST:
+		display_mode = radio.MODE_TIME
+	radio.setDisplayMode(display_mode)
+	return
 
 # Daemon class
 class MyDaemon(Daemon):
@@ -62,19 +83,23 @@ class MyDaemon(Daemon):
 	def run(self):
 		global CurrentFile
 		log.init('radio')
+		signal.signal(signal.SIGTERM,signalHandler)
+		signal.signal(signal.SIGUSR1,signalSIGUSR1)
 
 		progcall = str(sys.argv)
 		log.message('Radio running pid ' + str(os.getpid()), log.INFO)
 		log.message("Radio " +  progcall + " daemon version " + radio.getVersion(), log.INFO)
 
 		hostname = exec_cmd('hostname')
-		ipaddr = exec_cmd('hostname -I')
+		ipaddr = exec_cmd('hostname -I') # Debian-like IP check
+#		ipaddr = exec_cmd('hostname -i') # Works for eth0 under Archlinux
 		log.message("IP " + ipaddr, log.INFO)
 		myos = exec_cmd('uname -a')
 		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
 		message = "Radio pid " + str(os.getpid())
+		lcd.init(1)
 		lcd.line1(message)
 		lcd.line2("IP " + ipaddr)
 		time.sleep(4)
@@ -101,7 +126,8 @@ class MyDaemon(Daemon):
 
 			display_mode = radio.getDisplayMode()
 			lcd.setScrollSpeed(0.3) # Scroll speed normal 
-			ipaddr = exec_cmd('hostname -I')
+			ipaddr = exec_cmd('hostname -I') #Same as above
+#			ipaddr = exec_cmd('hostname -i')
 
 			# Shutdown command issued
 			if display_mode == radio.MODE_SHUTDOWN:
@@ -216,6 +242,7 @@ def switch_event(switch):
 	global radio
 	radio.setSwitch(switch)
 	return
+
 
 # Check switch states
 def get_switch_states(lcd,radio,rss):
@@ -711,6 +738,7 @@ def scroll_artist(radio,direction):
 	radio.setLoadNew(True)
 	index = radio.getSearchIndex()
 	playlist = radio.getPlayList()
+	current_id = radio.getCurrentID()
 	current_artist = radio.getArtistName(index)
 
 	found = False
@@ -871,8 +899,8 @@ def display_sleep(lcd,radio):
 
 # Display time and timer/alarm
 def displayTime(lcd,radio):
-	dateFormat = radio.getDateFormat()
-	todaysdate = strftime(dateFormat)
+        dateFormat = radio.getDateFormat()
+        todaysdate = strftime(dateFormat)
 	timenow = strftime("%H:%M")
 	message = todaysdate
 	if radio.getTimer():
@@ -900,7 +928,8 @@ def displayWakeUpMessage(lcd):
 # Display shutdown message
 def displayShutdown(lcd):
 	lcd.line1("Stopping radio")
-	radio.execCommand("service mpd stop")
+	radio.execCommand("service mpd stop") # default way to start services under Debian
+#	radio.execCommand("systemctl stop mpd") # uncomment this line and comment above if you're using systemd
 	radio.execCommand("shutdown -h now")
 	lcd.line2("Shutdown issued")
 	time.sleep(3)
@@ -962,6 +991,7 @@ if __name__ == "__main__":
 			daemon.start()
 		elif 'stop' == sys.argv[1]:
 			os.system("service mpd stop")
+#			os.system("systemctl stop mpd") # Again systemd stuff
 			daemon.stop()
 		elif 'restart' == sys.argv[1]:
 			daemon.restart()
@@ -969,6 +999,9 @@ if __name__ == "__main__":
 			daemon.status()
 		elif 'version' == sys.argv[1]:
 			print "Version " + radio.getVersion()
+		elif 'run' == sys.argv[1]:
+			daemon.run() # Used for debug purposes
+			print "Run executed"
 		else:
 			print "Unknown command: " + sys.argv[1]
 			sys.exit(2)
@@ -978,4 +1011,6 @@ if __name__ == "__main__":
 		sys.exit(2)
 
 # End of script 
+
+
 

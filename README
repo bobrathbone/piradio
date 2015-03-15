@@ -73,6 +73,18 @@ Version 3.13 changes
 2 November 2014 - Added support for Adafruit LCD Backpack interface board.
 Correct Alarm problem in Adafruit Plate code
 
+Version 3.14 changes
+--------------------
+31 Dec 2014 3.14  - Variable date format added (USA date format for example) 
+
+Version 4.0 changes
+--------------------
+12 Feb 2015 4.0 Support for PiFace CAD. New configuration file 
+
+Version 4.1 changes
+--------------------
+27 Feb 2015 4.1 Hungarian characters added to translate class. Correct date format on Ada radio
+
 Manual
 ------
 Download from http://www.bobrathbone.com/raspberrypi/Raspberry%20PI%20Radio.pdf

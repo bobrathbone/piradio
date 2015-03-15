@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_playlists.py,v 1.21 2014/07/12 10:35:53 bob Exp $
+# $Id: create_playlists.py,v 1.23 2015/02/25 18:54:58 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -459,14 +459,14 @@ for line in open(StationList,'r'):
 		file = urllib2.urlopen(url)
 		data = file.read()
 		file.close()
+		# Creat list from data
+		lines = data.split('\n')
+		firstline = lines[0].rstrip()
 	except:
 		print "Error: Failed to retrieve ", url
 		errorCount += 1
 		continue
 
-	# Creat list from data
-	lines = data.split('\n')
-	firstline = lines[0].rstrip()
 
 	# process lines accoording to URL type
 	if isPLS:

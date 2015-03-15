@@ -1,6 +1,6 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.14 2014/10/05 14:18:10 bob Exp $
+# $Id: piradio.postinst,v 1.21 2015/03/01 13:32:15 bob Exp $
 
 # File locations
 DIR=/home/pi/radio
@@ -10,16 +10,24 @@ BOOTCMD=/boot/cmdline.txt
 MODULES=/etc/modules
 MPDCONF=/etc/mpd.conf
 PODCASTSDIST=podcasts.dist
+CONFIGFILE=/etc/radiod.conf
 
 # Display types
-LCD=3   # LCD screen (direct)
-I2C=4   # Uses I2C libraries
+LCD=1   # LCD screen (direct)
+I2C=2   # Uses I2C libraries
+CAD=3	# PiFace control and display
 
 echo "Executing post install script ${0}"
 update-rc.d -f radiod defaults
 sudo mkdir -p ${DIR}/playlists
 sudo chown -R pi:pi ${DIR}
 sudo chmod +x ${DIR}/*.py
+sudo chmod +x ${DIR}/*.sh
+
+# Create configuration file in /etc
+if [[ ! -f   ${CONFIGFILE} ]]; then
+	sudo cp -f ${DIR}/radiod.conf ${CONFIGFILE}
+fi
 
 # Set up daemon
 ${DIR}/select_daemon.sh
@@ -49,14 +57,16 @@ if [[ ${TYPE} -eq ${LCD} ]]; then
 	REBOOT=1
 
 elif [[ ${TYPE} -eq ${I2C} ]]; then
-	
-	if [[ ! -f   ${MODULES}.orig ]]; then
+	# Restore original moules file
+	if [[ -f ${MODULES}.orig ]]; then
+		sudo cp -fp ${MODULES}.orig ${MODULES}
+	else
 		sudo cp -fp ${MODULES} ${MODULES}.orig
-		echo "i2c-bcm2708" >>  ${MODULES}
-		echo "i2c-dev" >>  ${MODULES}
-		echo "# Original file stored as ${MODULES}.orig" >> ${MODULES} 
-		echo
 	fi
+	echo "i2c-bcm2708" >>  ${MODULES}
+	echo "i2c-dev" >>  ${MODULES}
+	echo "# Original file stored as ${MODULES}.orig" >> ${MODULES} 
+	echo "Updated ${MODULES}"
 
 else 
 	echo "No radio daemon selected"
@@ -92,22 +102,24 @@ fi
 # Create playlists if no station list present
 if [[ ! -f "${RADIOLIB}/stationlist" ]]; then
 	echo "Creating playlists:"
+	echo "This will take a few minutes"
 	${DIR}/create_playlists.py --no_delete 2>&1 > ${DIR}/playlists.log
-	echo "See ${DIR}/playlists.log for information about playlists created"
+	echo "Done: See ${DIR}/playlists.log for information about playlists created"
 	echo
 fi
 
-# End of installation
 echo
 echo "PI Radio software successfully installed"
 echo "See /usr/share/doc/radiod/README for release information"
 echo
 
 if [[ ${TYPE} -eq ${I2C} ]]; then
+	echo "Configured to use I2C libraries"
+	/home/pi/radio/run_raspi-config.sh ${I2C}
 	# Check to see if the python-smbus is already installed
 	dpkg -l python-smbus  > /dev/null 2>&1  
 	if [[ $? > 0 ]]; then  # Don't seperate from above
-		echo "It is necessary to install the I2C libraries for Adafruit LCD plate"
+		echo "It is necessary to install the I2C libraries"
 		echo "Carry out the following command:"
 		echo "   sudo apt-get install python-smbus"
 		echo "and reboot the system"
@@ -115,8 +127,23 @@ if [[ ${TYPE} -eq ${I2C} ]]; then
 	else 
 		REBOOT=1
 	fi
-fi
 
+elif [[ ${TYPE} -eq ${CAD} ]]; then
+	# Check to see if the python-pifacecommon is already installed
+	echo "Configured to use PiFace CAD"
+	/home/pi/radio/run_raspi-config.sh ${CAD}
+	dpkg -l python-pifacecommon  > /dev/null 2>&1  
+	if [[ $? > 0 ]]; then  # Don't seperate from above
+		echo "It is necessary to install the SPI libraries for PiFace CAD"
+		echo "Carry out the following command:"
+		echo "   sudo apt-get install python{,3}-pifacecad"
+		echo "and reboot the system"
+		REBOOT=0
+	else 
+		REBOOT=1
+	fi
+fi
+echo "Installation complete"
 if [[ REBOOT -eq 1 ]]; then
 	echo "It is necessary to reboot the system to start the radio"
 fi

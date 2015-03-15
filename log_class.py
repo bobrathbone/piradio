@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id: log_class.py,v 1.6 2014/03/25 19:42:00 bob Exp $
+# $Id: log_class.py,v 1.7 2015/01/24 10:29:14 bob Exp $
 # Raspberry Pi Internet Radio
 # Logging class
 #
@@ -12,83 +12,111 @@
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
 #             The authors shall not be liable for any loss or damage however caused.
 #
+# Modified to use /etc/radiod.conf from 3.15 onwards
+#
+# Log levels are :
+# 	CRITICAL 50 
+# 	ERROR 40 
+# 	WARNING 30 
+# 	INFO 20 
+# 	DEBUG 10 
+# 	NOTSET 0 
+#
+#  See https://docs.python.org/2/library/logging.html
+#
 
 import os
 import logging
+import ConfigParser
 
+config = ConfigParser.ConfigParser()
+ConfigFile = "/etc/radiod.conf"
 
 class Log:
 
-	INFO = logging.INFO
-	WARNING = logging.WARNING
+	CRITICAL = logging.CRITICAL
 	ERROR = logging.ERROR
+	WARNING = logging.WARNING
+	INFO = logging.INFO
 	DEBUG = logging.DEBUG
 	NONE = 0
 
-	RadioLibDir = "/var/lib/radiod"
-	LogLevelFile = RadioLibDir + "/loglevel"
-
-	module = ''
-	level = logging.INFO
+	module = '' 	# Module name for log entries
+	loglevel = logging.INFO
 
         def __init__(self):
                 return 
 
 	def init(self,module):
 		self.module = module
-                # Set up loglevel file
-                if not os.path.isfile(self.LogLevelFile) or os.path.getsize(self.LogLevelFile) == 0:
-                        os.popen("echo INFO > " + self.LogLevelFile)
-			os.popen("echo INFO > " + self.LogLevelFile)
-		self.level = self.getLevel()
+		self.loglevel = self.getConfig()
                 return 
 
 	def message(self,message,level):
-		# Set up logging, level can be INFO, WARNING, ERROR, DEBUG or NONE
+		# Set up logging, level 
 		if level != self.NONE:
 			logger = logging.getLogger('gipiod')
 			hdlr = logging.FileHandler('/var/log/' + self.module + '.log')
 			formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 			hdlr.setFormatter(formatter)
 			logger.addHandler(hdlr)
-			logger.setLevel(self.level)
-			if level == logging.INFO:
-				logger.info(message)
-			if level == logging.WARNING:
-				logger.warning(message)
-			if level == logging.DEBUG:
-				logger.debug(message)
-			if level == logging.ERROR:
+			logger.setLevel(self.loglevel)
+
+			# write to log
+			if level == self.CRITICAL:
+				logger.critical(message)
+			elif level == self.ERROR:
 				logger.error(message)
+			elif level == self.WARNING:
+				logger.warning(message)
+			elif level == self.INFO:
+				logger.info(message)
+			elif level == self.DEBUG:
+				logger.debug(message)
+
 			logger.removeHandler(hdlr)
 			hdlr.close()
 		return
 
 	# Temporary set log level
 	def setLevel(self,level):
-		self.level = level
+		self.loglevel = level
 		return
 
 	# Get the log level from the configuration file
         def getLevel(self):
-                self.loglevel = logging.INFO
-                if os.path.isfile(self.LogLevelFile):
-                        try:
-                                p = os.popen("cat " + self.LogLevelFile)
-                                strLogLevel = p.readline().rstrip('\n')
-                                if strLogLevel == "DEBUG":
-                                        self.loglevel = logging.DEBUG
-                                elif strLogLevel == "WARNING":
-                                        self.loglevel = logging.WARNING
-                                elif strLogLevel == "ERROR":
-                                        self.loglevel = logging.ERROR
-                                elif strLogLevel == "NONE":
-                                        self.loglevel = self.NONE
-
-                        except ValueError:
-                                self.loglevel = logging.INFO
-
                 return self.loglevel
+
+	# Get configuration loglevel option
+	def getConfig(self):
+		section = 'RADIOD'
+		option = 'loglevel'
+		strLogLevel = 'INFO'
+
+		# Get loglevel option
+		config.read(ConfigFile)
+		try:
+			strLogLevel = config.get(section,option)
+
+		except ConfigParser.NoSectionError:
+			msg = ConfigParser.NoSectionError(section),'in',ConfigFile
+			self.message(msg,self.ERROR)
+
+		if strLogLevel == "CRITICAL":
+			loglevel = self.CRITICAL
+		elif strLogLevel == "ERROR":
+			loglevel = self.ERROR
+		elif strLogLevel == "WARNING":
+			loglevel = self.WARNING
+		elif strLogLevel == "INFO":
+			loglevel = self.INFO
+		elif strLogLevel == "DEBUG":
+			loglevel = self.DEBUG
+		elif strLogLevel == "NONE":
+			loglevel = self.NONE
+		else:
+			loglevel = self.INFO
+		return loglevel
 
 # End of log class
 

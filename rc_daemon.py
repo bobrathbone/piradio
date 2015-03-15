@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #
-# Raspberry Pi Internet Radio Class
-# $Id: radio_daemon.py,v 1.4 2015/01/24 11:46:17 bob Exp $
+# Raspberry Pi Internet Radio Remote Control Class
+# $Id: rc_daemon.py,v 1.3 2015/02/07 13:59:18 bob Exp $
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
 #
-# This class is the daemon class for radio_class.py
+# This is the daemon class for the PiFace CAD remote control
 #
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
@@ -14,7 +14,8 @@
 #
 
 import sys, os, time, atexit
-from signal import SIGTERM 
+from signal import SIGKILL 
+from signal import SIGHUP 
 
 class Daemon:
 	"""
@@ -114,13 +115,22 @@ class Daemon:
 			sys.stderr.write(message % self.pidfile)
 			return # not an error in a restart
 
-		# Try killing the daemon process	
+		# Stop lircd and irexec
 		try:
-			count = 3
-			while count > 0:
-				os.kill(pid, SIGTERM)
-				time.sleep(1.0)
-				count -= 1
+			pid1 = int(self.exec_cmd("pidof lircd"))
+			os.kill(pid1, SIGKILL)
+		except OSError, err:
+			print str(err)
+		except ValueError:
+			print "lircd not running"
+		
+		# Try killing the daemon process	
+		cpid = int(self.exec_cmd("pgrep -P " + str(pid)))
+		try:
+			os.kill(cpid, SIGHUP)
+			if os.path.exists(self.pidfile):
+				os.remove(self.pidfile)
+			os.kill(pid, SIGKILL)
 			sys.exit(0)
 
 		except OSError, err:
@@ -150,3 +160,10 @@ class Daemon:
 		daemonized by start() or restart().
 		"""
 
+	# Execute system command
+	def exec_cmd(self,cmd):
+		p = os.popen(cmd)
+		result = p.readline().rstrip('\n')
+		return result
+
+### End ###

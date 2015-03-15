@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: station.urls,v 1.13 2014/06/18 05:54:11 bob Exp $
+# $Id: station.urls,v 1.15 2015/03/05 19:19:23 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -23,18 +23,20 @@
 # Then run create_pl_files.py in the /home/pi/radio directory to create PLS files
  
 # United Kingdom
-# The following link are iPhone streams (asx files)
+# The following links are iPhone streams (m3u files)
 (BBC stations)
-[BBC Radio 1] http://bbc.co.uk/radio/listen/live/r1.asx
-[BBC Radio 2] http://bbc.co.uk/radio/listen/live/r2.asx
-[BBC Radio 3] http://bbc.co.uk/radio/listen/live/r3.asx
-[BBC Radio 4] http://bbc.co.uk/radio/listen/live/r4.asx
-[BBC Radio 5 Live] http://bbc.co.uk/radio/listen/live/r5l.asx
-[BBC Radio 6] http://bbc.co.uk/radio/listen/live/r6.asx
-[BBC Radio 5  Live sports] http://bbc.co.uk/radio/listen/live/r5lsp.asx
-[BBC Radio 1 extra] http://bbc.co.uk/radio/listen/live/r1x.asx
-[BBC Radio Bristol] http://bbc.co.uk/radio/listen/live/bbcbristol.asx
-[BBC Radio 4 extra] http://www.bbc.co.uk/radio/listen/live/r4x.asx
+[BBC Radio 1] http://www.radiofeeds.co.uk/bbcradio1.pls
+[BBC Radio 2] http://www.radiofeeds.co.uk/bbcradio2.pls 
+[BBC Radio 3] http://www.radiofeeds.co.uk/bbcradio3.pls
+[BBC Radio 4] http://www.radiofeeds.co.uk/bbcradio4.pls
+[BBC Radio 5 Live] http://www.radiofeeds.co.uk/bbc5live.pls 
+[BBC Radio 6 Live] http://www.radiofeeds.co.uk/bbc6live.pls 
+[BBC Radio 6] http://www.radiofeeds.co.uk/bbc6music.pls
+[BBC Radio 5 Live sports] http://www.radiofeeds.co.uk/bbc5livesportsextra.pls
+[BBC Radio 1 extra] http://www.radiofeeds.co.uk/bbc1xtra.pls
+[BBC Radio Bristol] http://www.radiofeeds.co.uk/bbcradiobristol.pls
+[BBC Radio 4 extra] http://www.radiofeeds.co.uk/bbcradio4extra.pls
+[BBC World service] http://wsdownload.bbc.co.uk/worldservice/meta/live/shoutcast/mp3/eieuk.pls
 
 # Netherlands
 (Dutch stations)
@@ -65,4 +67,9 @@
 (Jazz stations)
 [Ghost Sky Jazz] http://streaming.radionomy.com/ghost-sky
 [Radio Sky Music] http://streaming.radionomy.com/RadioSky-Music
+
+# Australia
+(Australia)
+[Adelaide Radio AA] http://streaming.novaentertainment.com.au/fiveaa
+
 

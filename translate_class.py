@@ -4,7 +4,7 @@
 # Raspberry Pi Radio Character translation class
 # Escaped characters, html and unicode translation to ascii
 #
-# $Id: translate_class.py,v 1.13 2014/11/01 08:53:04 bob Exp $
+# $Id: translate_class.py,v 1.14 2015/02/28 11:29:10 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -92,6 +92,14 @@ class Translate:
  		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
  		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
  		s = s.replace('\\xc3\\xb6', 'u')	# u diaris
+
+		# Hungarian lower case
+		s = s.replace('\\xc3\\xb3', chr(243))   # ó
+		s = s.replace('\\xc3\\xad', chr(237))   # í
+		s = s.replace('\\xc3\\xb5', chr(245))   # ő
+		s = s.replace('\\xc5\\x91', chr(245))   # ő
+		s = s.replace('\\xc5\\xb1', chr(252))   # ű
+		s = s.replace('\\xc3\\xba', chr(250))   # ú
 
 		# Greek upper case
  		s = s.replace('\\xce\\x91', 'A')	# Alpha
@@ -277,9 +285,9 @@ class Translate:
 
 		if self.displayUmlauts:
 			s = s.replace(chr(223), chr(226))       # Sharp s
-			s = s.replace(chr(246), chr(239))       # o umlaut
+			s = s.replace(chr(246), chr(239))       # o umlaut (Problem in Hungarian?)
 			s = s.replace(chr(228), chr(225))       # a umlaut
-			s = s.replace(chr(252), chr(245))       # u umlaut
+			s = s.replace(chr(252), chr(245))       # u umlaut (Problem in Hungarian?)
 		else:
 			s = s.replace(chr(228), "ae")	   # a umlaut
 			s = s.replace(chr(223), "ss")	   # Sharp s

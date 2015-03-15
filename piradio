@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.22 2014/12/30 12:15:56 bob Exp $
+# $Id: piradio,v 1.29 2015/03/08 11:47:41 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 3.14
+Version: 4.1
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 # Pre-Depends: <comma-separated list of packages>
 # Depends: <comma-separated list of packages>
@@ -35,6 +35,7 @@ Files:  radiod.py /home/pi/radio/
 	rradio4.py /home/pi/radio/
 	rradiobp.py /home/pi/radio/
 	rradiobp4.py /home/pi/radio/
+	radio_piface.py /home/pi/radio/
 	display_current.py /home/pi/radio/
 	display_config.py /home/pi/radio/
 	ada_lcd_class.py /home/pi/radio/
@@ -48,19 +49,23 @@ Files:  radiod.py /home/pi/radio/
 	rotary_class.py /home/pi/radio/
 	test_ada_lcd.py /home/pi/radio/
 	test_rotary_class.py /home/pi/radio/
+	test_remote_control.py /home/pi/radio/
 	create_playlists.py /home/pi/radio/
 	create_podcasts.py /home/pi/radio/
 	i2c_class.py /home/pi/radio/
 	radio_class.py /home/pi/radio/
 	lcd_class.py /home/pi/radio/
+	lcd_piface_class.py /home/pi/radio/
 	lcd_i2c_class.py /home/pi/radio/
 	radio_daemon.py /home/pi/radio/  
 	test_lcd.py /home/pi/radio/
 	test_i2c_lcd.py /home/pi/radio/
 	test_switches.py /home/pi/radio/
 	select_daemon.sh /home/pi/radio/
+	run_raspi-config.sh /home/pi/radio/
 	station.urls /home/pi/radio/
 	podcasts.dist /home/pi/radio/
+	setup_pifacecad_lirc.sh /home/pi/radio/
 	configs/mpdstream /home/pi/radio/
 	piradio_build.tar.gz /home/pi/radio/
 	README /home/pi/radio/
@@ -68,6 +73,8 @@ Files:  radiod.py /home/pi/radio/
 	install_streaming.sh /home/pi/radio/
 	logrotate.d/radiod /etc/
 	init.d/radiod /etc/
+	init.d/pifacercd /etc/
+	radiod.conf /home/pi/radio/	
 	cron.hourly/podcast /etc/
 	contributors/README /home/pi/radio/
 	contributors/LCD4x40-PCF854/radio4x40.py /home/pi/radio/
