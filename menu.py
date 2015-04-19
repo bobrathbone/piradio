@@ -1203,7 +1203,7 @@ class path_menu(menu):
 
     def gotoplaylist(self,node):
         self.please_wait()
-        submenu(playlist_menu(node['playlist']),'playlist')
+        submenu(playlist_menu(node['playlist'],'playlist'))
 
     def gotofile(self,node):
         self.please_wait()
