@@ -20,6 +20,7 @@
 import os
 import sys
 import string
+import errno
 import time,datetime
 import re
 import config
@@ -188,6 +189,7 @@ class RadioState(threading.Thread):
                         log.message(string.join(traceback.format_stack()),log.ERROR)
                 ok = False
                 ret = None
+                first = True
                 while repeat and not ok:
                         try:
                                 log.message("RadioState: executing command",
@@ -204,6 +206,8 @@ class RadioState(threading.Thread):
                                 except mpd.ConnectionError:
                                         pass
                                 ok = False
+                                if not first:
+                                        time.sleep(0.1)
 
                         except socket.timeout:
                                 log.message("RadioState: connection timeout",
@@ -214,10 +218,11 @@ class RadioState(threading.Thread):
                                 except mpd.ConnectionError:
                                         pass
                                 ok = False
+                                if not first:
+                                        time.sleep(0.1)
 
-                        except socket.error, e:
-				log.message("Connection to MPD lost: ".\
-                                            str(e),
+                        except socket.error as e:
+				log.message("Connection to MPD lost: %s" % e,
                                             log.ERROR)
                                 if isinstance(e.args, tuple):
                                         if e[0] == errno.EPIPE:
@@ -226,8 +231,13 @@ class RadioState(threading.Thread):
                                                 except mpd.ConnectionError:
                                                         pass
                                                 ok = False
+                                                if not first:
+                                                        time.sleep(0.1)
                                         else:
                                                 # determine and handle different error
+                                                if not first:
+                                                        time.sleep(0.1)
+                                                ok = False
                                                 pass
                                 else:
                                         client.disconnect()
@@ -996,9 +1006,11 @@ class Radio:
                                                 pass
                                         if self.connect():
                                                 ret = cmd()
-                                except socket.error, e:
-                                        log.message("Connection to MPD lost: ".\
-                                                    str(e),
+                                        if not first:
+                                                time.sleep(0.1)
+                                                
+                                except socket.error as e:
+                                        log.message("Connection to MPD lost: %s" % e,
                                                     log.ERROR)
                                         if isinstance(e.args, tuple):
                                                 if e[0] == errno.EPIPE:
@@ -1007,11 +1019,17 @@ class Radio:
                                                         except mpd.ConnectionError:
                                                                 pass
                                                         ok = False
+                                                        if not first:
+                                                                time.sleep(0.1)
                                                 else:
+                                                        if not first:
+                                                                time.sleep(0.1)
                                                         # determine and handle different error
                                                         pass
                                         else:
                                                 client.disconnect()
+                                                if not first:
+                                                        time.sleep(0.1)
                                         break
 
                 log.message("Radio: execMpc end", log.DEBUG)
