@@ -153,6 +153,24 @@ class Translate:
  		s = s.replace('\\xce\\xc8', 'ps')	# Psi
  		s = s.replace('\\xce\\xc9', 'o')	# Omega
 
+                # Polish unicode escape sequences
+                s = s.replace('\\xc4\\x84', 'A')        # A,
+                s = s.replace('\\xc4\\x85', 'a')        # a,
+                s = s.replace('\\xc4\\x86', 'C')        # C'
+                s = s.replace('\\xc4\\x87', 'c')        # c'
+                s = s.replace('\\xc4\\x98', 'E')        # E,
+                s = s.replace('\\xc4\\x99', 'e')        # e,
+                s = s.replace('\\xc5\\x81', 'L')        # L/
+                s = s.replace('\\xc5\\x82', 'l')        # l/
+                s = s.replace('\\xc5\\x83', 'N')        # N'
+                s = s.replace('\\xc5\\x84', 'n')        # n'
+                s = s.replace('\\xc5\\x9a', 'S')        # S'
+                s = s.replace('\\xc5\\x9b', 's')        # s'
+                s = s.replace('\\xc5\\xb9', 'Z')        # Z'
+                s = s.replace('\\xc5\\xba', 'z')        # z'
+                s = s.replace('\\xc5\\xbb', 'Z')        # Z.
+                s = s.replace('\\xc5\\xbc', 'z')        # z.
+
 		# Currency other special character
 		s = s.replace('\\xa3', chr(156))  # UK pound sign
 		s = s.replace('\\xa9', chr(169))  # Copyright
