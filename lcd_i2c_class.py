@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # LCD test program for the lcd_i2c_class.py class
-# $Id: lcd_i2c_class.py,v 1.2 2014/10/05 08:38:31 bob Exp $
+# $Id: lcd_i2c_class.py,v 1.3 2015/07/21 18:42:34 bob Exp $
 # Use this program to test I2C Backpack LCD wiring
 # Adapted from RpiLcdBackpack from Paul Knox-Kennedy
 # at Adafruit Industries
@@ -115,7 +115,8 @@ class lcd_i2c:
 		self.__bus=smbus.SMBus(bus)
 		self.__bus.write_byte_data(0x20,0x00,0x00)
 		self.__displayfunction = self.__4BITMODE | self.__2LINE | self.__5x8DOTS
-		self.__displaycontrol = self.__DISPLAYCONTROL | self.__DISPLAYON | self.__CURSORON | self.__BLINKON
+		#self.__displaycontrol = self.__DISPLAYCONTROL | self.__DISPLAYON | self.__CURSORON | self.__BLINKON
+		self.__displaycontrol = self.__DISPLAYCONTROL | self.__DISPLAYON 
 		self.__data = 0
 		self.writeFourBits(0x03)
 		time.sleep(0.005)

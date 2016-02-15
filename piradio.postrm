@@ -1,10 +1,10 @@
 #!/bin/bash
 # Radio daemon post remove script
-# $Id: piradio.postrm,v 1.4 2014/07/12 12:41:34 bob Exp $
+# $Id: piradio.postrm,v 1.5 2015/12/27 18:39:27 bob Exp $
 
 BOOTCMD=/boot/cmdline.txt
 INITTAB=/etc/inittab
-DIR=/home/pi/radio
+DIR=/usr/share/radio
 
 rm -f ${DIR}/*.pyc
 echo "Executing post remove script ${0}"

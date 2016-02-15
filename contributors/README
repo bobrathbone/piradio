@@ -7,6 +7,7 @@ As Bob Rathbone is unable to test these programs absolutely no support is provid
 so please don't ask for it as the answer will always be the same - no support.
 A useful README file is however included in each sub-directory.
 
-Directory	Description
-=========	===========
-LCD4x40-PCF854	Version supporting a 4 line 40 character display from Christian Heise 
+Directory	     Description
+=========	     ===========
+LCD4x40-PCF854	     Version supporting a 4 line 40 character display from Christian Heise 
+Norwegian_characters Custom Norwegian characters from Anders Herbjoren

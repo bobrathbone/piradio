@@ -4,7 +4,7 @@
 # Raspberry Pi Radio Character translation class
 # Escaped characters, html and unicode translation to ascii
 #
-# $Id: translate_class.py,v 1.14 2015/02/28 11:29:10 bob Exp $
+# $Id: translate_class.py,v 1.20 2016/01/30 09:07:52 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -67,6 +67,39 @@ class Translate:
 		s = s.replace("\\'", "'") 	
 		s = s.replace("\\n", " ") 	# Line feed  to space
 
+		# Special characters
+ 		s = s.replace('\\xc2\\xa1', '!') 	# Inverted exclamation
+ 		s = s.replace('\\xc2\\xa2', 'c') 	# Cent sign
+ 		s = s.replace('\\xc2\\xa3', '#') 	# Pound sign
+ 		s = s.replace('\\xc2\\xa4', '$') 	# Currency sign
+ 		s = s.replace('\\xc2\\xa5', 'Y') 	# Yen sign
+ 		s = s.replace('\\xc2\\xa6', '|') 	# Broken bar
+ 		s = s.replace('\\xc2\\xa7', '?') 	# Section sign
+ 		s = s.replace('\\xc2\\xa8', ':') 	# Diaerisis
+ 		s = s.replace('\\xc2\\xa9', '(C)') 	# Copyright
+ 		s = s.replace('\\xc2\\xaa', '?') 	# Feminal ordinal
+ 		s = s.replace('\\xc2\\xab', '<<') 	# Double left
+ 		s = s.replace('\\xc2\\xac', '-') 	# Not sign
+ 		s = s.replace('\\xc2\\xad', '') 	# Soft hyphen
+ 		s = s.replace('\\xc2\\xae', '(R)') 	# Registered sign
+ 		s = s.replace('\\xc2\\xaf', '-') 	# Macron
+ 		s = s.replace('\\xc2\\xb0', 'o') 	# Degrees sign
+ 		s = s.replace('\\xc2\\xb1', '+-') 	# Plus minus
+ 		s = s.replace('\\xc2\\xb2', '2') 	# Superscript 2
+ 		s = s.replace('\\xc2\\xb3', '3') 	# Superscript 3
+ 		s = s.replace('\\xc2\\xb4', '') 	# Acute accent
+ 		s = s.replace('\\xc2\\xb5', 'u') 	# Micro sign
+ 		s = s.replace('\\xc2\\xb6', '') 	# Pilcrow
+ 		s = s.replace('\\xc2\\xb7', '.') 	# Middle dot
+ 		s = s.replace('\\xc2\\xb8', '') 	# Cedilla
+ 		s = s.replace('\\xc2\\xb9', '1') 	# Superscript 1
+ 		s = s.replace('\\xc2\\xba', '') 	# Masculine indicator
+ 		s = s.replace('\\xc2\\xbb', '>>') 	# Double right
+ 		s = s.replace('\\xc2\\xbc', '1/4') 	# 1/4 fraction
+ 		s = s.replace('\\xc2\\xbd', '1/2') 	# 1/2 Fraction
+ 		s = s.replace('\\xc2\\xbe', '3/4') 	# 3/4 Fraction
+ 		s = s.replace('\\xc2\\xbf', '?') 	# Inverted ? 
+
 		# German unicode escape sequences
 		s = s.replace('\\xc3\\x83', chr(223))   # Sharp s es-zett
 		s = s.replace('\\xc3\\x9f', chr(223))   # Sharp s ?
@@ -77,7 +110,23 @@ class Translate:
 		s = s.replace('\\xc3\\x96', chr(214)) 	# O umlaut
  		s = s.replace('\\xc3\\x9c', chr(220))	# U umlaut
 
-		# French unicode escape sequences
+		# Norwegian unicode escape sequences
+		s = s.replace('\\xc3\\x98', 'O')   # Oslash
+		s = s.replace('\\xc3\\xb8', 'o')   # Oslash
+		s = s.replace('\\xc3\\x85', 'A')   # Aring
+		s = s.replace('\\xc3\\x93', 'O')   # O grave
+		s = s.replace('\\xc3\\xa5', 'a')   # aring
+		s = s.replace('\\xc3\\x86', 'AE')  # AElig
+		s = s.replace('\\xc3\\x98', 'O')   # O crossed
+		s = s.replace('\\xc3\\x99', 'U')   # U grave
+		s = s.replace('\\xc3\\xa6', 'ae')  # aelig
+		s = s.replace('\\xc3\\xb0', 'o')   # o umlaut
+		s = s.replace('\\xc3\\xb3', 'o')   # o tilde
+		s = s.replace('\\xc3\\xb8', 'o')   # oslash
+		s = s.replace('\\xc2\\x88', 'A')   # aelig
+		s = s.replace('\\xc2\\xb4', 'A')   # aelig
+
+		# French (Latin) unicode escape sequences
  		s = s.replace('\\xc3\\x80', 'A')	# A grave 
  		s = s.replace('\\xc3\\x81', 'A')	# A acute 
  		s = s.replace('\\xc3\\x82', 'A')	# A circumflex 
@@ -91,7 +140,8 @@ class Translate:
  		s = s.replace('\\xc3\\xa8', chr(232))	# e grave
  		s = s.replace('\\xc3\\xa9', chr(233))	# e acute
  		s = s.replace('\\xc3\\xaa', chr(234))	# e circumflex
- 		s = s.replace('\\xc3\\xb6', 'u')	# u diaris
+ 		s = s.replace('\\xc3\\xb6', "'")	# Hyphon
+ 		s = s.replace('\\xc3\\xb7', "/")	# Division sign
 
 		# Hungarian lower case
 		s = s.replace('\\xc3\\xb3', chr(243))   # ó
@@ -200,6 +250,7 @@ class Translate:
 	# HTML translations (callable)
 	def html(self,text):
 		s = self._html(s)
+		_convert_html(s)
 		return s
 
 	# HTML translations
@@ -211,6 +262,18 @@ class Translate:
 		s = s.replace('&nbsp;', ' ') 
 		s = s.replace('&amp;', '&') 
 		s = s.replace('&copy;', '(c)') 
+		return s
+
+	# Convert &#nn sequences
+	def _convert_html(s):
+		c = re.findall('&#[0-9][0-9][0-9]', s)
+		c += re.findall('&#[0-9][0-9]', s)
+		for html in c:
+			ch = int(html.replace('&#', ''))
+			if ch > 31 and ch < 127:
+				s = s.replace(html,chr(ch))
+			else:
+				s = s.replace(html,'')
 		return s
 
 	# Unicodes etc (callable)
@@ -237,10 +300,10 @@ class Translate:
 		s = text.decode('macgreek')
 		return s
 
-        # Display umlats as oe ae etc
-        def displayUmlauts(self,value):
-                self.displayUmlauts = value
-                return
+	# Display umlats as oe ae etc
+	def displayUmlauts(self,value):
+		self.displayUmlauts = value
+		return
 
 	# Translate special characters (umlautes etc) to LCD values
 	# See standard character patterns for LCD display
@@ -250,6 +313,9 @@ class Translate:
 		# Currency
 		s = s.replace(chr(156), '#')       # Pound by hash
 		s = s.replace(chr(169), '(c)')     # Copyright
+
+		# Norwegian
+		s = s.replace(chr(216), 'O')       # Oslash
 
 		# Spanish french
 		s = s.replace(chr(241), 'n')       # Small tilde n

@@ -2,7 +2,7 @@
 #
 # Test push buttons for the Raspberry PI internet radio
 #
-# $Id: test_switches.py,v 1.5 2014/04/18 13:16:27 bob Exp $
+# $Id: test_switches.py,v 1.6 2015/07/13 07:25:32 bob Exp $
 #
 # Author Bob Rathbone
 # Web site http://www.bobrathbone.com
@@ -23,6 +23,7 @@ LEFT_SWITCH = 14
 RIGHT_SWITCH = 15
 UP_SWITCH = 17
 DOWN_SWITCH = 18
+MUTE_SWITCH = 4
 
 
 GPIO.setmode(GPIO.BCM)       # Use BCM GPIO numbers
@@ -45,6 +46,7 @@ GPIO.setup(UP_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(DOWN_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(LEFT_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(RIGHT_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(MUTE_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 while True:
 	try:
@@ -53,6 +55,7 @@ while True:
 		down_switch = GPIO.input(DOWN_SWITCH)
 		left_switch = GPIO.input(LEFT_SWITCH)
 		right_switch = GPIO.input(RIGHT_SWITCH)
+		mute_switch = GPIO.input(MUTE_SWITCH)
 
 		if menu_switch:
 			print "menu_switch"
@@ -64,6 +67,8 @@ while True:
 			print "left_switch"
 		elif right_switch:
 			print "right_switch"
+		elif mute_switch:
+			print "mute_switch"
 
 		time.sleep(0.5)
 

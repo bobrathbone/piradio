@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_daemon.py,v 1.4 2015/01/24 11:46:17 bob Exp $
-# Author : Bob Rathbone
+# $Id: radio_daemon.py,v 1.7 2015/10/31 15:40:05 bob Exp $
+# Author : Sander Marechal
+# Website http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
+#
+# Adapted by Bob Rathbone for the Internet Radio
 # Site   : http://www.bobrathbone.com
 #
 # This class is the daemon class for radio_class.py
@@ -78,6 +81,22 @@ class Daemon:
 
 	def start(self):
 		"""
+		Start the daemon 
+		"""
+		self.begin(True) # Daemonize
+
+	def nodaemon(self):
+		"""
+		Start the program in foreground
+		Test purposes only
+		"""
+		try:
+			self.begin(False)
+		except KeyboardInterrupt:
+			print "\nRadio stopped"
+
+	def begin(self,daemonize):
+		"""
 		Start the daemon
 		"""
 		# Check for a pidfile to see if the daemon already runs
@@ -94,7 +113,11 @@ class Daemon:
 			sys.exit(1)
 		
 		# Start the daemon
-		self.daemonize()
+		if daemonize:
+			self.daemonize()
+		else:
+			print "Radio running pid", os.getpid()
+
 		self.run()
 
 	def stop(self):

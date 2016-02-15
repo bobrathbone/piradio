@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Raspberry Pi Internet Radio Init script
-# $Id: radiod,v 1.3 2014/05/22 07:27:32 bob Exp $
+# $Id: radiod,v 1.4 2016/01/03 09:30:35 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -33,9 +33,16 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 # Change NAME parameter this next line to the version of the daemon you are using
 # Choices are radiod.py, radio4.py, rradiod.py, rradio4.py or ada_radio.py
 # No spaces around the = character
+
+if [ -d /usr/share/radio ]; then
+   DIR=/usr/share/radio
+else
+   DIR=/home/pi/radio
+fi
+
 NAME=radio4.py
 DESC="PI Radio Daemon"
-DAEMON=/home/pi/radio/${NAME}
+DAEMON=${DIR}/${NAME}
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0

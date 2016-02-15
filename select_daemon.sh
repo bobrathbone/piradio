@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_daemon.sh,v 1.11 2015/02/08 13:19:30 bob Exp $
+# $Id: select_daemon.sh,v 1.14 2016/02/03 19:19:52 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -13,79 +13,80 @@
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
 #            The authors shall not be liable for any loss or damage however caused.
 #
+# This program uses whiptail. Set putty terminal to use UTF-8 charachter set
+# for best results
 
 DAEMON=radiod.py
 
 INIT=/etc/init.d/radiod
+RC_INIT=/etc/init.d/pifacercd
+
 # Display types
 LCD=1	# LCD screen (direct)
 I2C=2	# Requires I2C libraries
 CAD=3	# PiFace Control and Display
 
-echo
-echo "Radio daemon selection"
-echo
-echo "Select the radio daemon to be installed 1-8:"
-echo
-echo "1) Two line LCD with push buttons  (radiod.py)"
-echo "2) Four line LCD with push buttons (radio4.py)"
-echo "3) Two line LCD with rotary encoders  (rradiod.py)"
-echo "4) Four line LCD with rotary encoders (rradio4.py)"
-echo "5) Two line Adafruit LCD with push buttons (ada_radio.py)"
-echo "6) Two line LCD with I2C backpack and rotary encoders (rradiobp.py)"
-echo "7) Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)"
-echo "8) PiFace Control and Display - CAD (radio_piface.py)"
-echo "x) Exit"
-echo -n "Select version: "
-
-while read ans
+selection=1 
+while [ $selection != 0 ]
 do
+	ans=$(whiptail --title "Select radio daemon" --menu "Choose your option" 15 75 8 \
+	"1" "Two line LCD with push buttons  (radiod.py)" \
+	"2" "Four line LCD with push buttons (radio4.py)" \
+	"3" "Two line LCD with rotary encoders  (rradiod.py)" \
+	"4" "Four line LCD with rotary encoders (rradio4.py)" \
+	"5" "Two line Adafruit LCD with push buttons (ada_radio.py)" \
+	"6" "Two line LCD with I2C backpack and rotary encoders (rradiobp.py)" \
+	"7" "Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)" \
+	"8" "PiFace Control and Display - CAD (radio_piface.py)" 3>&1 1>&2 2>&3)
+
+	exitstatus=$?
+	if [[ $exitstatus != 0 ]]; then
+		exit 0
+	fi
+
 	if [[ ${ans} == '1' ]]; then
 		DAEMON=radiod.py
 		TYPE=${LCD}
-		break
+		DESC="Two line LCD with buttons"
 
 	elif [[ ${ans} == '2' ]]; then
 		DAEMON=radio4.py
 		TYPE=${LCD}
-		break
+		DESC="Four line LCD with buttons"
 
 	elif [[ ${ans} == '3' ]]; then
 		DAEMON=rradiod.py
 		TYPE=${LCD}
-		break
+		DESC="Two line LCD with encoders"
 
 	elif [[ ${ans} == '4' ]]; then
 		DAEMON=rradio4.py
 		TYPE=${LCD}
-		break
+		DESC="Four line LCD with encoders"
 
 	elif [[ ${ans} == '5' ]]; then
 		DAEMON=ada_radio.py
 		TYPE=${I2C}
-		break
+		DESC="AdaFruit LCD"
 
 	elif [[ ${ans} == '6' ]]; then
 		DAEMON=rradiobp.py
 		TYPE=${I2C}
-		break
+		DESC="Two line LCD with I2C backpack"
 
 	elif [[ ${ans} == '7' ]]; then
 		DAEMON=rradiobp4.py
 		TYPE=${I2C}
-		break
+		DESC="Four line LCD with I2C backpack"
 
 	elif [[ ${ans} == '8' ]]; then
 		DAEMON=radio_piface.py
 		TYPE=${CAD}
-		break
-
-	elif [[ ${ans} == 'x' ]]; then
-		exit 0
-	else
-		echo -n "Select version: "
+		DESC="Piface CAD"
 	fi
 
+	whiptail --title "$DESC ($DAEMON)" --yesno "Is this correct?" 10 60
+	selection=$?
 done 
 
 echo "Daemon ${DAEMON} selected"

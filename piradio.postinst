@@ -1,15 +1,17 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.21 2015/03/01 13:32:15 bob Exp $
+# $Id: piradio.postinst,v 1.29 2016/02/05 10:52:05 bob Exp $
 
 # File locations
-DIR=/home/pi/radio
+DIR=/usr/share/radio
 RADIOLIB=/var/lib/radiod
 INITTAB=/etc/inittab
 BOOTCMD=/boot/cmdline.txt 
 MODULES=/etc/modules
 MPDCONF=/etc/mpd.conf
-PODCASTSDIST=podcasts.dist
+VOICEDIST=voice.dist
+LANGUAGEFILE=language/language.en
+RSSFILE=rss/rss
 CONFIGFILE=/etc/radiod.conf
 
 # Display types
@@ -92,18 +94,32 @@ sudo update-rc.d mpd disable
 # Go to radio directory
 cd ${DIR}
 
-# Copy podcast example to the radio lib directory
-if [[ ! -f "${RADIOLIB}/podcasts" ]]; then
-	echo "Copying ${PODCASTSDIST} to ${RADIOLIB}/podcasts"
+# Copy espeak command to the radio lib directory
+if [[ ! -f "${RADIOLIB}/voice" ]]; then
+	echo "Copying ${VOICEDIST} to ${RADIOLIB}/voice"
 	mkdir -p ${RADIOLIB}
-	cp -f ${PODCASTSDIST} ${RADIOLIB}/podcasts
+	cp -f ${VOICEDIST} ${RADIOLIB}/voice
+fi
+
+# Copy language file
+if [[ ! -f "${RADIOLIB}/language" ]]; then
+	echo "Copying ${LANGUAGEFILE} to ${RADIOLIB}/language"
+	mkdir -p ${RADIOLIB}
+	cp -f ${VOICEDIST} ${RADIOLIB}/language
+fi
+
+# Copy RSS file
+if [[ ! -f "${RADIOLIB}/rss" ]]; then
+	echo "Copying ${RSSFILE} to ${RADIOLIB}/rss"
+	mkdir -p ${RADIOLIB}
+	cp -f ${RSSFILE} ${RADIOLIB}/rss
 fi
 
 # Create playlists if no station list present
 if [[ ! -f "${RADIOLIB}/stationlist" ]]; then
 	echo "Creating playlists:"
 	echo "This will take a few minutes"
-	${DIR}/create_playlists.py --no_delete 2>&1 > ${DIR}/playlists.log
+	${DIR}/create_m3u.py --no_delete 2>&1 > ${DIR}/playlists.log
 	echo "Done: See ${DIR}/playlists.log for information about playlists created"
 	echo
 fi
@@ -115,7 +131,7 @@ echo
 
 if [[ ${TYPE} -eq ${I2C} ]]; then
 	echo "Configured to use I2C libraries"
-	/home/pi/radio/run_raspi-config.sh ${I2C}
+	${DIR}/run_raspi-config.sh ${I2C}
 	# Check to see if the python-smbus is already installed
 	dpkg -l python-smbus  > /dev/null 2>&1  
 	if [[ $? > 0 ]]; then  # Don't seperate from above
@@ -131,7 +147,7 @@ if [[ ${TYPE} -eq ${I2C} ]]; then
 elif [[ ${TYPE} -eq ${CAD} ]]; then
 	# Check to see if the python-pifacecommon is already installed
 	echo "Configured to use PiFace CAD"
-	/home/pi/radio/run_raspi-config.sh ${CAD}
+	${DIR}/run_raspi-config.sh ${CAD}
 	dpkg -l python-pifacecommon  > /dev/null 2>&1  
 	if [[ $? > 0 ]]; then  # Don't seperate from above
 		echo "It is necessary to install the SPI libraries for PiFace CAD"
@@ -143,9 +159,19 @@ elif [[ ${TYPE} -eq ${CAD} ]]; then
 		REBOOT=1
 	fi
 fi
+
+# Move old radio directory
+if [[ -d /home/pi/radio ]]; then
+	mv -f /home/pi/radio /home/pi/radio_old
+fi
+
+ln -fs /usr/share/radio /home/pi/radio
+
 echo "Installation complete"
 if [[ REBOOT -eq 1 ]]; then
 	echo "It is necessary to reboot the system to start the radio"
 fi
+
+exit 0
 
 # End of post-installation script

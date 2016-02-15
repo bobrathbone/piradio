@@ -1,0 +1,31 @@
+Contributors software
+Directory Norwegian_characters
+Contributor: Anders Herbjoren Norway
+Email: anders.herbjornsen@gmail.com
+Web site: Not available
+Supported: No
+Last tested with: Version 4.5 
+Description: Support for Norwegian Character set 
+
+Contributors description
+========================
+What I noticed is that my panel is a japanese version (HD44780UA00) 
+and not a European (HD44780UA02). This means that I mostly have 
+Kana-characters in addition to standard ASCII. But I found that the
+HD44780 support up to 8 custom characters, so I adapted the code from this web page:
+
+http://ailin.phychembio.com/miscellany/1422/
+
+I just modified it slightly and added it to lcd_i2c_pcf8475.py with definitions for the special Norwegian characters I need, and added the necessary lines to translate_class.py. Now I have a working display with Norwegian characters. This could probably be useful for other people as well.
+
+
+
+Disclaimer
+==========
+The code in this sub-directory is provided "as is" and without any warranties.
+Neither can any guarantees be given that the software in this directory
+will be compatible with future releases of the main-stream software.
+As Bob Rathbone is unable to test these programs absolutely no support is provided
+so please don't ask for it as the answer will always be the same - no support available.
+
+

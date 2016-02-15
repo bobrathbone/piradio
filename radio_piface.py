@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using a Piface backlit LCD plate for Raspberry Pi.
-# $Id: radio_piface.py,v 1.2 2015/01/21 19:44:18 bob Exp $
+# $Id: radio_piface.py,v 1.7 2016/01/31 15:08:21 bob Exp $
 #
 # Author : Patrick Zacharias 
 # based on Bob Rathbone's Adafruit code
@@ -44,6 +44,7 @@ DOWN = 1
 CurrentStationFile = "/var/lib/radiod/current_station"
 CurrentTrackFile = "/var/lib/radiod/current_track"
 CurrentFile = CurrentStationFile
+PlaylistsDirectory = "/var/lib/mpd/playlists/"
 
 # Instantiate classes
 log = Log()
@@ -66,17 +67,6 @@ def signalHandler(signal,frame):
 	GPIO.cleanup()
 	sys.exit(0)
 
-# Signal SIGTERM handler
-def signalSIGUSR1(signal,frame):
-	global log
-	global radio
-	log.message("Radio got SIGUSR1", log.INFO)
-	display_mode = radio.getDisplayMode() + 1
-	if display_mode > radio.MODE_LAST:
-		display_mode = radio.MODE_TIME
-	radio.setDisplayMode(display_mode)
-	return
-
 # Daemon class
 class MyDaemon(Daemon):
 
@@ -84,7 +74,6 @@ class MyDaemon(Daemon):
 		global CurrentFile
 		log.init('radio')
 		signal.signal(signal.SIGTERM,signalHandler)
-		signal.signal(signal.SIGUSR1,signalSIGUSR1)
 
 		progcall = str(sys.argv)
 		log.message('Radio running pid ' + str(os.getpid()), log.INFO)
@@ -92,7 +81,6 @@ class MyDaemon(Daemon):
 
 		hostname = exec_cmd('hostname')
 		ipaddr = exec_cmd('hostname -I') # Debian-like IP check
-#		ipaddr = exec_cmd('hostname -i') # Works for eth0 under Archlinux
 		log.message("IP " + ipaddr, log.INFO)
 		myos = exec_cmd('uname -a')
 		log.message(myos, log.INFO)
@@ -139,6 +127,11 @@ class MyDaemon(Daemon):
 				lcd.line1("No IP network")
 
 			elif display_mode == radio.MODE_TIME:
+				if radio.getReload():
+					log.message("Reload ", log.DEBUG)
+					reload(lcd,radio)
+					radio.setReload(False)
+
 				displayTime(lcd,radio)
 				if radio.muted():
 					msg = "Sound muted"
@@ -230,7 +223,7 @@ def interrupt():
 		time.sleep(0.5)
 
 	if not interrupt:
-		interrupt = checkState(radio)
+		interrupt = checkState(radio) or radio.getInterrupt()
 
 	return interrupt
 
@@ -299,11 +292,14 @@ def get_switch_states(lcd,radio,rss):
 			#radio.optionChangedFalse()
 
                         log.message("optionChanged", log.DEBUG)
-                        if radio.alarmActive() and not radio.getTimer() and option == radio.ALARMSET:
+                        if radio.alarmActive() and not radio.getTimer() and \
+					(option == radio.ALARMSETHOURS \
+					or option == radio.ALARMSETMINS):
                                 radio.setDisplayMode(radio.MODE_SLEEP)
                                 radio.mute()
                         else:
-                                radio.setDisplayMode(radio.MODE_TIME)
+				display_mode = radio.MODE_TIME
+				
 
                         radio.optionChangedFalse()
 
@@ -327,7 +323,7 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,UP)
+				radio.getNext(UP)
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,UP)
@@ -352,7 +348,7 @@ def get_switch_states(lcd,radio,rss):
 				radio.setReload(True)
 
 			elif display_mode == radio.MODE_SEARCH:
-				scroll_search(radio,DOWN)
+				radio.getNext(DOWN)
 
 			elif display_mode == radio.MODE_OPTIONS:
 				cycle_options(radio,DOWN)
@@ -374,7 +370,7 @@ def get_switch_states(lcd,radio,rss):
 				interrupt = True
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,DOWN)
+				radio.findNextArtist(DOWN)
 				interrupt = True
 
 			else:
@@ -408,7 +404,7 @@ def get_switch_states(lcd,radio,rss):
 				interrupt = True
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
-				scroll_artist(radio,UP)
+				radio.findNextArtist(UP)
 				interrupt = True
 			else:
 				# Increase volume
@@ -523,12 +519,16 @@ def toggle_option(radio,lcd,direction):
 	elif option == radio.ALARM:
 		radio.alarmCycle(direction)
 
-	elif option == radio.ALARMSET:
+	elif option == radio.ALARMSETHOURS or option == radio.ALARMSETMINS:
 
 		# Buttons held in
 		AlarmChange = True
 		value = 1
 		twait = 0.4
+
+                if option == radio.ALARMSETHOURS:
+                        value = 60
+
 		while AlarmChange:
 			if direction == UP:
 				radio.incrementAlarm(value)
@@ -556,78 +556,34 @@ def toggle_option(radio,lcd,direction):
 
 # Update music library
 def update_library(lcd,radio):
-	log.message("Initialising music library", log.INFO)
-	lcd.line1("Initialising")
-	lcd.line2("Please wait")
-	exec_cmd("/bin/umount /media")
-	exec_cmd("/bin/umount /share")
-	radio.updateLibrary()
-	mount_usb(lcd)
-	mount_share()
-	log.message("Updatimg music library", log.INFO)
-	lcd.line1("Updating Library")
+	log.message("Updating library", log.INFO)
+	lcd.line1("Updating library")
 	lcd.line2("Please wait")
 	radio.updateLibrary()
-	radio.loadMusic()
 	return
 
 # Reload if new source selected (RADIO or PLAYER)
 def reload(lcd,radio):
 	lcd.line1("Loading:")
-	exec_cmd("/bin/umount /media")  # Unmount USB stick
-	exec_cmd("/bin/umount /share")  # Unmount network drive
 
 	source = radio.getSource()
 	if source == radio.RADIO:
 		lcd.line2("Radio Stations")
-		dirList=os.listdir("/var/lib/mpd/playlists")
+		dirList=os.listdir(PlaylistsDirectory)
 		for fname in dirList:
+			if os.path.isfile(fname):
+				continue
 			log.message("Loading " + fname, log.DEBUG)
 			lcd.line2(fname)
 			time.sleep(0.1)
 		radio.loadStations()
 
 	elif source == radio.PLAYER:
-		mount_usb(lcd)
-		mount_share()
-		radio.loadMusic()
+		lcd.line2("Media library")
+		radio.loadMedia()
 		current = radio.execMpcCommand("current")
 		if len(current) < 1:
 			update_library(lcd,radio)
-	return
-
-# Mount USB  drive
-def mount_usb(lcd):
-	usbok = False
-	if os.path.exists("/dev/sda1"):
-		device = "/dev/sda1"
-		usbok = True
-
-	elif os.path.exists("/dev/sdb1"):
-		device = "/dev/sdb1"
-		usbok = True
-
-	if usbok:
-		exec_cmd("/bin/mount -o rw,uid=1000,gid=1000 "+ device + " /media")
-		log.message(device + " mounted on /media", log.DEBUG)
-		dirList=os.listdir("/var/lib/mpd/music")
-		for fname in dirList:
-			lcd.line2(fname)
-			time.sleep(0.1)
-	else:
-		msg = "No USB stick found!"
-		lcd.line2(msg)
-		time.sleep(2)
-		log.message(msg, log.WARNING)
-	return
-
-# Mount any remote network drive
-def mount_share():
-	if os.path.exists("/var/lib/radiod/share"):
-		myshare = exec_cmd("cat /var/lib/radiod/share")
-		if myshare[:1] != '#':
-			exec_cmd(myshare)
-			log.message(myshare,log.DEBUG)
 	return
 
 # Display the RSS feed
@@ -706,81 +662,6 @@ def get_mpc_list(cmd):
 
 	return list
 
-# Scroll up and down between stations/tracks
-def scroll_search(radio,direction):
-	current_id = radio.getCurrentID()
-	playlist = radio.getPlayList()
-	index = radio.getSearchIndex()
-
-	# Artist displayed then don't increment track first time in
-	
-	if not radio.displayArtist():
-		leng = len(playlist)
-		log.message("len playlist =" + str(leng),log.DEBUG)
-		if leng > 0:
-			if direction == UP:
-				index = index + 1
-				if index >= leng:
-					index = 0 
-			else:
-				index = index - 1
-				if index < 0:
-					index = leng - 1
-			
-	radio.setDisplayArtist(False)
-	track =  radio.getTrackNameByIndex(index)
- 	radio.setSearchIndex(index)	
- 	radio.setLoadNew(True)	
-	return 
-
-# Scroll through tracks by artist
-def scroll_artist(radio,direction):
-	radio.setLoadNew(True)
-	index = radio.getSearchIndex()
-	playlist = radio.getPlayList()
-	current_id = radio.getCurrentID()
-	current_artist = radio.getArtistName(index)
-
-	found = False
-	leng = len(playlist)
-	count = leng
-	while not found:
-		if direction == UP:
-			index = index + 1
-			if index >= leng:
-				index = 0
-		elif direction == DOWN:
-			index = index - 1
-			if index < 1:
-				index = leng - 1
-
-		new_artist = radio.getArtistName(index)
-		if current_artist != new_artist:
-			found = True
-
-		count = count - 1
-
-		# Prevent everlasting loop
-		if count < 1:
-			found = True
-			index = current_id
-
-	# If a Backward Search find start of this list
-	found = False
-	if direction == DOWN:
-		current_artist = new_artist
-		while not found:
-			index = index - 1
-			new_artist = radio.getArtistName(index)
-			if current_artist != new_artist:
-				found = True
-		index = index + 1
-		if index >= leng:
-			index = leng-1
-
-	radio.setSearchIndex(index)
-	return
-
 # Source selection display
 def display_source_select(lcd,radio):
 
@@ -829,7 +710,8 @@ def displayVolume(lcd,radio):
 def display_options(lcd,radio):
 
 	option = radio.getOption()
-	if option != radio.TIMER and option != radio.ALARM and option != radio.ALARMSET:
+	if option != radio.TIMER and option != radio.ALARM \
+		and option != radio.ALARMSETHOURS and option != radio.ALARMSETMINS:
 			lcd.line1("Menu selection:")
 
 	if option == radio.RANDOM:
@@ -870,9 +752,13 @@ def display_options(lcd,radio):
 			alarmString = "Weekdays only"
 		lcd.line2(alarmString)
 
-	elif option == radio.ALARMSET:
-		lcd.line1("Set alarm time:")
-		lcd.line2("Alarm " + radio.getAlarmTime())
+        elif option == radio.ALARMSETHOURS:
+                lcd.line1("Set alarm time:")
+                lcd.line2("Alarm " + radio.getAlarmTime() + " hours")
+
+        elif option == radio.ALARMSETMINS:
+                lcd.line1("Set alarm time:")
+                lcd.line2("Alarm " + radio.getAlarmTime() + " mins")
 
 	elif option == radio.STREAMING:
 		if radio.getStreaming():
@@ -995,6 +881,8 @@ if __name__ == "__main__":
 			daemon.stop()
 		elif 'restart' == sys.argv[1]:
 			daemon.restart()
+		elif 'nodaemon' == sys.argv[1]:
+			daemon.nodaemon()
 		elif 'status' == sys.argv[1]:
 			daemon.status()
 		elif 'version' == sys.argv[1]:
@@ -1007,7 +895,7 @@ if __name__ == "__main__":
 			sys.exit(2)
 		sys.exit(0)
 	else:
-		print "usage: %s start|stop|restart|status|version" % sys.argv[0]
+		print "usage: %s start|stop|restart|nodaemon|status|version" % sys.argv[0]
 		sys.exit(2)
 
 # End of script 

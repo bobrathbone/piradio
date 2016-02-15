@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class.py,v 1.25 2014/09/24 07:47:41 bob Exp $
+# $Id: lcd_class.py,v 1.26 2015/05/30 13:10:47 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -103,17 +103,20 @@ class Lcd:
 		GPIO.setup(LCD_D5, GPIO.OUT) # DB5
 		GPIO.setup(LCD_D6, GPIO.OUT) # DB6
 		GPIO.setup(LCD_D7, GPIO.OUT) # DB7
-
-		self._byte_out(0x33,LCD_CMD)
-		self._byte_out(0x32,LCD_CMD)
-		self._byte_out(0x28,LCD_CMD)
-		self._byte_out(0x0C,LCD_CMD)
-		self._byte_out(0x06,LCD_CMD)
-		self._byte_out(0x01,LCD_CMD)
-		time.sleep(0.3)
+		self.lcd_init()
 		return
 
-
+	# Initialise the display
+	def lcd_init(self):
+		self._byte_out(0x33,LCD_CMD) # 110011 Initialise
+		self._byte_out(0x32,LCD_CMD) # 110010 Initialise
+		self._byte_out(0x06,LCD_CMD) # 000110 Cursor move direction
+		self._byte_out(0x0C,LCD_CMD) # 001100 Display On,Cursor Off, Blink Off
+		self._byte_out(0x28,LCD_CMD) # 101000 Data length, number of lines, font size
+		self._byte_out(0x01,LCD_CMD) # 000001 Clear display
+		time.sleep(0.3)		     # Allow to settle before using
+		return
+	 
 	# Output byte to Led  mode = Command or Data
 	def _byte_out(self,bits, mode):
 		# Send byte to data pins
@@ -271,5 +274,12 @@ class Lcd:
         def setRawMode(self,value):
                 self.RawMode = value
                 return
+
+	# Clear display
+	def clearDisplay(self):
+		self._byte_out(0x01,LCD_CMD) # 000001 Clear display
+		time.sleep(E_DELAY)
+                return
+
 
 # End of Lcd class

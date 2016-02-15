@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Remote Control Class
-# $Id: rc_daemon.py,v 1.3 2015/02/07 13:59:18 bob Exp $
-# Author : Bob Rathbone
+# $Id: rc_daemon.py,v 1.7 2015/10/31 15:40:05 bob Exp $
+# 
+# Author : Sander Marechal
+# Website http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
+#
+# Adapted by Bob Rathbone for the Internet Radio
 # Site   : http://www.bobrathbone.com
 #
 # This is the daemon class for the PiFace CAD remote control
@@ -20,7 +24,7 @@ from signal import SIGHUP
 class Daemon:
 	"""
 	A generic daemon class.
-	
+
 	Usage: subclass the Daemon class and override the run() method
 	"""
 	def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
@@ -36,6 +40,7 @@ class Daemon:
 		http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
 		"""
 		try: 
+			self.ppid = os.getpid() 
 			pid = os.fork() 
 			if pid > 0:
 				# exit first parent
@@ -81,6 +86,24 @@ class Daemon:
 		"""
 		Start the daemon
 		"""
+		self.begin(True)
+
+	def nodaemon(self):
+		"""
+		Start the program in foreground
+		Test purposes only
+		"""
+		try:
+			self.begin(False)
+		except KeyboardInterrupt:
+			pid = os.getpid()
+			print "\nStopping remote control pid",pid
+			os.kill(pid, SIGKILL)
+ 
+	def begin(self,daemonize):
+		"""
+		Start the daemon
+		"""
 		# Check for a pidfile to see if the daemon already runs
 		try:
 			pf = file(self.pidfile,'r')
@@ -95,7 +118,11 @@ class Daemon:
 			sys.exit(1)
 		
 		# Start the daemon
-		self.daemonize()
+		if daemonize:
+			self.daemonize()
+		else:
+			print "remote control running pid", os.getpid()
+
 		self.run()
 
 	def stop(self):
@@ -125,13 +152,17 @@ class Daemon:
 			print "lircd not running"
 		
 		# Try killing the daemon process	
-		cpid = int(self.exec_cmd("pgrep -P " + str(pid)))
 		try:
+			cpid = int(self.exec_cmd("pgrep -P " + str(pid)))
 			os.kill(cpid, SIGHUP)
 			if os.path.exists(self.pidfile):
 				os.remove(self.pidfile)
 			os.kill(pid, SIGKILL)
 			sys.exit(0)
+
+		except ValueError, err:
+			print "Remote control daemon not running"
+			os.remove(self.pidfile)
 
 		except OSError, err:
 			err = str(err)
@@ -153,6 +184,12 @@ class Daemon:
 		"""
 		Status
 		"""
+
+	def flash(self):
+		"""
+		Flash activity LED
+		"""
+
 
 	def run(self):
 		"""

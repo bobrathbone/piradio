@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_playlists.py,v 1.23 2015/02/25 18:54:58 bob Exp $
+# $Id: create_playlists.py,v 1.26 2015/11/30 16:00:40 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -463,7 +463,7 @@ for line in open(StationList,'r'):
 		lines = data.split('\n')
 		firstline = lines[0].rstrip()
 	except:
-		print "Error: Failed to retrieve ", url
+		print "Error: Failed to retrieve ",title, url
 		errorCount += 1
 		continue
 
@@ -501,7 +501,7 @@ print ("Processed %s station URLs from %s" % (processedCount,StationList))
 oldfiles = len(os.listdir(PlsDirectory))
 if oldfiles > 0:
 	if not deleteOld and not noDelete:
-		stderr("There are %s old playlist files in the %s directory.\n" % (oldfiles,PlsDirectory))
+		stderr("There are %s old playlist files in the %s directory.\n" % (oldfiles-2,PlsDirectory))
 		stderr("Do you wish to remove the old files y/n: ")
 		answer = raw_input("")
 		if answer == 'y':
