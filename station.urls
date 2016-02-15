@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: station.urls,v 1.18 2015/08/25 16:49:18 bob Exp $
+# $Id: station.urls,v 1.19 2016/02/15 15:17:21 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -57,6 +57,12 @@
 [RAI Radio Uno] http://www.listenlive.eu/rai1.m3u
 [RAI Radio Duo] http://www.listenlive.eu/rai2.m3u
 [Prima Radio Napoli] http://kemoniastreaming2.net:8010/listen.pls
+
+# France
+(France)
+[RTL] http://streaming.radio.rtl.fr/rtl-1-44-128.m3u
+[RTL2] http://streaming.radio.rtl.fr/rtl2-1-44-128.m3u
+[Music Box] http://www.musicboxtv.com:8000/live.m3u
 
 # Country music
 (Country music)

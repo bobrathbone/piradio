@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_m3u.py,v 1.2 2016/01/04 16:22:56 bob Exp $
+# $Id: create_m3u.py,v 1.3 2016/02/15 15:17:21 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -267,9 +267,9 @@ def parseM3u(title,lines,filenumber):
 		filename = title.replace(' ','_')
 
 	print 'Title:',title
-	output.append('Title%s=%s'% (filenumber,title))
-	output.append('File%s=%s'% (filenumber,url))
-	output.append('Length%s=-1'% filenumber)
+	output.append('#EXTM3U')
+	output.append('#EXTINF:-1,%s'% title)
+	output.append('%s#%s'% (url,title))
 	return output
 
 # Usage message 
