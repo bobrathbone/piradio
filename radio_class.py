@@ -63,7 +63,7 @@ def radioStateUpdater(state):
 #                log.message("radioStateUpdater",log.DEBUG)
                 if state._terminate:
                         state._terminate += 1
-                        state.unidle()
+#                        state.unidle()
                         return
                 state.update()
 
@@ -115,6 +115,7 @@ class RadioState(threading.Thread):
                                                 group = None,
                                                 target=radioStateUpdater,
                                                 args=(self,))
+                self._idle = False
 
         def start(self):
                 self._client = self.connect()
@@ -124,6 +125,21 @@ class RadioState(threading.Thread):
                 self._fetch_currentsong()
                 self._thread.start()
                 super(RadioState,self).start()
+
+        def stop(self):
+                sys.stderr.write("RadioState: stop()\n")
+                self._terminate = True
+                sys.stderr.write("RadioState: unidling\n")
+                try:
+                        self.unidle()
+                except Exception as e:
+                        sys.stderr.write("RadioState: got exception %s" % unicode(e))
+                        time.sleep(self._check_interval)
+                        try:
+                                self.unidle()
+                        except Exception as e:
+                                sys.stderr.write("RadioState: got another exception %s" % unicode(e))
+                sys.stderr.write("RadioState: unidled\n")
 
         def run(self):
                 self._running = True
@@ -247,7 +263,11 @@ class RadioState(threading.Thread):
                 return ret
 
         def unidle(self):
-                self.execMpdCmd(self._client,lambda(client): client.unidle())
+                for method in ("unidle","noidle"):
+                        tmp = getattr(client,method,None)
+                        if tmp:
+                                self.execMpdCmd(self._client,lambda(client): tmp())
+                                break
 
 
         def update(self):
@@ -545,6 +565,14 @@ class Radio:
                                 time.sleep(0.001)
                         self.play(last_playlist['id'])
 		return
+        def stop(self):
+                sys.stderr.write("radio.stop()\n")
+                if self._radiostate:
+                        self._radiostate.stop()
+                sys.stderr.write("radiostate stopped\n")
+                #self._radiostate.join()
+                sys.stderr.write("radiotate joined\n")
+                self._radiostate = None
 
 	def connect(self,callback=None):
 		global client
@@ -972,16 +1000,20 @@ class Radio:
 	
 	# Execute system command
 	def execCommand(self,cmd):
+                sys.stderr.write("Executing radio class command: %s" % cmd)
 		p = os.popen(cmd)
 		return  p.readline().rstrip('\n')
 
 	# Execute MPC comnmand using mpd library - Connect client if required
 	def execMpc(self,cmd, repeat=True):
                 log.message("Radio: execMpc ({0},{1})".
-                            format(inspect.getsource(cmd),repeat),log.DEBUG)
+                            format(inspect.getsource(cmd),
+                                   repeat),
+                            log.DEBUG)
                 with self.connection_lock:
                         ok = False
                         ret = None
+                        first = True
                         while repeat:
                                 try:
                                         log.message("executing command",log.DEBUG)
@@ -995,6 +1027,10 @@ class Radio:
                                                 pass
                                                 if self.connect():
                                                         ret = cmd()
+                                        except socket.error:
+                                                pass
+                                                if self.connect():
+                                                        ret = cmd()
                                         repeat = False
 
                                 except socket.timeout:
@@ -1003,6 +1039,8 @@ class Radio:
                                         try:
                                                 client.disconnect()
                                         except mpd.ConnectionError:
+                                                pass
+                                        except socket.error:
                                                 pass
                                         if self.connect():
                                                 ret = cmd()
@@ -1018,6 +1056,8 @@ class Radio:
                                                                 client.disconnect()
                                                         except mpd.ConnectionError:
                                                                 pass
+                                                        except socket.error:
+                                                                pass
                                                         ok = False
                                                         if not first:
                                                                 time.sleep(0.1)
@@ -1027,11 +1067,14 @@ class Radio:
                                                         # determine and handle different error
                                                         pass
                                         else:
-                                                client.disconnect()
+                                                try:
+                                                        client.disconnect()
+                                                except socket.error:
+                                                        pass
                                                 if not first:
                                                         time.sleep(0.1)
                                         break
-
+                                first = False
                 log.message("Radio: execMpc end", log.DEBUG)
                 return ret
 
@@ -1297,8 +1340,11 @@ class Radio:
 
 		# Client play function starts at 0 not 1
 		log.message("play station/track number "+ str(number), log.DEBUG)
-		self.execMpc(lambda: client.play(number))
-		return
+                try:
+		        self.execMpc(lambda: client.play(number))
+                except CommandError as e:
+                        return e
+		return None
 
 	# Clear streaming and other errors
 	def clearError(self):
