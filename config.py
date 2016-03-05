@@ -1,6 +1,6 @@
 import os
 import sys
-import configparser
+import ConfigParser
 import threading
 import traceback
 
@@ -74,7 +74,7 @@ libconfigdefaults = {
 
 def load_config(filename,defaults=None):
     configlock.acquire()
-    retval = configparser.ConfigParser()
+    retval = ConfigParser.ConfigParser()
     retval.read(filename)
     configlock.release()
     return retval
