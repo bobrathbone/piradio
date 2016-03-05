@@ -11,7 +11,7 @@ import string
 import traceback
 import config
 import radio_class
-import pifacecad
+import tspifacecad
 from time import strftime
 from glob import glob
 from radio_api import RadioApi
@@ -206,12 +206,12 @@ def register_buttons(listener):
         key = buttons[value]
         method = getattr(menukeys,key)
         listener.register(value,
-                          pifacecad.IODIR_ON,
+                          tspifacecad.IODIR_ON,
                           method)
         
         method = getattr(menukeys,key+'_off')
         listener.register(value,
-                          pifacecad.IODIR_OFF,
+                          tspifacecad.IODIR_OFF,
                           method)
 
 def register_irkeys(listener):

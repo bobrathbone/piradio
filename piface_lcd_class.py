@@ -31,8 +31,8 @@
 import os
 import sys
 import time
-import pifacecommon
-import pifacecad
+import tspifacecommon
+import tspifacecad
 import threading
 import codecs
 import cpHD44780
@@ -86,17 +86,17 @@ LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
 E_PULSE = 0.00005
 E_DELAY = 0.00005
 
-PLAY_SYMBOL = pifacecad.LCDBitmap(
+PLAY_SYMBOL = tspifacecad.LCDBitmap(
         [0x10, 0x18, 0x1c, 0x1e, 0x1c, 0x18, 0x10, 0x0])
-PAUSE_SYMBOL = pifacecad.LCDBitmap(
+PAUSE_SYMBOL = tspifacecad.LCDBitmap(
         [0x0, 0x1b, 0x1b, 0x1b, 0x1b, 0x1b, 0x0, 0x0])
-INFO_SYMBOL = pifacecad.LCDBitmap(
+INFO_SYMBOL = tspifacecad.LCDBitmap(
         [0x6, 0x6, 0x0, 0x1e, 0xe, 0xe, 0xe, 0x1f])
-MUSIC_SYMBOL = pifacecad.LCDBitmap(
+MUSIC_SYMBOL = tspifacecad.LCDBitmap(
         [0x2, 0x3, 0x2, 0x2, 0xe, 0x1e, 0xc, 0x0])
-STOP_SYMBOL = pifacecad.LCDBitmap(
+STOP_SYMBOL = tspifacecad.LCDBitmap(
         [0x0, 0x1F, 0x1F, 0x3F, 0x1F, 0x1F, 0x0, 0x0])
-TIME_SYMBOL = pifacecad.LCDBitmap(
+TIME_SYMBOL = tspifacecad.LCDBitmap(
         [0x0E, 0x15, 0x15, 0x15, 0x13, 0x11, 0x0E, 0x00])
 
 def heartbeat_run(self):
@@ -145,7 +145,7 @@ class Piface_lcd:
 #	lcd_d4 = LCD_D4_27	# Default for revision 2 boards 
 
         def __init__(self):
-                self.cad = pifacecad.PiFaceCAD()
+                self.cad = tspifacecad.Tspifacecad()
                 self.lcd = self.cad.lcd
                 self.width = 16
                 self.clear()
@@ -415,7 +415,7 @@ class Piface_lcd:
                 retval = self.cad.switches[Wert].value
                 return retval
         def get_listener(self):
-                self.listener = pifacecad.SwitchEventListener(chip=self.cad)
+                self.listener = tspifacecad.SwitchEventListener(chip=self.cad)
                 return self.listener
 
         def lock(self):

@@ -28,8 +28,8 @@ import signal
 import shutil
 import threading
 import lirc
-import pifacecommon
-import pifacecad
+import tspifacecommon
+import tspifacecad
 import piface_lcd_class
 from piface_lcd_class import Piface_lcd
 
@@ -131,7 +131,7 @@ class MyDaemon(Daemon):
                 menu.register_buttons(listener)
                 listener.activate()
 
-                irlistener = pifacecad.IREventListener(
+                irlistener = tspifacecad.IREventListener(
                         prog="pifacecad-radio-ts",
                         lircrc="/etc/lirc/radiolircrc")
                 menu.register_irkeys(irlistener)
