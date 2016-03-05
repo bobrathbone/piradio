@@ -93,6 +93,7 @@ do_start()
 #
 do_stop()
 {
+	test -f $PIDFILE && kill `cat $PIDFILE`
 	# Return
 	#   0 if daemon has been stopped
 	#   1 if daemon was already stopped
