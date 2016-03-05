@@ -149,6 +149,7 @@ class Rss:
 
 	# Execute system command
 	def exec_cmd(self,cmd):
+                sys.stderr.write("Executing RSS command: %s\n" % cmd)
 		p = os.popen(cmd)
 		result = p.readline().rstrip('\n')
 		return result

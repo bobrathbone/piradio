@@ -176,7 +176,7 @@ class Piface_lcd:
                                                        group=None,
                                                        target = heartbeat_run,
                                                        args = [self])
-                self._update_thread.daemon = True
+                self._update_thread.setDaemon(True)
                 self._update_thread.start()
 
 #                 for i in range(8):
@@ -190,6 +190,9 @@ class Piface_lcd:
 
         def stop(self):
             stop_heartbeat()
+#            self._update_thread.join()
+            self._update_thread = None
+
 	# Initialise for either revision 1 or 2 boards
 	def init(self):
                 

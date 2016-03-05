@@ -30,7 +30,7 @@ import inspect
 import traceback
 from log_class import Log
 from translate_class import Translate
-from mpd import MPDClient
+from mpd import MPDClient, CommandError
 import mpd
 import socket
 
@@ -54,6 +54,7 @@ translate = Translate()
 #Mpc = "/usr/bin/mpc"	# Music Player Client
 client = MPDClient(use_unicode = True)	# Create the MPD client
 client.timeout = None
+
 
 def radioStateUpdater(state):
         log.message("radioStateUpdater: " + unicode(state),
@@ -115,6 +116,7 @@ class RadioState(threading.Thread):
                                                 group = None,
                                                 target=radioStateUpdater,
                                                 args=(self,))
+                self._thread.setDaemon(True);
                 self._idle = False
 
         def start(self):
@@ -144,14 +146,20 @@ class RadioState(threading.Thread):
         def run(self):
                 self._running = True
                 while self._running:
+                        sys.stderr.write("RadioState: next round\n")
                         if self._terminate:
-                                _thread.join()
+                                sys.stderr.write("RadioState: waiting for _thread\n")
+                                #                                _thread.join()
+                                sys.stderr.write("RadioState: _thread joined\n")
+                                self._running = False
                                 return
+                        sys.stderr.write("RadioState: idle\n")
                         changes = self.execMpdCmd(self._client,lambda(client): client.idle())
-                        log.message("RadioState changed: " + unicode(changes),
-                                    log.DEBUG)
+                        sys.stderr.write("RadioState: got info %s\n" % changes)
                         if changes:
                                 with self._change_lock:
+                                        log.message("RadioState changed: " + unicode(changes),
+                                                    log.DEBUG)
                                         for change in changes:
                                                 self._changed[change] = True
 

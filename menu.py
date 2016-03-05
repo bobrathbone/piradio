@@ -60,6 +60,7 @@ def _(string):
 
 # Execute system command
 def exec_cmd(cmd):
+    sys.stderr.write("Executing menu command: %s" % cmd)
     p = os.popen(cmd)
     result = p.readline().rstrip('\n')
     return result

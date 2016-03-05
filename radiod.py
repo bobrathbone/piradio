@@ -734,6 +734,7 @@ def get_stored_id(current_file):
 
 # Execute system command
 def exec_cmd(cmd):
+        sys.stderr.write("Executing radiod command: %s" % cmd)
 	p = os.popen(cmd)
 	result = p.readline().rstrip('\n')
 	return result
@@ -742,6 +743,7 @@ def exec_cmd(cmd):
 def get_mpc_list(cmd):
 	list = []
 	line = ""
+        sys.stderr.write("Executing radiod command: mpc %s" % cmd)
 	p = os.popen("/usr/bin/mpc " + cmd)
 	while True:
 		line =  p.readline().strip('\n')
@@ -1033,7 +1035,7 @@ if __name__ == "__main__":
 		else:
 			print "Unknown command: " + sys.argv[1]
 			sys.exit(2)
-		sys.exit(0)
+		os._exit(0)
 	else:
 		print "usage: %s start|stop|restart|status|version" % sys.argv[0]
 		sys.exit(2)

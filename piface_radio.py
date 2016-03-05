@@ -18,6 +18,7 @@
 #
 
 import os
+import psutil
 import subprocess
 import sys
 import time
@@ -56,20 +57,60 @@ lcd = Piface_lcd()
 listener = None
 irlistener = None
 interrupt = None
+oldhandler= {}
+main_pid = None
+
+
+def kill_proc_tree(pid, including_parent=True):    
+    parent = psutil.Process(pid)
+    children = parent.get_children(recursive=True)
+    for child in children:
+        child.kill()
+    #psutil.wait_procs(children, timeout=5)
+    if including_parent:
+        parent.kill()
+        #parent.wait(5)
 
 # Register exit routine
 def finish():
+        global listener
+        global irlistener
+        global main_pid
+        if main_pid != os.getpid():
+                return
+        sys.stderr.write("Calling piface_radio.finish()\n")
 	lcd.clear()
+        sys.stderr.write("Calling radio.stop()\n")
+        radio.stop()
+        sys.stderr.write("Deactivating listener\n")
         if listener:
                 listener.deactivate()
+                listener = None
+        sys.stderr.write("Deactivating IR listener\n")
         if irlistener:
                 if irlistener_activated: irlistenter.deactivate()
+                irlistener = None
 #	radio.execCommand("umount /media  > /dev/null 2>&1")
 #	radio.execCommand("umount /share  > /dev/null 2>&1")
         lcd.lock()
 	lcd.line(0,0, "Radio stopped")
-        lcd.backlight(False)
+#        lcd.backlight(False)
         lcd.unlock()
+        lcd.stop()
+
+        kill_proc_tree(main_pid)
+
+        sys.stderr.write("Enumerating threads\n")
+        for i in range(10):
+                for thread in threading.enumerate():
+                        sys.stderr.write("Thread '%s' named '%s' is %s daemon and %s\n"
+                                         % (thread.ident,
+                                            thread.name,
+                                            "a" if thread.daemon else "no",
+                                            "alive" if thread.is_alive() else "dead"))
+                sys.stderr.write("\n")
+                time.sleep(1)
+        sys.stderr.write("finished piface_radio.finish()\n")
 
 
 def statuscallback(text):
@@ -79,6 +120,9 @@ def statuscallback(text):
 class MyDaemon(Daemon):
 	def run(self):
 		global CurrentFile
+                global oldhandler
+                global main_pid
+                main_pid = os.getpid()
                 lcd.lock()
 		log.init('radio')
 
@@ -122,10 +166,16 @@ class MyDaemon(Daemon):
 
                 atexit.register(finish)
                 def killhandler (signum,frame):
+                        sys.stderr.write("Got signal: %d; %s" % (signum,str(frame)))
                         finish()
-                        sys.exit(0)
-                signal.signal(signal.SIGTERM, killhandler)
-                signal.signal(signal.SIGINT, killhandler)
+                        sys.stderr.write("returned from finish")
+                        if oldhandler[signum]:
+                                oldhandler[signum](signum,frame)
+                        else:
+                                os._exit(0)
+                        sys.stderr.write("Error: should not be called")
+                oldhandler[signal.SIGTERM] = signal.signal(signal.SIGTERM, killhandler)
+                oldhandler[signal.SIGINT] = signal.signal(signal.SIGINT, killhandler)
                 
                 listener = lcd.get_listener()
                 menu.register_buttons(listener)
@@ -761,6 +811,7 @@ def get_stored_id(current_file):
 
 # Execute system command
 def exec_cmd(cmd):
+        sys.stderr.write("Executing radio command: %s\n" % cmd)
 	p = os.popen(cmd)
 	result = p.readline().rstrip('\n')
 	return result
@@ -769,6 +820,7 @@ def exec_cmd(cmd):
 def old_get_mpc_list(cmd):
 	list = []
 	line = ""
+        sys.stderr.write("Executing radio command: /usr/bin/mpc %s\n" % cmd)
 	p = os.popen("/usr/bin/mpc " + cmd)
 	while True:
 		line =  p.readline().strip('\n')

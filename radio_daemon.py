@@ -38,29 +38,41 @@ class Daemon:
 		Programming in the UNIX Environment" for details (ISBN 0201563177)
 		http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
 		"""
+                sys.stderr.write("demonizing")
+                
                 try: 
                         pid = os.fork() 
                         if pid > 0:
                                 # exit first parent
-                                sys.exit(0) 
+                                sys.stderr.write("exiting instance 0")
+                                os._exit(0) 
                 except OSError as e: 
                         sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-                        sys.exit(1)
+                        os._exit(1)
 	
 		# decouple from parent environment
 		os.chdir("/") 
 		os.setsid() 
 		os.umask(0) 
+		sys.stdout.flush()
+		sys.stderr.flush()
+		si = file(self.stdin, 'r')
+		so = file(self.stdout, 'a+')
+		se = file(self.stderr, 'a+', 0)
+		os.dup2(si.fileno(), sys.stdin.fileno())
+		os.dup2(so.fileno(), sys.stdout.fileno())
+		os.dup2(se.fileno(), sys.stderr.fileno())
 	
                 # do second fork
                 try: 
                         pid = os.fork() 
                         if pid > 0:
+                                sys.stderr.write("exiting 1");
                                 # exit from second parent
-                                sys.exit(0) 
+                                os._exit(0) 
                 except OSError as e: 
                         sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-                        sys.exit(1) 
+                        os._exit(1) 
 	
 		# redirect standard file descriptors
 		sys.stdout.flush()
@@ -79,7 +91,18 @@ class Daemon:
 		file(self.pidfile,'w+').write("%s\n" % pid)
 	
 	def delpid(self):
-		os.remove(self.pidfile)
+		try:
+			pf = file(self.pidfile,'r')
+			pid = int(pf.read().strip())
+                        pf.close()
+		except IOError:
+			pid = 0
+                        print ("no pid file")
+
+                sys.stderr.write("PID " + str(pid));
+		if int(pid) == os.getpid():
+                        sys.stderr.write("Deleting pidfile %s" % self.pidfile)
+		        os.remove(self.pidfile)
 
 	def start(self):
 		"""
@@ -92,13 +115,14 @@ class Daemon:
                         pf.close()
 		except IOError:
 			pid = None
-                        print ("no pid")
-	
+                        print ("no pid file")
+
+                sys.stderr.write("PID " + str(pid));
 		if pid:
 			message = "pidfile %s already exist. Daemon already running?\n"
 			sys.stderr.write(message % self.pidfile)
-			sys.exit(1)
-		
+			os._exit(1)
+
 		# Start the daemon
 		self.daemonize()
 		self.run()
@@ -135,7 +159,7 @@ class Daemon:
 					os.remove(self.pidfile)
 			else:
 				print (str(err))
-				sys.exit(1)
+				os._exit(1)
 
 	def restart(self):
 		"""
