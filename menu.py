@@ -622,32 +622,32 @@ class menu(object):
         return
 
     def formatfile(self,node):
-        if (node['title']):
+        if ('title' in node):
             fmt = u'{0} ({1})'
         else:
             msg = u""
             fmt = u'{1}'
 
-        if (node['artist']):
+        if ('artist' in node):
             fmt2 = u'{0}'
         else:
             fmt2 = u''
 
-        if (node['album']):
+        if ('album' in node):
             if (len(fmt2)):
                 fmt2 += u': {1}'
             else:
                 fmt2 = u'{1}'
 
-        if (node['track']):
+        if ('track' in node):
             if (len(fmt2)):
                 fmt2 += u': {2}'
             else:
                 fmt2 = u'{2}'
-        msg2 = fmt2.format(node['artist'],
-                           node['album'],
-                           node['track'])
-        return fmt.format(node['title'],msg2)
+        msg2 = fmt2.format(node.get('artist',''),
+                           node.get('album',''),
+                           node.get('track',''))
+        return fmt.format(node.get('title',''),msg2)
 
     def format_entry(self,current_station):
         text = ''
@@ -1247,8 +1247,15 @@ class path_menu(menu):
 
     def setplaceradio(self,event):
             entry = self.entry_list[self.current_entry][2]
-            log.message("addtoradio: " + unicode(entry), log.DEBUG)
-            if ('file' in entry and len(entry['file'])):
+            log.message("setplaceradio: " + unicode(entry), log.DEBUG)
+            if (not entry):
+                lcd.lock()
+                lcd.line(0,1,"Possibly failed (empty entry).")
+                time.sleep(1.0)
+                lcd.unlock()
+                self.displayMode()
+                return
+            elif ('file' in entry and len(entry['file'])):
                 path = self.current_path
                 ptype = self.current_type
             elif ('directory' in entry and len(entry['directory'])):
