@@ -100,10 +100,14 @@ TIME_SYMBOL = pifacecad.LCDBitmap(
         [0x0E, 0x15, 0x15, 0x15, 0x13, 0x11, 0x0E, 0x00])
 
 def heartbeat_run(self):
-        while True:
+        while do_heartbeat:
                 self.heartbeat()
                 time.sleep(0.1)
-                
+
+do_heartbeat = True
+
+def stop_heartbeat():
+        do_heartbeat = False
 
 
 # Lcd Class 
@@ -159,6 +163,7 @@ class Piface_lcd:
                                                  MUSIC_SYMBOL)
                 self.cad.lcd.store_custom_bitmap(self.TIME_SYMBOL_INDEX,
                                                  TIME_SYMBOL)
+
         def __enter__(self):
                 self.lock()
                 return
@@ -183,6 +188,8 @@ class Piface_lcd:
 #                 
 		return
 
+        def stop(self):
+            stop_heartbeat()
 	# Initialise for either revision 1 or 2 boards
 	def init(self):
                 
