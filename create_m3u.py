@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_m3u.py,v 1.3 2016/02/15 15:17:21 bob Exp $
+# $Id: create_m3u.py,v 1.8 2016/09/04 13:12:02 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -33,12 +33,12 @@ stderr = sys.stderr.write;
 
 # File locations
 PlsDirectory = '/var/lib/mpd/playlists/'
-RadioDir = '/home/pi/radio/'
+RadioDir = '/usr/share/radio/'
 RadioLibDir = '/var/lib/radiod/'
 StationList = RadioLibDir + 'stationlist'
-DistFile = '/home/pi/radio/station.urls'
+DistFile =  RadioDir + 'station.urls'
 TempDir = '/tmp/radio_stream_files/'
-PlaylistsDir = '/home/pi/radio/playlists/'
+PlaylistsDir = RadioDir + 'playlists/'
 
 duplicateCount = 0
 
@@ -341,9 +341,9 @@ warningCount = 0	# Warnings
 processedCount = 0	# Processed station count
 
 # Copy user stream files to temporary directory 
-print "Copying user M3U files from " + PlaylistsDir  + " to " + TempDir + '\n'
 
-if os.listdir(PlaylistsDir):
+if os.path.exists(PlaylistsDir + '*.m3u'):
+	print "Copying user M3U files from " + PlaylistsDir + " to " + TempDir + '\n'
 	execCommand ("cp -f " +  PlaylistsDir + '*.m3u ' + TempDir )
 
 # Playlist file name
@@ -433,15 +433,15 @@ for line in open(StationList,'r'):
 	print 'Processing line ' + str(lineCount) + ': ' + url
 
 	# Extended M3U (MPEG 3 URL) format
-	if url.endswith('.m3u'):
+	if url.endswith('.m3u') or '.m3u?' in url:
 		isM3U = True
 
 	# Advanced Stream Redirector (ASX)
-	elif url.endswith('.asx'):
+	elif url.endswith('.asx') or '.asx?' in url:
 		isASX = True
 
 	# Playlist format
-	elif url.endswith('.pls'):
+	elif url.endswith('.pls') or '.pls?' in url:
 		isPLS = True
 
 	# Advanced Audio Coding stream (Don't retrieve any URL)

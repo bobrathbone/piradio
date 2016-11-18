@@ -1,14 +1,21 @@
 #!/bin/bash 
+set -e
 # Radio daemon pre-install script
-# $Id: piradio.preinst,v 1.1 2014/06/08 14:24:59 bob Exp $
+# $Id: piradio.preinst,v 1.6 2016/08/04 19:27:09 bob Exp $
 
-DIR=/home/pi/radio
 RADIOLIB=/var/lib/radiod
 MPDCONF=/etc/mpd.conf
 INITTAB=/etc/inittab
 BOOTCMD=/boot/cmdline.txt
 MODULES=/etc/modules
 INIT=/etc/init.d/radiod
+
+# Check if the script is being run as root
+if [[ $EUID -ne 0 ]]
+then
+    printf 'This script must be run using sudo.\nExiting..\n'
+    exit 1
+fi
 
 echo "Raspberry PI internet radio installation"
 if [[ -d ${RADIOLIB} ]]; then
@@ -25,6 +32,7 @@ if [[ -d ${RADIOLIB} ]]; then
 		sudo cp -fp ${MODULES} ${MODULES}.orig
 	else
 		echo "Software only will be upgraded"
+		echo "Your existing configuration will not be changed"
 	fi
 	sleep 2
 	if [[ -f ${INIT} ]]; then
@@ -32,5 +40,8 @@ if [[ -d ${RADIOLIB} ]]; then
 		sudo service radiod stop
 	fi
 fi
+
+exit 0
+# End of preinst script
 
 # End of pre-install script

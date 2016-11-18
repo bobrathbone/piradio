@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Configuration dislay
-# $Id: display_config.py,v 1.2 2014/05/26 07:47:05 bob Exp $
+# $Id: display_config.py,v 1.3 2016/06/19 12:23:53 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -24,7 +24,6 @@ AlarmFile = RadioLibDir + "/alarm"
 StreamFile = RadioLibDir + "/streaming"
 LogLevelFile=RadioLibDir + "/loglevel"
 RssFile = "/var/lib/radiod/rss"
-MpdPortFile = "/var/lib/radiod/mpdport"
 
 alarmType = ["off", "on", "repeat", "weekdays"]
 
@@ -38,7 +37,6 @@ def execCommand(cmd):
 def displayConfig(radio):
 	todaysdate = strftime("%H:%M %d/%m/%Y")
 	print "Radio Configuration " + todaysdate
-	print "MPD port " + execCommand( "cat " + MpdPortFile)
 	print "Volume " + str(radio.getStoredVolume())
 	print "Timer  " + str(radio.getStoredTimer())
 	AlarmString = radio.getStoredAlarm()

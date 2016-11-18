@@ -5,8 +5,8 @@ Email: pythy@nexgo.de
 Web site: Not available
 Supported: No
 Last tested with: Version 3.7 (With push buttons only - no rotary switches version available) 
-Description: Support for a 4 x 40 LCD using a PCF8547 I/O expander
-Photo: http://www.bobrathbone.com/photogallery/raspberry_pi/constructors/LCD4x40-PCF854.jpg
+Description: Support for a 4 x 40 LCD using a PCF8574 I/O expander
+Photo: http://www.bobrathbone.com/photogallery/raspberry_pi/constructors/LCD4x40-PCF8574.jpg
 
 Contributors description
 ========================

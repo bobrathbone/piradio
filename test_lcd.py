@@ -3,7 +3,7 @@
 # LCD test program using the lcd_class.py 
 # Use this program to test LCD wiring
 #
-# $Id: test_lcd.py,v 1.9 2014/06/04 08:31:34 bob Exp $
+# $Id: test_lcd.py,v 1.10 2016/10/15 10:56:05 bob Exp $
 # 
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -49,6 +49,8 @@ lcd.line1("Bob Rathbone")
 
 while True:
 	try:
+		lcd.line3("Line 3")
+		lcd.line4("Line 4")
 		lcd.scroll2("Line 2: abcdefghijklmnopqrstuvwxyz 0123456789",interrupt) 
 	except KeyboardInterrupt:
 		print "\nExit"

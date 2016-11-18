@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: station.urls,v 1.19 2016/02/15 15:17:21 bob Exp $
+# $Id: station.urls,v 1.21 2016/08/16 07:40:13 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -10,8 +10,6 @@
 # For example (BBC Stations) creates a playlist called BBC_Stations.pls
 # Note: Play lists are terminated with a blank line
 # 
-# The (stream) parameter is optional and indicates this is a direct stream link
-#
 # In general it is always better to define a title
 #
 # Some sites that you can use are:
@@ -20,7 +18,7 @@
 #   http://www.radio-locator.com
 #   http://bbcstreams.com/ 
 #
-# Then run create_pl_files.py in the /home/pi/radio directory to create PLS files
+# Then run create_m3u.py in the /usr/share/radio directory to create M3U files
  
 # United Kingdom
 # The following links are iPhone streams (m3u files)
@@ -75,8 +73,7 @@
 [Ghost Sky Jazz] http://streaming.radionomy.com/ghost-sky
 [Radio Sky Music] http://streaming.radionomy.com/RadioSky-Music
 
-# Australia
-#(Australia)
-#[Adelaide Radio AA] http://streaming.novaentertainment.com.au/fiveaa
+(Belgium)
+[Crooze FM] http://77.92.64.44:8045/stream
 
 

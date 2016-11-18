@@ -1,5 +1,5 @@
 # Raspberry Pi Internet Radio
-# $Id: lircrc.dist,v 1.1 2015/01/17 15:36:38 bob Exp $
+# $Id: lircrc.dist,v 1.5 2016/02/09 13:24:35 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -16,12 +16,14 @@ begin
   prog = piradio
   button = KEY_VOLUMEUP
   config = KEY_VOLUMEUP
+  repeat = 1
 end
 
 begin
   prog = piradio
   button = KEY_VOLUMEDOWN
   config = KEY_VOLUMEDOWN
+  repeat = 1
 end
 
 begin
@@ -46,6 +48,48 @@ begin
   prog = piradio
   button = KEY_MENU
   config = KEY_MENU
+end
+
+begin
+  prog = piradio
+  button = KEY_LEFT
+  config = KEY_LEFT
+end
+
+begin
+  prog = piradio
+  button = KEY_RIGHT
+  config = KEY_RIGHT
+end
+
+begin
+  prog = piradio
+  button = KEY_UP
+  config = KEY_UP
+end
+
+begin
+  prog = piradio
+  button = KEY_DOWN
+  config = KEY_DOWN
+end
+
+begin
+  prog = piradio
+  button = KEY_OK
+  config = KEY_OK
+end
+
+begin
+  prog = piradio
+  button = KEY_LANGUAGE
+  config = KEY_LANGUAGE
+end
+
+begin
+  prog = piradio
+  button = KEY_INFO
+  config = KEY_INFO
 end
 
 # End

@@ -1,0 +1,96 @@
+# Raspberry Pi Internet Radio Configuration File (40 Pin version)
+# $Id: radiod.conf.40_pin,v 1.1 2016/08/11 11:29:52 bob Exp $
+
+# Configuration file for version 5.4 onwards
+# 40 pin version to support IQ Audio and other sound cards
+
+[RADIOD]
+
+# loglevel is CRITICAL,ERROR,WARNING,INFO,DEBUG or NONE
+loglevel=DEBUG
+
+# Startup option either RADIO or MEDIA (USB stick)
+startup=RADIO
+
+# Set date format, US format =  %H:%M %m/%d/%Y
+dateformat=%H:%M %d/%m/%Y
+
+# Volume range 10, 20, 25, 50 or 100 
+volume_range=20
+
+# MPD port number (Do not change unless MPD reconfigured)
+mpdport=6600
+
+# Remote control communication  host and port Default localhost 5100
+remote_control_host=localhost
+remote_control_port=5100
+
+# Remote control UDP server listen host either 0.0.0.0 (All interfaces) or localhost
+remote_listen_host=localhost
+
+# Output LED for remote control, default GPIO 11 (pin 23) or
+# GPIO 13 (pin 33) for AdaFruit plate or PiFace CAD (40 pin RPi needed)
+# remote_led=0 is no output LED 
+remote_led=0
+
+# Display playlist number in brackets yes or no 
+display_playlist_number=no
+
+# Station name source, either from the stream (stream) or use playlist names (list)
+station_names=list
+
+# Background colours (If supported) See Adafruit RGB plate
+# options OFF, RED, GREEN, BLUE, YELLOW, TEAL, VIOLET, WHITE 
+bg_color=WHITE
+mute_color=VIOLET
+shutdown_color=TEAL
+error_color=RED
+search_color=GREEN
+info_color=BLUE
+menu_color=YELLOW
+source_color=TEAL
+sleep_color=OFF
+
+# The i2cbackpack is either ADAFRUIT or PCF8574
+#i2c_backpack=PCF8574
+i2c_backpack=ADAFRUIT
+
+# The i2c_address overides the default i2c address. 0x00 = use default
+# Some backpacks use other addresses such as 0x3F, then set i2c_address=0x3F
+i2c_address=0x00
+
+# Speech for visually impaired or blind listeners, yes or no
+# Needs espeak package - sudo apt-get install espeak
+speech=no
+# Speech volume as a percentage of the normal MPD volume
+speech_volume=60
+# Verbose - yes = each station change is spoken
+verbose=no
+
+# MPD version 0.16 requires the mpc load command to use the playlist extension
+# so set to yes, MPD version 0.19 does not use the playlist extension so 
+# set it to no
+use_playlist_extensions=no
+
+# Switch settings for 40 pin version (support for IQAudio)
+menu_switch=17
+mute_switch=4
+up_switch=15
+down_switch=14
+left_switch=23
+right_switch=24
+
+# LCD GPIO connections for 40 pin version of the radio 
+lcd_select=7
+lcd_enable=8
+lcd_data4=5
+lcd_data5=6
+lcd_data6=12
+lcd_data7=13
+
+# Some rotary switches do not work well with the standard rotary class
+# Rotary encoder driver. Set to "alternative" to use the alternative rotary encoder class
+rotary_class=standard
+#rotary_class=alternative
+
+

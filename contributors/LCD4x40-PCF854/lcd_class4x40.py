@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class4x40.py,v 1.1 2014/06/20 08:39:26 bob Exp $
+# $Id: lcd_class4x40.py,v 1.1 2016/04/30 11:11:19 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -13,7 +13,7 @@
 # From original LCD routines : Matt Hawkins
 # Site   : http://www.raspberrypi-spy.co.uk
 #
-# Expanded to use 4 x 40  display with 2 HD 44780 Controller and use a PCF8475 Port Expander (no Backlight Version)
+# Expanded to use 4 x 40  display with 2 HD 44780 Controller and use a PCF8574 Port Expander (no Backlight Version)
 #
 # Pinout: P0, P1, P2, P3 = D4, D5, D6, D7    P4=RS, P5=R/W, P6=E1, P7=E2
 #

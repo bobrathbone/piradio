@@ -1,14 +1,23 @@
 #!/bin/bash
+set -e
 # Radio daemon post remove script
-# $Id: piradio.postrm,v 1.5 2015/12/27 18:39:27 bob Exp $
+# $Id: piradio.postrm,v 1.8 2016/07/18 13:19:53 bob Exp $
 
 BOOTCMD=/boot/cmdline.txt
 INITTAB=/etc/inittab
 DIR=/usr/share/radio
 
+# Check if the script is being run as root
+if [[ $EUID -ne 0 ]]
+then
+    printf 'This script must be run using sudo.\nExiting..\n'
+    exit 1
+fi
+
 rm -f ${DIR}/*.pyc
 echo "Executing post remove script ${0}"
 update-rc.d radiod remove
+update-rc.d pifacercd remove
 rm -f /etc/logrotate.d/radiod
 rm -f /etc/cron.hourly/podcast
 
@@ -22,4 +31,6 @@ if [[ -f  ${BOOTCMD}.orig ]]; then
 	sudo mv -f ${BOOTCMD}.orig ${BOOTCMD}
 fi
 
+exit 0
+# End of postrm script
 

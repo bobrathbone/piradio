@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.59 2016/01/31 13:34:22 bob Exp $
+# $Id: ada_radio.py,v 1.62 2016/07/23 16:13:10 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -54,7 +54,20 @@ def finish():
 	lcd.clear()
 	radio.execCommand("umount /media  > /dev/null 2>&1")
 	radio.execCommand("umount /share  > /dev/null 2>&1")
-	lcd.line1("Radio stopped")
+	lcd.line1("Radio stopped.")
+
+# Signal SIGTERM handler
+def signalHandler(signal,frame):
+        global lcd
+        global log
+        #radio.execCommand("umount /media > /dev/null 2>&1")
+        #radio.execCommand("umount /share > /dev/null 2>&1")
+        pid = os.getpid()
+        log.message("Radio stopped (SIGTERM), PID " + str(pid), log.INFO)
+        lcd.line1("Radio stopped")
+        lcd.line2("")
+        GPIO.cleanup()
+        sys.exit(0)
 
 atexit.register(finish)
 
@@ -65,17 +78,18 @@ class MyDaemon(Daemon):
 		global CurrentFile
 		log.init('radio')
 
+		signal.signal(signal.SIGTERM,signalHandler)
+
 		progcall = str(sys.argv)
 		log.message('Radio running pid ' + str(os.getpid()), log.INFO)
 		log.message("Radio " +  progcall + " daemon version " + radio.getVersion(), log.INFO)
 
 		hostname = exec_cmd('hostname')
 		ipaddr = exec_cmd('hostname -I')
-		myos = exec_cmd('uname -a')
-		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
 		message = "Radio pid " + str(os.getpid())
+		lcd.line1("")
 		lcd.line1(message)
 
 		# Wait for the IP network

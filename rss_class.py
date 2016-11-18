@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 #
-# $Id: rss_class.py,v 1.21 2014/09/10 12:49:54 bob Exp $
+# $Id: rss_class.py,v 1.23 2016/06/28 06:40:51 bob Exp $
 # Raspberry Pi RSS feed class
 #
 # Author : Bob Rathbone
@@ -42,6 +42,7 @@ class Rss:
         rss = []	# Array for the RSS feed
         length = 0	# Number of RSS news items
 	feed_available = False
+	rss_error = False # RSS Error (prevents repetitive error logging)
 
 	def __init__(self):
 		log.init('radio')
@@ -64,7 +65,9 @@ class Rss:
 			self.length -= 1
 			feed = translate.all(line)
 			feed = feed.lstrip('"')
-			log.message(feed,log.DEBUG)
+			feed = feed.lstrip('<')
+			if not self.rss_error:
+				log.message(feed,log.DEBUG)
 		return feed
 
 	# Is an RSS news feed available
@@ -76,64 +79,74 @@ class Rss:
 		rss = []
                 if os.path.isfile(url):
 			rss_feed = self.exec_cmd("cat " + url)
-			log.message("Getting RSS feed: " + rss_feed,log.INFO)
-			file = urllib2.urlopen(rss_feed)
-			data = file.read()
-			file.close()
-			dom = parseString(data)
-			dom.normalize()
+			try:
+				file = urllib2.urlopen(rss_feed)
+				data = file.read()
+				file.close()
+				dom = parseString(data)
+				dom.normalize()
+				rss = self.parse_feed(dom)
+				self.rss_error = False # Clear RSS Error
+				log.message("Getting RSS feed: " + rss_feed,log.INFO)
+			except:
+				if not self.rss_error:
+					log.message("Invalid RSS feed: " + rss_feed,log.ERROR)
+					self.rss_error = True  # Set RSS error
+				rss.append("No RSS feed found")
+		return rss
+		
+	def parse_feed(self,dom):	
+		rss = []
+		for news in dom.getElementsByTagName('*'):
+			display = False
+			line = news.toxml()
+			line = line.replace("&lt;", "<")	# Replace special string
+			line = line.replace("&gt;", ">")
 			
-			for news in dom.getElementsByTagName('*'):
-				display = False
-				line = news.toxml()
-				line = line.replace("&lt;", "<")	# Replace special string
-				line = line.replace("&gt;", ">")
-				
-				msg =  "LINE:" + line
-				line = line.lstrip(' ')
-				if (line.find("VIDEO:") != -1):
-					continue
-				if (line.find("AUDIO:") != -1):
-					continue
-				if (line.find("<rss") != -1):
-					continue
-				if (line.find("<item") != -1):
-					continue
-				if (line.find("<image") == 0):
-					continue
+			msg =  "LINE:" + line
+			line = line.lstrip(' ')
+			if (line.find("VIDEO:") != -1):
+				continue
+			if (line.find("AUDIO:") != -1):
+				continue
+			if (line.find("<rss") != -1):
+				continue
+			if (line.find("<item") != -1):
+				continue
+			if (line.find("<image") == 0):
+				continue
+			if (line.find("<title>") >= 0):
+				display= True
+			if (line.find("<description>") >= 0):
+				display= True
+
+			if display:
+				title = ''
+				description = ''
+				line = line.rstrip(' ')
+				line = line.replace("![CDATA[", "")
+				line = line.replace("]]>", "")
+
+				if (line.find("<description>") == 0):
+					description = line.split("</description>", 2)[0]
+					description = self._strip_string(description, "<img", "</img>")
+					description = self._strip_string(description, "<a href", "</a>")
+					description = self._strip_string(description, "<br ", "</br>")
 
 				if (line.find("<title>") >= 0):
-					display= True
-				if (line.find("<description>") >= 0):
-					display= True
+					title = line.split("</title>", 2)[0]
 
-				if display:
-					title = ''
-					description = ''
-					line = line.rstrip(' ')
-					line = line.replace("![CDATA[", "")
-					line = line.replace("]]>", "")
+				if len(title) > 0:
+					for tag in tags:	# Strip out HTML tags
+						title = title.replace(tag, "")
+					rss.append(title)
 
-					if (line.find("<description>") == 0):
-						description = line.split("</description>", 2)[0]
-						description = self._strip_string(description, "<img", "</img>")
-						description = self._strip_string(description, "<a href", "</a>")
-						description = self._strip_string(description, "<br ", "</br>")
+				if len(description) > 0:
+					for tag in tags:	# Strip out HTML tags
+						description = description.replace(tag, "")
+					rss.append(description)
 
-					if (line.find("<title>") >= 0):
-						title = line.split("</title>", 2)[0]
-
-					if len(title) > 0:
-						for tag in tags:	# Strip out HTML tags
-							title = title.replace(tag, "")
-						rss.append(title)
-
-					if len(description) > 0:
-						for tag in tags:	# Strip out HTML tags
-							description = description.replace(tag, "")
-						rss.append(description)
-
-					self.feed_available = True
+				self.feed_available = True
 		rss.reverse()
 		return rss
 

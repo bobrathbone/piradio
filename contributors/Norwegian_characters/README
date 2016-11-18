@@ -16,7 +16,7 @@ HD44780 support up to 8 custom characters, so I adapted the code from this web p
 
 http://ailin.phychembio.com/miscellany/1422/
 
-I just modified it slightly and added it to lcd_i2c_pcf8475.py with definitions for the special Norwegian characters I need, and added the necessary lines to translate_class.py. Now I have a working display with Norwegian characters. This could probably be useful for other people as well.
+I just modified it slightly and added it to lcd_i2c_pcf8574.py with definitions for the special Norwegian characters I need, and added the necessary lines to translate_class.py. Now I have a working display with Norwegian characters. This could probably be useful for other people as well.
 
 
 

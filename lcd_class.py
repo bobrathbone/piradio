@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class.py,v 1.26 2015/05/30 13:10:47 bob Exp $
+# $Id: lcd_class.py,v 1.30 2016/10/15 10:56:05 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -10,6 +10,9 @@
 #
 # From original LCD routines : Matt Hawkins
 # Site   : http://www.raspberrypi-spy.co.uk
+# Timing improvements fromobert Coward/Paul Carpenter
+# Site   : http://www.raspberrypi-spy.co.uk
+#          http://www.pcserviceslectronics.co.uk
 #
 # Expanded to use 4 x 20  display
 #
@@ -26,6 +29,7 @@ import os
 import time
 import RPi.GPIO as GPIO
 from translate_class import Translate
+from config_class import Configuration
 
 # The wiring for the LCD is as follows:
 # 1 : GND
@@ -45,15 +49,6 @@ from translate_class import Translate
 # 15: LCD Backlight +5V**
 # 16: LCD Backlight GND
 
-# Define GPIO to LCD mapping
-LCD_RS = 7
-LCD_E  = 8
-LCD_D4_21 = 21    # Rev 1 Board
-LCD_D4_27 = 27    # Rev 2 Board
-LCD_D5 = 22
-LCD_D6 = 23
-LCD_D7 = 24
-
 # Define LCD device constants
 LCD_WIDTH = 16    # Default characters per line
 LCD_CHR = True
@@ -63,46 +58,69 @@ LCD_LINE_1 = 0x80 # LCD RAM address for the 1st line
 LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
 LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
 LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
-
 # Some LCDs use different addresses (16 x 4 line LCDs)
-# Comment out the above two lines and uncomment the two lines below
-# LCD_LINE_3 = 0x90 # LCD RAM address for the 3rd line
-# LCD_LINE_4 = 0xD0 # LCD RAM address for the 4th line
+LCD_LINE_3a = 0x90 # LCD RAM address for the 3rd line (16 char display)
+LCD_LINE_4a = 0xD0 # LCD RAM address for the 4th line (16 char display)
 
 # If using a 4 x 16 display also amend the lcd.setWidth(<width>) statement in rradio4.py
 
 # Timing constants
-E_PULSE = 0.00005
-E_DELAY = 0.00005
-
+E_PULSE = 0.00001	# Pulse width of enable
+E_DELAY = 0.00001	# Delay between writes
+E_POSTCLEAR = 0.01	# Delay after clearing display
 
 translate = Translate()
+config = Configuration()
 
 # Lcd Class 
 class Lcd:
+	# Define GPIO to LCD mapping
+	lcd_select = 7
+	lcd_enable  = 8
+	LCD_D4_21 = 21    # Rev 1 Board
+	LCD_D4_27 = 27    # Rev 2 Board
+	lcd_data4 = LCD_D4_27
+	lcd_data5 = 22
+	lcd_data6 = 23
+	lcd_data7 = 24
+
+	lcd_line3 = LCD_LINE_3
+	lcd_line4 = LCD_LINE_4
+
 	width = LCD_WIDTH
 	# If display can support umlauts set to True else False
         RawMode = False         # Test only
         ScrollSpeed = 0.3       # Default scroll speed
-	lcd_d4 = LCD_D4_27	# Default for revision 2 boards 
 
         def __init__(self):
 		return
 
 	# Initialise for either revision 1 or 2 boards
 	def init(self,revision=2):
-        # LED outputs
+        # LCD outputs
+
 		if revision == 1:
-			self.lcd_d4 = LCD_D4_21
+			self.lcd_data4 = LCD_D4_21
+
+		# Get LCD configuration connects including self.lcd_data4
+		self.lcd_select = config.getLcdGpio("lcd_select")
+		self.lcd_enable  = config.getLcdGpio("lcd_enable")
+
+		if revision != 1:
+			self.lcd_data4 = config.getLcdGpio("lcd_data4")
+
+		self.lcd_data5 = config.getLcdGpio("lcd_data5")
+		self.lcd_data6 = config.getLcdGpio("lcd_data6")
+		self.lcd_data7 = config.getLcdGpio("lcd_data7")
 
 		GPIO.setwarnings(False)	     # Disable warnings
 		GPIO.setmode(GPIO.BCM)       # Use BCM GPIO numbers
-		GPIO.setup(LCD_E, GPIO.OUT)  # E
-		GPIO.setup(LCD_RS, GPIO.OUT) # RS
-		GPIO.setup(self.lcd_d4, GPIO.OUT) # DB4
-		GPIO.setup(LCD_D5, GPIO.OUT) # DB5
-		GPIO.setup(LCD_D6, GPIO.OUT) # DB6
-		GPIO.setup(LCD_D7, GPIO.OUT) # DB7
+		GPIO.setup(self.lcd_enable, GPIO.OUT)  # E
+		GPIO.setup(self.lcd_select, GPIO.OUT) # RS
+		GPIO.setup(self.lcd_data4, GPIO.OUT) # DB4
+		GPIO.setup(self.lcd_data5, GPIO.OUT) # DB5
+		GPIO.setup(self.lcd_data6, GPIO.OUT) # DB6
+		GPIO.setup(self.lcd_data7, GPIO.OUT) # DB7
 		self.lcd_init()
 		return
 
@@ -111,6 +129,7 @@ class Lcd:
 		self._byte_out(0x33,LCD_CMD) # 110011 Initialise
 		self._byte_out(0x32,LCD_CMD) # 110010 Initialise
 		self._byte_out(0x06,LCD_CMD) # 000110 Cursor move direction
+		self._byte_out(0x17,LCD_CMD) # character mode, power on
 		self._byte_out(0x0C,LCD_CMD) # 001100 Display On,Cursor Off, Blink Off
 		self._byte_out(0x28,LCD_CMD) # 101000 Data length, number of lines, font size
 		self._byte_out(0x01,LCD_CMD) # 000001 Clear display
@@ -123,55 +142,62 @@ class Lcd:
 		# bits = data
 		# mode = True  for character
 		#        False for command
-		GPIO.output(LCD_RS, mode) # RS
-
+		GPIO.output(self.lcd_select, mode) # RS
 		# High bits
-		GPIO.output(self.lcd_d4, False)
-		GPIO.output(LCD_D5, False)
-		GPIO.output(LCD_D6, False)
-		GPIO.output(LCD_D7, False)
+		GPIO.output(self.lcd_data4, False)
+		GPIO.output(self.lcd_data5, False)
+		GPIO.output(self.lcd_data6, False)
+		GPIO.output(self.lcd_data7, False)
 		if bits&0x10==0x10:
-			GPIO.output(self.lcd_d4, True)
+			GPIO.output(self.lcd_data4, True)
 		if bits&0x20==0x20:
-			GPIO.output(LCD_D5, True)
+			GPIO.output(self.lcd_data5, True)
 		if bits&0x40==0x40:
-			GPIO.output(LCD_D6, True)
+			GPIO.output(self.lcd_data6, True)
 		if bits&0x80==0x80:
-			GPIO.output(LCD_D7, True)
+			GPIO.output(self.lcd_data7, True)
 
 		# Toggle 'Enable' pin
 		time.sleep(E_DELAY)
-		GPIO.output(LCD_E, True)
+		GPIO.output(self.lcd_enable, True)
 		time.sleep(E_PULSE)
-		GPIO.output(LCD_E, False)
+		GPIO.output(self.lcd_enable, False)
 		time.sleep(E_DELAY)
 
 		# Low bits
-		GPIO.output(self.lcd_d4, False)
-		GPIO.output(LCD_D5, False)
-		GPIO.output(LCD_D6, False)
-		GPIO.output(LCD_D7, False)
+		GPIO.output(self.lcd_data4, False)
+		GPIO.output(self.lcd_data5, False)
+		GPIO.output(self.lcd_data6, False)
+		GPIO.output(self.lcd_data7, False)
 		if bits&0x01==0x01:
-			GPIO.output(self.lcd_d4, True)
+			GPIO.output(self.lcd_data4, True)
 		if bits&0x02==0x02:
-			GPIO.output(LCD_D5, True)
+			GPIO.output(self.lcd_data5, True)
 		if bits&0x04==0x04:
-			GPIO.output(LCD_D6, True)
+			GPIO.output(self.lcd_data6, True)
 		if bits&0x08==0x08:
-			GPIO.output(LCD_D7, True)
+			GPIO.output(self.lcd_data7, True)
 
 		# Toggle 'Enable' pin
 		time.sleep(E_DELAY)
-		GPIO.output(LCD_E, True)
+		GPIO.output(self.lcd_enable, True)
 		time.sleep(E_PULSE)
-		GPIO.output(LCD_E, False)
+		GPIO.output(self.lcd_enable, False)
 		time.sleep(E_DELAY)
 		return
 
 	# Set the display width
 	def setWidth(self,width):
 		self.width = width
+		# Adjust line offsets if 16 char display
+		if width is 16:
+			self.lcd_line3 = LCD_LINE_3a
+			self.lcd_line4 = LCD_LINE_4a
 		return
+
+	# Get LCD width 0 = use default for program
+	def getWidth(self):
+		return config.getWidth()
 
 	# Send string to display
 	def _string(self,message):
@@ -182,27 +208,27 @@ class Lcd:
 			self._byte_out(ord(s[i]),LCD_CHR)
 		return
 
-	# Display Line 1 on LED
+	# Display Line 1 on LCD
 	def line1(self,text):
 		self._byte_out(LCD_LINE_1, LCD_CMD)
 		self._string(text)
 		return
 
-	# Display Line 2 on LED
+	# Display Line 2 on LCD
 	def line2(self,text):
 		self._byte_out(LCD_LINE_2, LCD_CMD)
 		self._string(text)
 		return
 
-	# Display Line 3 on LED
+	# Display Line 3 on LCD
 	def line3(self,text):
-		self._byte_out(LCD_LINE_3, LCD_CMD)
+		self._byte_out(self.lcd_line3, LCD_CMD)
 		self._string(text)
 		return
 
-	# Display Line 4 on LED
+	# Display Line 4 on LCD
 	def line4(self,text):
-		self._byte_out(LCD_LINE_4, LCD_CMD)
+		self._byte_out(self.lcd_line4, LCD_CMD)
 		self._string(text)
 		return
 
@@ -218,12 +244,12 @@ class Lcd:
 
 	# Scroll message on line 3
 	def scroll3(self,mytext,interrupt):
-		self._scroll(mytext,LCD_LINE_3,interrupt)
+		self._scroll(mytext,self.lcd_line3,interrupt)
 		return
 
 	# Scroll message on line 4
 	def scroll4(self,mytext,interrupt):
-		self._scroll(mytext,LCD_LINE_4,interrupt)
+		self._scroll(mytext,self.lcd_line4,interrupt)
 		return
 
 	# Scroll line - interrupt() breaks out routine if True
@@ -278,7 +304,7 @@ class Lcd:
 	# Clear display
 	def clearDisplay(self):
 		self._byte_out(0x01,LCD_CMD) # 000001 Clear display
-		time.sleep(E_DELAY)
+		time.sleep(E_POSTCLEAR)
                 return
 
 

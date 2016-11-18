@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.220 2016/02/09 13:56:27 bob Exp $
+# $Id: radio_class.py,v 1.249 2016/11/13 11:19:31 bob Exp $
 # 
 #
 # Author : Bob Rathbone
@@ -43,6 +43,7 @@ PlaylistsDirectory = "/var/lib/mpd/playlists"
 MusicDirectory = "/var/lib/mpd/music"
 CurrentStationFile = RadioLibDir + "/current_station"
 CurrentTrackFile = RadioLibDir + "/current_track"
+RandomSettingFile = RadioLibDir + "/random"
 VolumeFile = RadioLibDir + "/volume"
 TimerFile = RadioLibDir + "/timer" 
 AlarmFile = RadioLibDir + "/alarm" 
@@ -64,18 +65,22 @@ class Radio:
 	RADIO = 0
 	PLAYER = 1
 
+	# Rotary class
+	ROTARY_STANDARD = config.STANDARD
+	ROTARY_ALTERNATIVE = config.ALTERNATIVE
+
 	# Player options
 	RANDOM = 0
 	CONSUME = 1
 	REPEAT = 2
-	TIMER = 3
-	ALARM = 4
-	ALARMSETHOURS = 5
-	ALARMSETMINS = 6
-	STREAMING = 7
-	RELOADLIB = 8
+	RELOADLIB = 3
+	TIMER = 4
+	ALARM = 5
+	ALARMSETHOURS = 6
+	ALARMSETMINS = 7
+	STREAMING = 8
 	SELECTCOLOR = 9
-	OPTION_LAST = RELOADLIB
+	OPTION_LAST = STREAMING
 	OPTION_ADA_LAST = SELECTCOLOR
 
 	# Display Modes
@@ -99,6 +104,9 @@ class Radio:
 	# Other definitions
 	UP = 0
 	DOWN = 1
+	LEFT = 2
+	RIGHT = 3
+
 	ONEDAYSECS = 86400	# Day in seconds
 	ONEDAYMINS = 1440	# Day in minutes
 
@@ -107,6 +115,7 @@ class Radio:
 	udpport = 5100  # Remote IR listener UDP port number
 	mpdport = 6600  # MPD port number
 	volume = 80	# Volume level 0 - 100%
+	device_error_cnt = 0	# Device error causes an abort
 	isMuted = False # Is radio state "pause" or "stop"
 	playlist = []	# Play list (tracks or radio stations)
 	current_id = 1	# Currently playing track or station
@@ -126,7 +135,10 @@ class Radio:
 	getIdError = False	# Prevent repeated display of ID error
 	StationNamesSource = config.LIST # Use own names from playlist
 	use_playlist_extensions = False # MPD 0.16 requires playlist.<ext>
+	rotary_class = config.STANDARD  # Rotary class standard all alternate
 
+	mode_last = MODE_IP	 	# Last mode a user can select
+	option_last = OPTION_LAST	# Last available option
 	display_mode = MODE_TIME	# Display mode
 	display_artist = False		# Display artist (or tracck) flag
 	current_file = ""  		# Currently playing track or station
@@ -158,11 +170,12 @@ class Radio:
 	search_index = 0	 # The current search index
 	loadnew = False	  # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "5.0"		# Version number
+	VERSION	= "5.6"		# Version number
 
 	ADAFRUIT = 1		# I2C backpack type AdaFruit
-	PCF8475  = 2 		# I2C backpack type PCF8475
+	PCF8574  = 2 		# I2C backpack type PCF8574
 	i2c_backpack = ADAFRUIT
+	i2c_address = 0x00	# Use default I2C address
 
 	speech = False 		# Speech for visually impaired or blind persons
 
@@ -172,8 +185,9 @@ class Radio:
  		CurrentTrackFile: 1,
  		VolumeFile: 75,
  		TimerFile: 30,
-		AlarmFile: "07:00:00", 
+		AlarmFile: "0:07:00", 
 		StreamFile: "off", 
+ 		RandomSettingFile: 0,
 		}
 
 	# Initialisation routine
@@ -293,6 +307,15 @@ class Radio:
 		self.stationNamesSource = config.getStationNamesSource()
 		language = Language(self.speech) # language is a global
 		self.use_playlist_extensions = config.getPlaylistExtensions()
+		self.rotary_class = config.getRotaryClass()
+
+		# Log OS version information 
+		OSrelease = self.execCommand("cat /etc/os-release | grep NAME")
+		OSrelease = OSrelease.replace("PRETTY_NAME=", "OS release: ")
+		OSrelease = OSrelease.replace('"', '')
+		log.message(OSrelease, log.INFO)
+		myos = self.execCommand('uname -a')
+		log.message(myos, log.INFO)
 
 		# Start the player daemon
 		self.execCommand("service mpd start")
@@ -300,18 +323,23 @@ class Radio:
 		self.connect(self.mpdport)
 		client.clear()
 		self.randomOff()
-		self.randomOff()
 		self.consumeOff()
 		self.repeatOff()
 		self.current_id = self.getStoredID(self.current_file)
 		log.message("radio.start current ID " + str(self.current_id), log.DEBUG)
 		self.volume = self.getStoredVolume()
 		self._setVolume(self.volume)
+
+		# Alarm and timer settings
 		self.timeTimer = int(time.time())
 		self.timerValue = self.getStoredTimer()
 		self.alarmTime = self.getStoredAlarm()
 		sType,sHours,sMinutes = self.alarmTime.split(':')
 		self.alarmType = int(sType)
+		if self.alarmType > self.ALARM_OFF:
+			self.alarmType = self.ALARM_OFF
+
+		# Icecast Streaming settings
 		self.streaming = self.getStoredStreaming()
 		if self.streaming:
 			self.streamingOn()
@@ -345,7 +373,7 @@ class Radio:
 				retry = 0
 			except:
 				log.message("Failed to connect to MPD on port " + str(port), log.ERROR)
-				time.sleep(0.5)	# Wait for interrupt in the case of a shutdown
+				time.sleep(2.5)	# Wait for interrupt in the case of a shutdown
 				log.message("Restarting MPD",log.DEBUG)
 				if retry < 2:
 					self.execCommand("service mpd restart") 
@@ -371,26 +399,53 @@ class Radio:
 
 		return
 
-	# Handle stepping through menu options
+	# Handle stepping through menu options and changing them
 	def handle_options(self,key):
-		option = self.getOption()
+		direction = -1
 
 		if key == 'KEY_UP':	
-			option += 1
+			direction = self.UP
 		elif key == 'KEY_DOWN':	
+			direction = self.DOWN
+		elif key == 'KEY_LEFT':	
+			direction = self.LEFT
+		elif key == 'KEY_RIGHT':	
+			direction = self.RIGHT
+		
+		if direction == self.UP or direction == self.DOWN:
+			self.cycleOptions(direction)
+		elif direction == self.LEFT or direction == self.RIGHT:	
+			self.changeOption(direction)
+		return
+
+	# Handle stepping through menu options
+	def cycleOptions(self,direction):
+		option = self.getOption()
+
+		log.message("radio.cycleOptions option=" + str(option) \
+			+ " direction=" + str(direction), log.DEBUG)
+
+		# Cycle through option
+		if direction == self.UP:
+			option += 1
+		elif direction == self.DOWN:
 			option -= 1
 
-		elif key == 'KEY_LEFT' or key == 'KEY_RIGHT':	
-			self.change_option(key)
+
+		# Skip reload if not in player mode
+		if option == self.RELOADLIB and self.source != self.PLAYER:
+			if direction == self.UP:
+				option += 1
+			else:
+				option -= 1
  
-		if option > self.OPTION_LAST:
-			option = self.RANDOM
+		if option > self.option_last:
+				option = self.RANDOM
 
 		elif option < 0:
-			if self.source == self.PLAYER:
-				option = self.OPTION_LAST
-			else:
-				option = self.OPTION_LAST-1
+			option = self.option_last
+			if option == self.RELOADLIB and self.source != self.PLAYER:
+				option -= 1
 
 		self.setOption(option)
 		return
@@ -449,6 +504,8 @@ class Radio:
 		name = self.getStationName(index)
 		if name.startswith("http:") and '#' in name: 
 			url,name = name.split('#')
+		msg = "radio.getNext index " + str(index) + " "+ name
+		log.message(msg, log.DEBUG)
 		if self.speech: 
 			self.speak(language.getText('search') + " " +  str(index+1)
 				 + " " + name)
@@ -504,14 +561,14 @@ class Radio:
 			self.speak( str(index+1) + " " + new_artist)
 		return
 
-	# Change option (Used by remote control only)
-	def change_option(self,key):
-		option = self.getOption()
-		source = self.getSource()
+	# Change option (Used by remote control and non display radio only)
+	def changeOption(self,direction):
 
-		direction = self.UP
-		if key == 'KEY_LEFT':
-			direction = self.DOWN
+		option = self.getOption()
+		sOptions = language.getOptionText()
+		sOption = sOptions[option]
+
+		log.message("radio.changeOption " + str(option) + " " + sOption, log.DEBUG)
 
 		if option == self.RANDOM:
 			if self.getRandom():
@@ -560,6 +617,9 @@ class Radio:
 				self.incrementAlarm(value)
 			else:
 				self.decrementAlarm(value)
+
+		self.optionChangedTrue()
+		self.speakOption(option)
 		return
 
 	# Handle toggling of source
@@ -580,6 +640,7 @@ class Radio:
 		return self.reload
 
 	def setReload(self,reload):
+		log.message("radio.setReload " + str(reload), log.DEBUG)
 		self.reload = reload
 
 	# Reload music library flag
@@ -597,6 +658,7 @@ class Radio:
 		return self.loadnew
 
 	def setLoadNew(self,loadnew):
+		log.message("radio.setLoadNew " + str(loadnew), log.DEBUG)
 		self.loadnew = loadnew
 		return
 
@@ -670,15 +732,27 @@ class Radio:
 			error = True
 
 		if volume == str("None"):
-			volume = 1
+			volume = -1
+			error = True
+		if volume < 0:
 			error = True
 
 		if volume != self.volume:
 			if not error:
+				self.device_error_cnt = 0
 				log.message("radio._getVolume external client changed volume " 
 								+ str(volume),log.DEBUG)
 				self._setVolume(volume)
 				self.volumeChange = True
+			else:
+				self.device_error_cnt += 1
+				log.message("radio._getVolume audio device error " + str(volume), log.ERROR)
+
+				if self.device_error_cnt > 10:	
+					msg =  "Sound device error - exiting"
+					log.message("radio._getVolume " + msg , log.ERROR)
+					print msg
+					sys.exit(1)
 
 		return self.volume
 
@@ -808,25 +882,49 @@ class Radio:
 		self.execCommand ("echo " + str(volume) + " > " + VolumeFile)
 		return
 
-	# Random
+	# Random setting
 	def getRandom(self):
+		if self.source == self.PLAYER:
+			self.random = self.getStoredRandomSetting()
 		return self.random
 
 	def randomOn(self):
 		try:
 			client.random(1)
 			self.random = True
+			if self.source == self.PLAYER:
+				self.execCommand ("echo " + str(1) + " > " + RandomSettingFile)
 		except:
 			log.message("radio.randomOn error",log.ERROR)
-		return
+		return self.random
 
 	def randomOff(self):
 		try:
 			client.random(0)
 			self.random = False
+			if self.source == self.PLAYER:
+				self.execCommand ("echo " + str(0) + " > " + RandomSettingFile)
 		except:
 			log.message("radio.randomOff error",log.ERROR)
-		return
+		return self.random
+
+	# Get the stored random setting 0=off 1=on
+	def getStoredRandomSetting(self):
+		random = 0
+		if os.path.isfile(RandomSettingFile):
+			try:
+				random = int(self.execCommand("cat " + RandomSettingFile) )
+			except ValueError:
+				random = 0
+		else:
+			log.message("Error reading " + RandomSettingFile, log.ERROR)
+
+		if random is 1:
+			self.random = True
+		else:
+			self.random = False
+
+		return self.random
 
 	# Repeat
 	def getRepeat(self):
@@ -1070,6 +1168,8 @@ class Radio:
 		
 	# Get the alarm type
 	def getAlarmType(self):
+		if self.alarmType > self.ALARM_LAST:
+			self.alarmType = self.ALARM_OFF
 		return  self.alarmType
 		
 	# Get the date format
@@ -1156,8 +1256,8 @@ class Radio:
 		return self.option_changed
 
 	def optionChangedTrue(self):
-		if self.speech and self.display_mode != MODE_SEARCH: 
-			self.speakOption(self.option)
+		#if self.speech and self.display_mode != self.MODE_SEARCH: 
+		#	self.speakOption(self.option)
 		self.option_changed = True
 		return
 
@@ -1193,7 +1293,8 @@ class Radio:
 			self.speak(msg)
 
 		if display_mode is self.MODE_OPTIONS:
-			self.speakOption(self.option)
+			if not self.reload:
+				self.speakOption(self.option)
 
 	# Speak option
 	def speakOption(self,option):
@@ -1266,7 +1367,7 @@ class Radio:
 			display_mode = self.MODE_TIME
 		else:
 			display_mode = self.getDisplayMode() + 1
-			if display_mode > self.MODE_LAST:
+			if display_mode > self.mode_last:
 				display_mode = self.MODE_TIME
 
 		if self.optionChanged():
@@ -1283,8 +1384,22 @@ class Radio:
 	def setOption(self,option):
 		log.message("radio.setOption option " + str(option), log.DEBUG)
 		self.option = option
+		self.speakOption(self.option)
 		return
 	
+	# Set the menu restriction for radios without a display (retro_radio.py)
+	def setLastMode(self,mode_last):
+		if mode_last >= self.MODE_OPTIONS and mode_last <= self.MODE_LAST:
+			self.mode_last = mode_last
+		return self.mode_last
+
+	# Set the options restriction for radios without a display (retro_radio.py)
+	def setLastOption(self,option_last):
+		if option_last >= self.REPEAT and option_last <= self.RELOADLIB:
+			self.option_last = option_last
+		return self.option_last
+
+
 	# Execute system command
 	def execCommand(self,cmd):
 		p = os.popen(cmd)
@@ -1374,10 +1489,8 @@ class Radio:
 			log.message("radio.setCurrentID reset to " + str(self.current_id), log.DEBUG)
 		
 		self.search_index = self.current_id - 1
-		log.message("radio.setCurrentID index= " + str(self.search_index), log.DEBUG)
 		self.execCommand ("echo " + str(self.current_id) + " > " + self.current_file)
 		name = self.getCurrentTitle()
-		log.message("radio.setCurrentID (" + str(self.current_id) + ") " + name, log.INFO)
 		return
 
 	# Get stats array
@@ -1483,7 +1596,6 @@ class Radio:
 
 
 		if self.channelChanged: 
-			log.message( "Title: "+ title,log.INFO)
 			self.channelChanged = False
 			if config.verbose():
 				if self.source == self.RADIO:
@@ -1493,7 +1605,10 @@ class Radio:
 				if self.speech: 
 					self.speak(sSource + str(self.current_id) 
 						+ ' ' + self.stationName)
-
+		if title != self.stationTitle and len(title) > 0:
+			log.message ("Title: " + str(title), log.DEBUG)	
+			
+		self.stationTitle = title
 		return title
 
 	# Get the currently playing radio station from mpd 
@@ -1629,7 +1744,11 @@ class Radio:
 
 			# MPD version 0.19 plus does not require extions such as m3u, pls
 			if not self.use_playlist_extensions:
-				fname,ext = fname.split('.')
+				try:
+					fname,ext = fname.split('.')
+				except:
+					log.message("radio.loadStations missing file extension in" + fname, log.ERROR)
+					continue
 
 			log.message("load " + fname, log.DEBUG)
 			try:
@@ -1882,6 +2001,12 @@ class Radio:
 		log.message("Backpack type " + str(self.i2c_backpack), log.DEBUG)
 		return self.i2c_backpack
 
+	# Get I2C address
+	def getI2Caddress(self):
+		self.i2c_address = config.getI2Caddress()
+		log.message("I2C address " + hex(self.i2c_address), log.DEBUG)
+		return self.i2c_address
+
 	# Set an interrupt received
 	def setInterrupt(self):
 		self.interrupt = True
@@ -1899,6 +2024,7 @@ class Radio:
 		self.mountUsb()
 		self.mountShare()
 		self.loadMusic()
+		self.random = self.getStoredRandomSetting()
 		return
 
 	# Mount the USB stick
@@ -1946,12 +2072,16 @@ class Radio:
 
 	# Speak a message
 	def speak(self, msg):	
-		speech_volume = config.getSpeechVolume()
-		volume = self.volume * 2 * speech_volume/100
-		if self.speech:
-			self.mute()
-			language.speak(msg,volume)
-			self.unmute()
+		msg = msg.lstrip()
+		if self.speech and len(msg) > 1:
+			if msg[0] != '!':
+				speech_volume = config.getSpeechVolume()
+				volume = self.volume * speech_volume/100
+				if volume < 5:
+					volume = 5
+				self.mute()
+				language.speak(msg,volume)
+				self.unmute()
 		return
 
 	# Speak a message
@@ -1970,9 +2100,8 @@ class Radio:
 		sTime  = strftime("%H %M")
 		time = language.getText('the_time') + " " + sTime
 		self.speak(time)
-		self.speak(current)
-		self.speak(name)
-		self.speak(title)
+		msg = current + ", " + name + ", " + title 
+		self.speak(msg)
 		return
 
 	# Is speech enabled
@@ -1986,6 +2115,18 @@ class Radio:
 	# Get switch  GPIO configuration
 	def getSwitchGpio(self,label):
 		return config.getSwitchGpio(label)
+
+	# Get RGB LED GPIO configuration (Retro radio)
+	def getRgbLed(self,label):
+		return config.getRgbLed(label)
+
+	# Get Menu swich values configuration (Retro radio)
+	def getMenuSwitch(self,label):
+		return config.getMenuSwitch(label)
+
+	# Get rotary class
+	def getRotaryClass(self):
+		return config.getRotaryClass()
 
 	def dummy(self): 
 		log.message("dummy" , log.DEBUG)
@@ -2007,6 +2148,8 @@ if __name__ == "__main__":
 	# Start radio and load the radio stations
 	backpack = radio.getBackPackType()
 	print "Backpack", backpack
+	i2c_address = radio.getI2Caddress()
+	print "I2C address", hex(i2c_address)
 	radio.start()
 	radio.loadStations()
 	radio.play(1)

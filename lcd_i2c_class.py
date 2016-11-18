@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # LCD test program for the lcd_i2c_class.py class
-# $Id: lcd_i2c_class.py,v 1.3 2015/07/21 18:42:34 bob Exp $
+# $Id: lcd_i2c_class.py,v 1.4 2016/08/08 10:48:01 bob Exp $
 # Use this program to test I2C Backpack LCD wiring
 # Adapted from RpiLcdBackpack from Paul Knox-Kennedy
 # at Adafruit Industries
@@ -107,7 +107,7 @@ class lcd_i2c:
 		return
 
 	# Initialisation routine
-	def init(self, board_rev=2):
+	def init(self, board_rev=2, address=0x20):
 		bus=1
 		if board_rev == 1:
 			bus = 0

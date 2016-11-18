@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using a Piface backlit LCD plate for Raspberry Pi.
-# $Id: radio_piface.py,v 1.7 2016/01/31 15:08:21 bob Exp $
+# $Id: radio_piface.py,v 1.8 2016/07/23 16:13:10 bob Exp $
 #
 # Author : Patrick Zacharias 
 # based on Bob Rathbone's Adafruit code
@@ -82,8 +82,6 @@ class MyDaemon(Daemon):
 		hostname = exec_cmd('hostname')
 		ipaddr = exec_cmd('hostname -I') # Debian-like IP check
 		log.message("IP " + ipaddr, log.INFO)
-		myos = exec_cmd('uname -a')
-		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
 		message = "Radio pid " + str(os.getpid())

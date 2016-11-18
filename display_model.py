@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-$Id: display_model.py,v 1.5 2016/02/05 11:58:35 bob Exp $
+$Id: display_model.py,v 1.7 2016/03/03 16:29:06 bob Exp $
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
@@ -50,7 +50,8 @@ model_data = {
     'f': ('B', '2.0', 512, 'Qisda', ''),
     '10': ('B+', '2.0', 512, 'Unknown', ''),
     'a01041': ('2B', '2.0', 512, 'Farnell and others', ''),
-    '900092': ('Pi Zero', '2.0', 512, 'Wales', ''),
+    '900092': ('Pi Zero', '2.0', 1000, 'Element14', ''),
+    'a02082': ('3B', '2.0', 1000, 'Element14', ''),
 }
 
 
@@ -79,7 +80,7 @@ class ModelInfo(object):
                 self.model, self.revision, self.ram_mb, self.maker, self.info = \
                         model_data[rev_hex.lstrip("0")]
         except:
-                print "Unkwown model", rev_hex.lstrip("0")
+                print "Unknown model", rev_hex.lstrip("0")
 
     def __repr__(self):
         s = "%s: Model %s, Revision %s, RAM: %s MB, Maker: %s%s" % ( \

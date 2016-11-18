@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character I2C LCD interface
 #
-# $Id: rradiobp4.py,v 1.15 2016/01/31 15:59:16 bob Exp $
+# $Id: rradiobp4.py,v 1.25 2016/10/27 16:38:50 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -35,20 +35,11 @@ import traceback
 from radio_daemon import Daemon
 from radio_class import Radio
 from lcd_i2c_class import lcd_i2c
-from lcd_i2c_pcf8475 import lcd_i2c_pcf8475
+from lcd_i2c_pcf8574 import lcd_i2c_pcf8574
 from log_class import Log
 from rss_class import Rss
 from rotary_class import RotaryEncoder
-
-# Switch definitions
-# Volume rotary encoder
-LEFT_SWITCH = 14
-RIGHT_SWITCH = 15
-MUTE_SWITCH = 4
-# Tuner rotary encoder
-UP_SWITCH = 17
-# DOWN_SWITCH = 18 # No longer used
-MENU_SWITCH = 25
+from rotary_class_alternative import RotaryEncoderAlternative
 
 # To use GPIO 14 and 15 (Serial RX/TX)
 # Remove references to /dev/ttyAMA0 from /boot/cmdline.txt and /etc/inittab 
@@ -97,26 +88,29 @@ class MyDaemon(Daemon):
 		log.message("Radio " +  progcall + " daemon version " + radio.getVersion(), log.INFO)
 		log.message("GPIO version " + str(GPIO.VERSION), log.INFO)
 
-		# Load pcf8475 i2c class or Adafruit backpack
-		if radio.getBackPackType() == radio.PCF8475:
-			log.message("PCF8475 backpack", log.INFO)
-			lcd = lcd_i2c_pcf8475()
+		i2c_address = radio.getI2Caddress()
+
+		# Load pcf8574 i2c class or Adafruit backpack
+		if radio.getBackPackType() == radio.PCF8574:
+			log.message("PCF8574 backpack, address: " + hex(i2c_address), log.INFO)
+			lcd = lcd_i2c_pcf8574()
 		else:
-			log.message("Adafruit backpack", log.INFO)
+			log.message("Adafruit backpack, address: " + hex(i2c_address), log.INFO)
 			lcd = lcd_i2c()
 
 
 		boardrevision = radio.getBoardRevision()
-		lcd.init(boardrevision)
+		lcd.init(board_rev=boardrevision, address=i2c_address)
 		lcd.backlight(True)
+
+		# Set up LCD line width
 		lcd.setWidth(20)
+
 		lcd.line1("Radio version " + radio.getVersion())
 		time.sleep(0.5)
 
 		ipaddr = exec_cmd('hostname -I')
-		myos = exec_cmd('uname -a')
 		hostname = exec_cmd('hostname -s')
-		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
 		message = "Radio pid " + str(os.getpid())
@@ -140,12 +134,20 @@ class MyDaemon(Daemon):
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
 		lcd.line3("Radio Station " + str(radio.getCurrentID()))
 
-                # Define rotary switches
-                down_switch = radio.getSwitchGpio("down_switch")
-                log.message("Down switch = " + str(down_switch), log.DEBUG)
+		# Get rotary switches configuration
+		up_switch = radio.getSwitchGpio("up_switch")
+		down_switch = radio.getSwitchGpio("down_switch")
+		left_switch = radio.getSwitchGpio("left_switch")
+		right_switch = radio.getSwitchGpio("right_switch")
+		menu_switch = radio.getSwitchGpio("menu_switch")
+		mute_switch = radio.getSwitchGpio("mute_switch")
 
-		volumeknob = RotaryEncoder(LEFT_SWITCH,RIGHT_SWITCH,MUTE_SWITCH,volume_event,boardrevision)
-		tunerknob = RotaryEncoder(UP_SWITCH,down_switch,MENU_SWITCH,tuner_event,boardrevision)
+		if radio.getRotaryClass() is radio.ROTARY_STANDARD:
+			volumeknob = RotaryEncoder(left_switch,right_switch,mute_switch,volume_event,boardrevision)
+			tunerknob = RotaryEncoder(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+		elif radio.getRotaryClass() is radio.ROTARY_ALTERNATIVE:
+			volumeknob = RotaryEncoderAlternative(left_switch,right_switch,mute_switch,volume_event,boardrevision)
+
 		log.message("Running" , log.INFO)
 
 		# Main processing loop
@@ -296,18 +298,23 @@ def volume_event(event):
 	global radio
 	global volumeknob
 	switch = 0
-	ButtonNotPressed = volumeknob.getSwitchState(MUTE_SWITCH)
+
+	# Get rotary switches configuration
+	left_switch = radio.getSwitchGpio("left_switch")
+	right_switch = radio.getSwitchGpio("right_switch")
+	mute_switch = radio.getSwitchGpio("mute_switch")
+	ButtonNotPressed = volumeknob.getSwitchState(mute_switch)
 
 	# Suppress events if volume button pressed
 	if ButtonNotPressed:
 		radio.incrementEvent()
 		if event == RotaryEncoder.CLOCKWISE:
-			switch = RIGHT_SWITCH
+			switch = right_switch
 		elif event == RotaryEncoder.ANTICLOCKWISE:
-			switch = LEFT_SWITCH
+			switch = left_switch
 
 	if event ==  RotaryEncoder.BUTTONDOWN:
-		switch = MUTE_SWITCH
+		switch = mute_switch
 
 	radio.setSwitch(switch)
 	return
@@ -317,18 +324,24 @@ def tuner_event(event):
 	global radio
 	global tunerknob
 	switch = 0
-	ButtonNotPressed = tunerknob.getSwitchState(MENU_SWITCH)
+
+	# Get rotary switches configuration
+	up_switch = radio.getSwitchGpio("up_switch")
+	down_switch = radio.getSwitchGpio("down_switch")
+	menu_switch = radio.getSwitchGpio("menu_switch")
+
+	ButtonNotPressed = tunerknob.getSwitchState(menu_switch)
 
 	# Suppress events if volume button pressed
 	if ButtonNotPressed:
 		radio.incrementEvent()
 		if event == RotaryEncoder.CLOCKWISE:
-			switch = UP_SWITCH
+			switch = up_switch
 		elif event == RotaryEncoder.ANTICLOCKWISE:
 			switch = radio.getSwitchGpio("down_switch")
 
 	if event ==  RotaryEncoder.BUTTONDOWN:
-		switch = MENU_SWITCH
+		switch = menu_switch
 
 	radio.setSwitch(switch)
 	return
@@ -343,11 +356,18 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 	input_source = radio.getSource()
 	events = radio.getEvents()
 	option = radio.getOption()
+
+	# Get rotary switches configuration
+	up_switch = radio.getSwitchGpio("up_switch")
 	down_switch = radio.getSwitchGpio("down_switch")
+	left_switch = radio.getSwitchGpio("left_switch")
+	right_switch = radio.getSwitchGpio("right_switch")
+	menu_switch = radio.getSwitchGpio("menu_switch")
+	mute_switch = radio.getSwitchGpio("mute_switch")
 
 	log.message("Events=" + str(events), log.DEBUG)
 
-	if switch == MENU_SWITCH:
+	if switch == menu_switch:
 		log.message("MENU switch mode=" + str(display_mode), log.DEBUG)
 
 		if radio.muted():
@@ -370,12 +390,12 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					"(" + str(display_mode) + ")", log.DEBUG)
 
 		# Shutdown if menu button held for > 3 seconds
-		MenuSwitch = tunerknob.getSwitchState(MENU_SWITCH)
+		MenuSwitch = tunerknob.getSwitchState(menu_switch)
 		log.message("switch state=" + str(MenuSwitch), log.DEBUG)
 		count = 15
 		while MenuSwitch == 0:
 			time.sleep(0.2)
-			MenuSwitch = tunerknob.getSwitchState(MENU_SWITCH)
+			MenuSwitch = tunerknob.getSwitchState(menu_switch)
 			count = count - 1
 			if count < 0:
 				log.message("Shutdown", log.DEBUG)
@@ -413,7 +433,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 		time.sleep(0.2)
 		interrupt = True
 
-	elif switch == UP_SWITCH:
+	elif switch == up_switch:
 		log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
@@ -459,7 +479,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 		else:
 			DisplayExitMessage(lcd)
 
-	elif switch == LEFT_SWITCH:
+	elif switch == left_switch:
 		log.message("LEFT switch" ,log.DEBUG)
 
 		if display_mode != radio.MODE_SLEEP:
@@ -493,7 +513,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 		else:
 			DisplayExitMessage(lcd)
 
-	elif switch == RIGHT_SWITCH:
+	elif switch == right_switch:
 		log.message("RIGHT switch" ,log.DEBUG)
 
 		if display_mode != radio.MODE_SLEEP:
@@ -523,7 +543,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					displayLine4(lcd,radio,"Volume " + str(volume))
 					volAdjust -= 1
 
-	elif switch == MUTE_SWITCH:
+	elif switch == mute_switch:
 		log.message("MUTE switch" ,log.DEBUG)
 
 		if display_mode != radio.MODE_SLEEP:

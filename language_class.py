@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: language_class.py,v 1.13 2016/02/09 13:56:27 bob Exp $
+# $Id: language_class.py,v 1.18 2016/05/24 15:03:19 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -58,12 +58,12 @@ class Language:
 		'random': 'Random',
 		'consume': 'Consume',
 		'repeat': 'Repeat',
+		'reload': 'Reload',
 		'timer': 'Timer',
 		'alarm': 'Alarm',
 		'alarmhours': 'Alarm hours',
 		'alarmminutes': 'Alarm minutes',
 		'streaming': 'Streaming',
-		'reload': 'Reload',
 		'colour': 'Colour',
 		'voice': 'voice',
 		}
@@ -120,8 +120,8 @@ class Language:
 	# Get the menu text 
 	def getOptionText(self):
 		OptionText = []
-		sLabels = [ 'random','consume','repeat','timer', 'alarm',
-			     'alarmhours','alarmminutes','streaming','reload','colour',
+		sLabels = [ 'random','consume','repeat','reload','timer', 'alarm',
+			     'alarmhours','alarmminutes','streaming','colour',
 			  ]
 
 		for label in sLabels:
@@ -135,10 +135,12 @@ class Language:
 			try:
 				message = self.purgeChars(message)
 				cmd = self.execCommand("cat " + VoiceFile)
-				cmd = cmd + str(volume)
+				cmd = cmd + str(volume) + " --stdout | aplay"
 				cmd = "echo " +  '"' + message + '"' + " | " + cmd + " >/dev/null 2>&1"
 				log.message(cmd, log.DEBUG)
-				if len(message) > 0:
+
+				# If the first character is ! then supress the message
+				if len(message) > 0 and message[0] != '!':
 					self.execCommand(cmd)
 			except:
 				log.message("Error reading " + VoiceFile, log.ERROR)
@@ -147,11 +149,22 @@ class Language:
 	# Remove problem charachters from speech text
 	def purgeChars(self,message):
 		chars = ['!',':','|','*','[',']',
-			 '_','"',]
+			 '_','"','.']
+
+		# If the first character is ! then supress the message
+		message = message.lstrip()
+
+		if message[0] is '!':
+			supress = True
+		else:
+			supress = False
 		for char in chars:
 			message = message.replace(char,'')
 
 		message = message.replace('/',' ')
+		message = message.replace('-',',')
+		if supress:
+			message = '!' + message
 		return message
 
 	# Display text

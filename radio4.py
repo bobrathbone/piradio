@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio4.py,v 1.108 2016/01/31 13:34:22 bob Exp $
+# $Id: radio4.py,v 1.113 2016/11/13 11:19:05 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -17,7 +17,6 @@
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
 #	     The authors shall not be liable for any loss or damage however caused.
 #
-
 
 import os
 import RPi.GPIO as GPIO
@@ -38,13 +37,6 @@ from radio_class import Radio
 from lcd_class import Lcd
 from log_class import Log
 from rss_class import Rss
-
-# Switch definitions
-MENU_SWITCH = 25
-LEFT_SWITCH = 14
-RIGHT_SWITCH = 15
-UP_SWITCH = 17
-#DOWN_SWITCH = 18  # Not used, is now configurable
 
 # To use GPIO 14 and 15 (Serial RX/TX)
 # Remove references to /dev/ttyAMA0 from /boot/cmdline.txt and /etc/inittab 
@@ -86,27 +78,31 @@ class MyDaemon(Daemon):
 		GPIO.setmode(GPIO.BCM)       # Use BCM GPIO numbers
 		GPIO.setwarnings(False)      # Ignore warnings
 
+		# Get switches configuration
+		up_switch = radio.getSwitchGpio("up_switch")
 		down_switch = radio.getSwitchGpio("down_switch")
-		log.message("Down switch = " + str(down_switch), log.DEBUG)
+		left_switch = radio.getSwitchGpio("left_switch")
+		right_switch = radio.getSwitchGpio("right_switch")
+		menu_switch = radio.getSwitchGpio("menu_switch")
 
 		boardrevision = radio.getBoardRevision() 
 		if boardrevision == 1:
 			# For rev 1 boards with no inbuilt pull-up/down resistors
 			# Wire the GPIO inputs to ground via a 10K resistor
-			GPIO.setup(MENU_SWITCH, GPIO.IN)
-			GPIO.setup(UP_SWITCH, GPIO.IN)
+			GPIO.setup(menu_switch, GPIO.IN)
+			GPIO.setup(up_switch, GPIO.IN)
 			GPIO.setup(down_switch, GPIO.IN)
-			GPIO.setup(LEFT_SWITCH, GPIO.IN)
-			GPIO.setup(RIGHT_SWITCH, GPIO.IN)
+			GPIO.setup(left_switch, GPIO.IN)
+			GPIO.setup(right_switch, GPIO.IN)
 
 		else:
 			# For rev 2 boards with inbuilt pull-up/down resistors 
 			# there is no need to physically wire the 10k resistors
-			GPIO.setup(MENU_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-			GPIO.setup(UP_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			GPIO.setup(menu_switch, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			GPIO.setup(up_switch, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 			GPIO.setup(down_switch, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-			GPIO.setup(LEFT_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-			GPIO.setup(RIGHT_SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			GPIO.setup(left_switch, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			GPIO.setup(right_switch, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 		# Initialise radio
 		log.init('radio')
@@ -118,14 +114,19 @@ class MyDaemon(Daemon):
 		log.message("GPIO version " + str(GPIO.VERSION), log.INFO)
 
 		lcd.init(boardrevision)
-		lcd.setWidth(20)
+
+		# Set up LCD line width
+		width = lcd.getWidth()
+		if width > 0:
+			lcd.setWidth(width)
+		else:
+			lcd.setWidth(20)
+
 		lcd.line1("Radio version " + radio.getVersion())
 		time.sleep(0.5)
 
 		ipaddr = exec_cmd('hostname -I')
-		myos = exec_cmd('uname -a')
 		hostname = exec_cmd('hostname -s')
-		log.message(myos, log.INFO)
 		log.message("IP " + ipaddr, log.INFO)
 
 		# Display daemon pid on the LCD
@@ -150,10 +151,10 @@ class MyDaemon(Daemon):
 		lcd.line3("Radio Station " + str(radio.getCurrentID()))
 
 		# Set up switch event processing
-		GPIO.add_event_detect(MENU_SWITCH, GPIO.RISING, callback=switch_event, bouncetime=200)
-		GPIO.add_event_detect(LEFT_SWITCH, GPIO.RISING, callback=switch_event, bouncetime=200)
-		GPIO.add_event_detect(RIGHT_SWITCH, GPIO.RISING, callback=switch_event, bouncetime=200)
-		GPIO.add_event_detect(UP_SWITCH, GPIO.RISING, callback=switch_event, bouncetime=200)
+		GPIO.add_event_detect(menu_switch, GPIO.RISING, callback=switch_event, bouncetime=200)
+		GPIO.add_event_detect(left_switch, GPIO.RISING, callback=switch_event, bouncetime=200)
+		GPIO.add_event_detect(right_switch, GPIO.RISING, callback=switch_event, bouncetime=200)
+		GPIO.add_event_detect(up_switch, GPIO.RISING, callback=switch_event, bouncetime=200)
 		GPIO.add_event_detect(down_switch, GPIO.RISING, callback=switch_event, bouncetime=200)
 
 		# Main processing loop
@@ -309,9 +310,15 @@ def get_switch_states(lcd,radio,rss):
 	display_mode = radio.getDisplayMode()
 	input_source = radio.getSource()
 	option = radio.getOption()
-	down_switch = radio.getSwitchGpio("down_switch")
 
-	if switch == MENU_SWITCH:
+	# Get switches configuration
+	up_switch = radio.getSwitchGpio("up_switch")
+	down_switch = radio.getSwitchGpio("down_switch")
+	left_switch = radio.getSwitchGpio("left_switch")
+	right_switch = radio.getSwitchGpio("right_switch")
+	menu_switch = radio.getSwitchGpio("menu_switch")
+
+	if switch == menu_switch:
 		log.message("MENU switch", log.DEBUG)
 		if radio.muted():
 			unmuteRadio(lcd,radio)
@@ -335,11 +342,11 @@ def get_switch_states(lcd,radio,rss):
 					"(" + str(display_mode) + ")", log.DEBUG)
 
 		# Shutdown if menu button held for > 3 seconds
-		MenuSwitch = GPIO.input(MENU_SWITCH)
+		MenuSwitch = GPIO.input(menu_switch)
 		count = 15
 		while MenuSwitch:
 			time.sleep(0.2)
-			MenuSwitch = GPIO.input(MENU_SWITCH)
+			MenuSwitch = GPIO.input(menu_switch)
 			count = count - 1
 			if count < 0:
 				log.message("Shutdown", log.DEBUG)
@@ -376,7 +383,7 @@ def get_switch_states(lcd,radio,rss):
 
 		interrupt = True
 
-	elif switch == UP_SWITCH:
+	elif switch == up_switch:
 		log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
@@ -389,7 +396,7 @@ def get_switch_states(lcd,radio,rss):
 
 			elif display_mode == radio.MODE_SEARCH:
 				wait = 0.5
-				while GPIO.input(UP_SWITCH):
+				while GPIO.input(up_switch):
 					radio.getNext(UP)
 					display_search(lcd,radio)
 					time.sleep(wait)
@@ -433,7 +440,7 @@ def get_switch_states(lcd,radio,rss):
 		else:
 			DisplayExitMessage(lcd)
 
-	elif switch == LEFT_SWITCH:
+	elif switch == left_switch:
 		log.message("LEFT switch" ,log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
@@ -443,7 +450,7 @@ def get_switch_states(lcd,radio,rss):
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
 				wait = 0.5
-				while GPIO.input(LEFT_SWITCH):
+				while GPIO.input(left_switch):
 					radio.findNextArtist(DOWN)
 					display_search(lcd,radio)
 					time.sleep(wait)
@@ -458,7 +465,7 @@ def get_switch_states(lcd,radio,rss):
 				volChange = True
 				while volChange:
 					# Mute function (Both buttons depressed)
-					if GPIO.input(RIGHT_SWITCH):
+					if GPIO.input(right_switch):
 						radio.mute()
 						if radio.alarmActive():
 							radio.setDisplayMode(radio.MODE_SLEEP)
@@ -470,14 +477,14 @@ def get_switch_states(lcd,radio,rss):
 					else:
 						volume = radio.decreaseVolume()
 						displayVolume(lcd,radio)
-						volChange = GPIO.input(LEFT_SWITCH)
+						volChange = GPIO.input(left_switch)
 						if volume <= 0:
 							volChange = False
 						time.sleep(0.1)
 		else:
 			DisplayExitMessage(lcd)
 
-	elif switch == RIGHT_SWITCH:
+	elif switch == right_switch:
 		log.message("RIGHT switch" ,log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
@@ -487,7 +494,7 @@ def get_switch_states(lcd,radio,rss):
 
 			elif display_mode == radio.MODE_SEARCH and input_source == radio.PLAYER:
 				wait = 0.5
-				while GPIO.input(RIGHT_SWITCH):
+				while GPIO.input(right_switch):
 					radio.findNextArtist(UP)
 					display_search(lcd,radio)
 					time.sleep(wait)
@@ -501,7 +508,7 @@ def get_switch_states(lcd,radio,rss):
 				volChange = True
 				while volChange:
 					# Mute function (Both buttons depressed)
-					if GPIO.input(LEFT_SWITCH):
+					if GPIO.input(left_switch):
 						radio.mute()
 						if radio.alarmActive():
 							radio.setDisplayMode(radio.MODE_SLEEP)
@@ -513,7 +520,7 @@ def get_switch_states(lcd,radio,rss):
 					else:
 						volume = radio.increaseVolume()
 						displayVolume(lcd,radio)
-						volChange =  GPIO.input(RIGHT_SWITCH)
+						volChange =  GPIO.input(right_switch)
 						if volume >= 100:
 							volChange = False
 						time.sleep(0.1)
@@ -578,6 +585,13 @@ def toggle_option(radio,lcd,direction):
 	option = radio.getOption() 
 	log.message("toggle_option option="+ str(option), log.DEBUG)
 
+	# Get switches configuration
+	up_switch = radio.getSwitchGpio("up_switch")
+	down_switch = radio.getSwitchGpio("down_switch")
+	left_switch = radio.getSwitchGpio("left_switch")
+	right_switch = radio.getSwitchGpio("right_switch")
+	menu_switch = radio.getSwitchGpio("menu_switch")
+
 	if option == radio.RANDOM:
 		if radio.getRandom():
 			radio.randomOff()
@@ -609,11 +623,11 @@ def toggle_option(radio,lcd,direction):
 				if direction == UP:
 					radio.incrementTimer(1)
 					lcd.line2("Timer " + radio.getTimerString())
-					TimerChange = GPIO.input(RIGHT_SWITCH)
+					TimerChange = GPIO.input(right_switch)
 				else:
 					radio.decrementTimer(1)
 					lcd.line2("Timer " + radio.getTimerString())
-					TimerChange = GPIO.input(LEFT_SWITCH)
+					TimerChange = GPIO.input(left_switch)
 				time.sleep(0.1)
 		else:
 			radio.timerOn()
@@ -637,12 +651,12 @@ def toggle_option(radio,lcd,direction):
 				radio.incrementAlarm(value)
 				lcd.line2("Alarm " + radio.getAlarmTime() + unit)
 				time.sleep(twait)
-				AlarmChange = GPIO.input(RIGHT_SWITCH)
+				AlarmChange = GPIO.input(right_switch)
 			else:
 				radio.decrementAlarm(value)
 				lcd.line2("Alarm " + radio.getAlarmTime() + unit)
 				time.sleep(twait)
-				AlarmChange = GPIO.input(LEFT_SWITCH)
+				AlarmChange = GPIO.input(left_switch)
 			twait = 0.1
 
 	elif option == radio.STREAMING:

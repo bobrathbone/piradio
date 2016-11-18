@@ -10,31 +10,94 @@ Use "apt-get install mpd mpc python-mpd" to install the library
 Modified to use python-mpd library. See https://pypi.python.org/pypi/python-mpd/
 
 
+Version 5.6 release notes
+-------------------------
+Version 5.6 has bug fix and support for 8x2 display
+1) Support for 8x2 LCD rradio8x2.py and radio8x2.py added
+2) radiod.py and radio8.py crashing in options cured
+
+Version 5.5 release notes
+-------------------------
+Version 5.5 has mainly configuration changes
+1) Support for IQAudio products for use with retro_radio.py
+2) Correct problem with pls files with ? at the end of the URL
+3) Correct numid in select_audio.sh for USB DAC
+4) All components now configurable in radiod.conf
+5) Further checks for invalid parameters in radiod.conf added
+6) Adjust line offsets automatically for 16 character displays
+7) Add lcd_width parameter to configuration plus tidy up
+8) Add unmute_amp to iqaudio dtoverlay to automatically unmute at boot time
+
+Version 5.4 release notes
+-------------------------
+Version 5.4 has mainly configuration changes
+1) All switch GPIO settings are configurable in /etc/radiod.conf
+2) All LCD GPIO outputs are configurable in /etc/radiod.conf
+3) Log OS information in radio.log file
+4) New select_audio.sh program to configure audio output
+5) Correct AdaFruit backpack initialisation error
+
+Version 5.3 release notes
+-------------------------
+Version 5.3 has some minor improvements in particular to speech
+1) Speech message can be supressed by adding an exclamation mark ! to the beginning of the message
+2) Correct incorrect copy of voice file to /var/lib/radiod/language
+3) Random state now stored in /var/lib/radiod/random to maintain setting by restarts
+4) Improved volume level for speech (was too loud before)
+5) Support for speech when using HiFiBerry DAC+ (Not working in earlier versions)
+6) Vintage radio support using retro_radio.py program (Rotary encoders but no LCD display)
+7) Test rotary switch (test_rotary_class.py) modifined to select down switch (If HiFiBerry DAC+)
+8) Correct display_config error non-existant file  /var/lib/radiod/mpdport
+9) New i2c_address parameter added to radiod.conf to make i2c address configurable
+10) Leading < character stripped from RSS feed
+
+Version 5.2 release notes
+-------------------------
+Version 5.2 has some minor improvements
+1) Degrees C and degrees F temporary handling in translate class (Not the final solution)
+2) Instructions added to the manual to prevent radio hanging on a reboot
+3) Clear Adafruit display on restart
+4) rradiobp.py correction to search backwards not correct (It was searching forwards)
+5) create_m3u.py incorrect file /var/lib/radiod/station.urls corrected to /usr/share/radio/station.urls
+6) Rename PCF8475(incorrect name) to PCF8574 in all affected files 
+
+Version 5.1 release notes
+-------------------------
+Version 5.1 addresses issues found in 5.0 (Major release) and general improvements
+1) Resolved the radio crashing if a playlist created without a .m3u extension
+2) Resolved the radio crashing if invalid RSS file /var/lib/radiod/rss
+3) Amended test_i3c_lcd test program to support PCF8475 backpack
+4) Amended test_ada_lcd.py test program to gracefully exit with Ctrl-C key
+5) Alternative rotary class configurable. New rotary_class=standard/alternative added to radiod.conf
+6) Missing nodaemon option added to rradiobp.py
+7) Reboot problem solved (systemd bug solved by installing svinit-core)
+8) Incorrect status display cured as above
+
 Version 5.0 release notes
 -------------------------
-Version 5.0 is a major release of the radio software specifically for Raspian Jesse
+Version 5.0 is a major release of the radio software specifically for Raspian Jessie
 Backwards compatibility with Raspian Wheezy is not guaranteed.
 Version 4.7 is still available for Raspbian Wheezy but is no longer maintained.
 
 The following changes have been implemented
 1) New language class to handle languages other than English (New language class)
 2) Problem with radio station jumping on un-mute solved
-3) Espeak implemented for people with bad sight or blindness (New espeak class)
+3) Espeak implemented for people with impaired vision or blindness (New espeak class)
 4) Full IR Remote Control functionality  
 5) New create_m3u.py program to M3U playlists (pls files are no longer used or supported)
-6) MPD version 0.19 now supoorted (was version 0.16)
+6) MPD version 0.19 now suported (was version 0.16)
 7) Version 1 Rasberry Pi boards are no longer supported
 8) Due to the very limited and poor functionality Podcasts are no longer supported
 9) All programs are now installed in /usr/share/radio instead of /home/pi/radio
 10) Volume range now configurable 10, 20, 25 50 and 100
 11) Support for HifFerry DAC and DAC+
-12) Seperate option for setting alarm hours and minutes
+12) Separate option for setting alarm hours and minutes
 
 Installation
 ------------
-You are strongly advised to install the latest Debian Jesse on a new SD card and
+You are strongly advised to install the latest Debian Jessie on a new SD card and
 then to install MPD and the radio software.
-Attempting a apt-get dist-upgrade does not do a full Jesse upgrade and may give uncertain results 
+Attempting a apt-get dist-upgrade does not do a full Jessie upgrade and may give uncertain results 
 
 Manual
 ------
@@ -45,9 +108,10 @@ Github
 Source available from Github
 See https://github.com/bobrathbone/piradio 
 
-License
--------
-GNU V3, See https://www.gnu.org/copyleft/gpl.html
+Licenses
+--------
+GNU General Public License. See http://www.gnu.org/licenses/gpl.html
+GNU AFFERO GENERAL PUBLIC LICENSE. See http://www.gnu.org/licenses/agpl.html
 
 Disclaimer 
 ----------

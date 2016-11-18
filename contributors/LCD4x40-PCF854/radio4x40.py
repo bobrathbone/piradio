@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio
-# using an HD44780 LCD display via PCF 8475 Port Expander
-# $Id: radio4x40.py,v 1.1 2014/06/20 08:39:26 bob Exp $
+# using an HD44780 LCD display via PCF8574 Port Expander
+# $Id: radio4x40.py,v 1.1 2016/04/30 11:11:19 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com

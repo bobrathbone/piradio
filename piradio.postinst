@@ -1,6 +1,6 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.29 2016/02/05 10:52:05 bob Exp $
+# $Id: piradio.postinst,v 1.36 2016/10/22 11:48:56 bob Exp $
 
 # File locations
 DIR=/usr/share/radio
@@ -13,15 +13,26 @@ VOICEDIST=voice.dist
 LANGUAGEFILE=language/language.en
 RSSFILE=rss/rss
 CONFIGFILE=/etc/radiod.conf
+DEFAULTRCS=/etc/default/rcS
 
 # Display types
 LCD=1   # LCD screen (direct)
 I2C=2   # Uses I2C libraries
 CAD=3	# PiFace control and display
+NODISPLAY=4 # Retro radio with no display
 
-echo "Executing post install script ${0}"
+# Check if the script is being run as root
+if [[ $EUID -ne 0 ]]
+then
+    printf 'This script must be run using sudo.\nExiting..\n'
+    exit 1
+fi
+
+# Set daemon startup defaults
 update-rc.d -f radiod defaults
-sudo mkdir -p ${DIR}/playlists
+update-rc.d -f pifacercd defaults
+
+# Ensure owner is pi
 sudo chown -R pi:pi ${DIR}
 sudo chmod +x ${DIR}/*.py
 sudo chmod +x ${DIR}/*.sh
@@ -36,7 +47,7 @@ ${DIR}/select_daemon.sh
 TYPE=$?	# Don't seperate from above
 
 # Disable serial interface (reboot required)
-if [[ ${TYPE} -eq ${LCD} ]]; then
+if [[ ${TYPE} -eq ${LCD} || ${TYPE} -eq ${NODISPLAY} ]]; then
 	echo "Disabling serial interface in ${INITTAB}" 
 	if [[ ! -f   ${INITTAB}.orig ]]; then
 		sudo cp -f ${INITTAB} ${INITTAB}.orig
@@ -105,7 +116,7 @@ fi
 if [[ ! -f "${RADIOLIB}/language" ]]; then
 	echo "Copying ${LANGUAGEFILE} to ${RADIOLIB}/language"
 	mkdir -p ${RADIOLIB}
-	cp -f ${VOICEDIST} ${RADIOLIB}/language
+	cp -f ${LANGUAGEFILE} ${RADIOLIB}/language
 fi
 
 # Copy RSS file
@@ -158,6 +169,12 @@ elif [[ ${TYPE} -eq ${CAD} ]]; then
 	else 
 		REBOOT=1
 	fi
+fi
+
+# Force file checks on reboot
+if [[ ! -f ${DEFAULTRCS}.orig ]]; then
+        sudo cp -f -p ${DEFAULTRCS} ${DEFAULTRCS}.orig
+        sudo sed -i -e 's/\#FSCKFIX=no/FSCKFIX=yes/' ${DEFAULTRCS}
 fi
 
 # Move old radio directory

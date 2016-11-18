@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: config_class.py,v 1.24 2016/02/07 20:38:35 bob Exp $
+# $Id: config_class.py,v 1.38 2016/10/16 09:54:34 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -33,6 +33,10 @@ class Configuration:
 	LIST = 0
 	STREAM = 1
 
+	# Rotary class selection
+	STANDARD = 0	# Select rotary_class.py
+	ALTERNATIVE = 1	# Select rotary_class_alternate.py
+
 	# Configuration parameters
 	mpdport = 6600  # MPD port number
 	dateFormat = "%H:%M %d/%m/%Y"   # Date format
@@ -41,6 +45,8 @@ class Configuration:
 	display_playlist_number = False # Two line displays only, display station(n)
 	source = RADIO  # Source RADIO or Player
 	stationNamesSource = LIST # Station names from playlist names or STREAM
+	rotary_class = STANDARD		# Rotary class STANDARD or ALTERNATIVE 
+	lcd_width = 0		# Line width of LCD 0 = use program default
 
 	# Remote control parameters 
 	remote_led = 0  # Remote Control activity LED 0 = No LED	
@@ -49,13 +55,15 @@ class Configuration:
 	remote_control_port = 5100 	  	# Remote control to radio communication port
 
 	ADAFRUIT = 1	    # I2C backpack type AdaFruit
-	PCF8475  = 2	    # I2C backpack type PCF8475
+	PCF8574  = 2	    # I2C backpack type PCF8574
 	i2c_backpack = ADAFRUIT 
+	i2c_address = 0x00	# Use defaults or use setting in radiod.conf 
+	backpack_names = [ 'UNKWOWN','ADAFRUIT','PCF8574']
 	speech = False 	    # Speech on for visually impaired or blind persons
 	isVerbose = False     # Extra speech verbosity
 	speech_volume = 80  # Percentage speech volume 
 	use_playlist_extensions = False # MPD 0.15 requires playlist.<ext>
-	down_switch=18 	    # Set to 10 if using the HiFiBerry DAC
+
 
 	# Colours for Adafruit LCD
 	color = { 'OFF': 0x0, 'RED' : 0x1, 'GREEN' : 0x2, 'YELLOW' : 0x3,
@@ -89,7 +97,31 @@ class Configuration:
 		     "up_switch": 17,
 		     "down_switch": 18,
 		   }
+
+	# Values for the rotary switch on vintage radio (Not rotary switches)
+	# Zero values disable usage 
+	menu_switches = {"menu_switch_value_1": 0,	# Normally 24
+			 "menu_switch_value_2": 0,	# Normally 8
+			 "menu_switch_value_4": 0,	# Normally 7
+			}
 	
+	# RGB LED definitions for vintage radio
+	# Zero values disable usage 
+	rgb_leds = { "rgb_green": 0,	# Normally 27
+		     "rgb_blue": 0,	# Normally 22
+		     "rgb_red": 0,	# Normally 23
+		   }
+
+	#  GPIOs for LCD connections
+	lcdconnects = { 
+		     "lcd_enable": 8,
+		     "lcd_select": 7,
+		     "lcd_data4": 27,
+		     "lcd_data5": 22,
+		     "lcd_data6": 23,
+		     "lcd_data7": 24,
+		   }
+
 	# Initialisation routine
 	def __init__(self):
 		log.init('radio')
@@ -109,8 +141,8 @@ class Configuration:
 		try:
 			options =  config.options(section)
 			for option in options:
+				option = option.lower()
 				parameter = config.get(section,option)
-				msg = "Config option: " + option + " = " + parameter
 				
 				self.configOptions[option] = parameter
 
@@ -118,28 +150,41 @@ class Configuration:
 					next
 
 				elif option == 'volume_range':
-					range = int(parameter)
-					if range < 10:
-						range = 10
-					if range > 100:
-						range = 100
-					self.volume_range = range
-					self.volume_increment = int(100/range)
+					range = 100
+					try:
+						range = int(parameter)
+						if range < 10:
+							range = 10
+						if range > 100:
+							range = 100
+						self.volume_range = range
+						self.volume_increment = int(100/range)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'remote_led':
-					self.remote_led = int(parameter)
+					try:
+						self.remote_led = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'remote_control_host':
 					self.remote_control_host = parameter
 
 				elif option == 'remote_control_port':
-					self.remote_control_port = int(parameter)
+					try:
+						self.remote_control_port = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'remote_listen_host':
 					self.remote_listen_host = parameter
 
 				elif option == 'mpdport':
-					self.mpdport = int(parameter)
+					try:
+						self.mpdport = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'dateformat':
 					self.dateFormat = parameter
@@ -159,16 +204,24 @@ class Configuration:
 						self.stationNamesSource =  self.LIST
 
 				elif option == 'i2c_backpack':
-					if parameter == 'PCF8475':
-						self.i2c_backpack =  self.PCF8475
+					if parameter == 'PCF8574':
+						self.i2c_backpack =  self.PCF8574
 					else:
 						self.i2c_backpack =  self.ADAFRUIT
+
+				elif option == 'i2c_address':
+					try:
+						value = int(parameter,16)
+						if parameter  > 0x00:
+							self.i2c_address =  value
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif 'color' in option:
 					try:
 						self.colors[option] = self.color[parameter]
 					except:
-						log.message("Invalid option " + option + ' ' + parameter, log.ERROR)
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'speech':
 					if parameter == 'yes':
@@ -183,7 +236,10 @@ class Configuration:
 						self.isVerbose = False
 
 				elif option == 'speech_volume':
-					self.speech_volume = int(parameter)
+					try:
+						self.speech_volume = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				elif option == 'use_playlist_extensions':
 					if parameter == 'yes':
@@ -191,13 +247,51 @@ class Configuration:
 					else:
 						self.use_playlist_extensions = False
 
-				elif '_switch' in option:
-					switch = int(parameter)
+				elif '_switch' in option and not 'menu_switch_value'in option:
 					try:
-						self.switches[option] = switch
+						self.switches[option] = int(parameter)
 					except:
-						msg = "Invalid switch parameter " +  option
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				elif 'lcd_width' in option:
+					try:
+						self.lcd_width = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				elif 'lcd_' in option:
+					try:
+						lcdconnect = int(parameter)
+						self.lcdconnects[option] = lcdconnect
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				elif 'rgb' in option:
+					try:
+						led = int(parameter)
+						self.rgb_leds[option] = led
+					except:
+						msg = "Invalid RGB LED connect parameter " +  option
 						log.message(msg,log.ERROR)
+
+				elif 'menu_switch_value_' in option:
+					try:
+						menuswitch = int(parameter)
+						self.menu_switches[option] = menuswitch
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				elif option == 'rotary_class':
+					if parameter == 'standard':
+						self.rotary_class = self.STANDARD
+					else:
+						self.rotary_class = self.ALTERNATIVE
+
+				elif 'lcd_width' in option:
+					try:
+						self.lcd_width = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
 
 				else:
 					msg = "Invalid option " + option + ' in section ' \
@@ -209,11 +303,26 @@ class Configuration:
 			log.message(msg,log.ERROR)
 		return
 
-	# Get routines
+
+	# Invalid parametrs message
+	def invalidParameter(self, ConfigFile, option, parameter):
+		msg = "Invalid parameter " + parameter + ' in option ' \
+			+ option + ' in ' + ConfigFile
+		log.message(msg,log.ERROR)
 	
+	# Get routines
+
 	# Get I2C backpack type
 	def getBackPackType(self):
 		return self.i2c_backpack
+
+	# Get I2C backpack address
+	def getI2Caddress(self):
+		return self.i2c_address
+
+	# Get I2C backpack name
+	def getBackPackName(self):
+		return self.backpack_names[self.i2c_backpack]
 
 	# Get the volume range
 	def getVolumeRange(self):
@@ -345,17 +454,23 @@ class Configuration:
 	def getPlaylistExtensions(self):
 		return self.use_playlist_extensions	
 
+	# Return the sations name source (Stream or playlist)
 	def getStationNamesSource(self):
 		return self.stationNamesSource	
 
 	# Display parameters
 	def display(self):
-		for option in self.configOptions:
+		for option in sorted(self.configOptions):
 			param = self.configOptions[option]
 			if option != 'None':
 				log.message(option + " = " + param, log.DEBUG)
 		return
 
+	# Return the ID of the rotary class to be used STANDARD or ALTERNATIVE
+	def getRotaryClass(self):
+		return self.rotary_class
+
+	# Returns the switch GPIO configuration by label
 	def getSwitchGpio(self,label):
 		switch = -1
 		try:
@@ -364,6 +479,40 @@ class Configuration:
 			msg = "Invalid switch label " + label
 			log.message(msg, log.ERROR)
 		return switch
+
+	# Returns the LCD GPIO configuration by label
+	def getLcdGpio(self,label):
+		lcdconnect = -1
+		try:
+			lcdconnect = self.lcdconnects[label]
+		except:
+			msg = "Invalid LCD connection label " + label
+			log.message(msg, log.ERROR)
+		return lcdconnect
+
+	# Get the RGB Led configuration by label (Retro radio only)
+	def getRgbLed(self,label):
+		led = -1
+		try:
+			led = self.rgb_leds[label]
+		except:
+			msg = "Invalid RGB configuration label " + label
+			log.message(msg, log.ERROR)
+		return led
+
+	# Get the RGB Led configuration by label (Retro radio only)
+	def getMenuSwitch(self,label):
+		menuswitch = -1
+		try:
+			menuswitch = self.menu_switches[label]
+		except:
+			msg = "Invalid menu switch configuration label " + label
+			log.message(msg, log.ERROR)
+		return menuswitch
+
+	# Get LCD width
+	def getWidth(self):
+		return self.lcd_width
 
 # End Configuration of class
 
@@ -391,7 +540,25 @@ if __name__ == '__main__':
 		sSource = "LIST"
 	print "Station names source:",sSource
 	print "Use playlist extensions:", config.getPlaylistExtensions()
-	print "Down switch:", config.getSwitchGpio("down_switch")
+
+	for switch in config.switches:
+		print switch, config.getSwitchGpio(switch)
+	
+	for lcdconnect in sorted(config.lcdconnects):
+		print lcdconnect, config.getLcdGpio(lcdconnect)
+	
+	for led in config.rgb_leds:
+		print led, config.getRgbLed(led)
+	
+	for menuswitch in config.menu_switches:
+		print menuswitch, config.getMenuSwitch(menuswitch)
+	
+	rclass = ['Standard', 'Alternative']
+	rotary_class = config.getRotaryClass()
+	print "Rotary class:", rotary_class, rclass[rotary_class]
+	print "Backpack type:", config.getBackPackType(), config.getBackPackName()
+	print "I2C address:", hex(config.getI2Caddress())
+	print "LCD width:", config.getWidth()
 
 # End of file
 

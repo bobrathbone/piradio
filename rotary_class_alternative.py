@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# $Id: rotary_class_alternative.py,v 1.1 2015/12/13 11:29:36 bob Exp $
+# $Id: rotary_class_alternative.py,v 1.2 2016/03/14 09:10:08 bob Exp $
 #
 # Raspberry Pi Alternative Rotary Encoder Class
 # Certain Rotary Encoders will not work with the current version of the Rotary class.
@@ -23,7 +23,7 @@
 
 import RPi.GPIO as GPIO
 
-class RotaryEncoder:
+class RotaryEncoderAlternative:
 
 	CLOCKWISE=1
 	ANTICLOCKWISE=2

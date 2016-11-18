@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Rotary Test Encoder Class
-# $Id: test_rotary_class.py,v 1.4 2014/07/22 13:10:01 bob Exp $
+# $Id: test_rotary_class.py,v 1.6 2016/06/29 09:43:33 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -29,7 +29,9 @@ LEFT_SWITCH = 14
 RIGHT_SWITCH = 15
 UP_SWITCH = 17
 DOWN_SWITCH = 18
+DOWN_SWITCH_IF_DAC = 10
 MUTE_SWITCH = 4 
+
 
 # Try to trap any exit errors 
 def exit_fn():
@@ -54,7 +56,7 @@ def display_event(name,event):
 	if event == RotaryEncoder.CLOCKWISE:
 		print name + " clockwise", RotaryEncoder.CLOCKWISE
 	elif event == RotaryEncoder.ANTICLOCKWISE:
-		print name + " anticlockwise", RotaryEncoder.BUTTONDOWN
+		print name + " anticlockwise", RotaryEncoder.ANTICLOCKWISE
 	elif event == RotaryEncoder.BUTTONDOWN:
 		print name + " button down", RotaryEncoder.BUTTONDOWN
 	elif event == RotaryEncoder.BUTTONUP:
@@ -68,18 +70,25 @@ answer = raw_input("")
 if answer == 'y':
 	revision = 1
 
+# If using a HiFiBerry DAC+ use GPIO 10 (Pin 19) 
+down_switch = DOWN_SWITCH
+stderr("Are you using a HiFiBerry DAC+ y/n: ")
+answer = raw_input("")
+if answer == 'y':
+	down_switch = DOWN_SWITCH_IF_DAC
+
 volumeknob = RotaryEncoder(LEFT_SWITCH,RIGHT_SWITCH,MUTE_SWITCH,volume_event,revision)
-tunerknob = RotaryEncoder(UP_SWITCH,DOWN_SWITCH,MENU_SWITCH,tuner_event,revision)
+tunerknob = RotaryEncoder(UP_SWITCH,down_switch,MENU_SWITCH,tuner_event,revision)
 
 print "Use Ctl-C to exit"
 
 while True:
 	try:
-		time.sleep(0.2)
+		time.sleep(0.1)
 	except KeyboardInterrupt:
 		print "\nExit"
 		sys.exit(0)
 
-
+# End of test rotary encoders
 
 

@@ -4,7 +4,7 @@
 # Raspberry Pi Radio Character translation class
 # Escaped characters, html and unicode translation to ascii
 #
-# $Id: translate_class.py,v 1.22 2016/02/15 14:06:51 bob Exp $
+# $Id: translate_class.py,v 1.24 2016/04/14 06:37:56 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -36,7 +36,7 @@ class Translate:
 		'//' : '/', 	   # Double /
 		'  ' : ' ',        # Double spaces
 		'\\xa0' : ' ',     # Line feed  to space
-		'\\' : "'",
+		'\\' : "'",	   # Double backslash to apostrophe
 		'\\n' : ' ',       # Line feed  to space
 
 		# Special characters
@@ -234,7 +234,8 @@ class Translate:
 		'\\xda' : chr(218),    # Capital U acute
 
 		'\\xbf' : chr(191),    # Spanish Punctuation
-		'voice': 'voice',
+
+		'xb0'  : 'o',	       # Degrees symbol
 	}
 
 	HtmlCodes = {
@@ -320,6 +321,8 @@ class Translate:
 		s = text
 		for code in self.codes:
 			s = s.replace(code, self.codes[code])
+		s = s.replace("'oC",'oC')   # Degrees C fudge
+		s = s.replace("'oF",'oF')   # Degrees C fudge
 		return s
 
 	# HTML translations (callable)

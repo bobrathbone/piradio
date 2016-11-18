@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_daemon.sh,v 1.14 2016/02/03 19:19:52 bob Exp $
+# $Id: select_daemon.sh,v 1.16 2016/05/16 12:09:43 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -25,11 +25,12 @@ RC_INIT=/etc/init.d/pifacercd
 LCD=1	# LCD screen (direct)
 I2C=2	# Requires I2C libraries
 CAD=3	# PiFace Control and Display
+NODISPLAY=4	# Retro radio with no display
 
 selection=1 
 while [ $selection != 0 ]
 do
-	ans=$(whiptail --title "Select radio daemon" --menu "Choose your option" 15 75 8 \
+	ans=$(whiptail --title "Select radio daemon" --menu "Choose your option" 15 75 9 \
 	"1" "Two line LCD with push buttons  (radiod.py)" \
 	"2" "Four line LCD with push buttons (radio4.py)" \
 	"3" "Two line LCD with rotary encoders  (rradiod.py)" \
@@ -37,7 +38,8 @@ do
 	"5" "Two line Adafruit LCD with push buttons (ada_radio.py)" \
 	"6" "Two line LCD with I2C backpack and rotary encoders (rradiobp.py)" \
 	"7" "Four line LCD with I2C backpack and rotary encoders (rradiobp4.py)" \
-	"8" "PiFace Control and Display - CAD (radio_piface.py)" 3>&1 1>&2 2>&3)
+	"8" "PiFace Control and Display - CAD (radio_piface.py)" \
+	"9" "Retro radio with rotary encoders (retro_radio.py)" 3>&1 1>&2 2>&3)
 
 	exitstatus=$?
 	if [[ $exitstatus != 0 ]]; then
@@ -83,6 +85,12 @@ do
 		DAEMON=radio_piface.py
 		TYPE=${CAD}
 		DESC="Piface CAD"
+
+	elif [[ ${ans} == '9' ]]; then
+		DAEMON=retro_radio.py
+		TYPE=${NODISPLAY}
+		DESC="Retro radio no display, "
+
 	fi
 
 	whiptail --title "$DESC ($DAEMON)" --yesno "Is this correct?" 10 60

@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: my_stations.urls,v 1.17 2016/02/15 15:17:21 bob Exp $
+# $Id: my_stations.urls,v 1.19 2016/08/16 07:40:13 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -91,4 +91,13 @@
 [RTL] http://streaming.radio.rtl.fr/rtl-1-44-128.m3u
 [RTL2] http://streaming.radio.rtl.fr/rtl2-1-44-128.m3u
 [Music Box] http://www.musicboxtv.com:8000/live.m3u
+
+(Belgium)
+[Crooze FM] http://77.92.64.44:8045/stream
+
+(_Live_ATC)
+[EHAA Approach Departures] http://d.liveatc.net/eham4
+[EHAA Radar 2 East Inbound] http://d.liveatc.net/eham03_rdr_e_inb 
+[EHAA Radar SW] http://d.liveatc.net/eham02_rdr_sw
+[EHEH Approach] http://d.liveatc.net/eheh2_app
 

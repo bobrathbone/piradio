@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.52 2016/02/06 08:52:28 bob Exp $
+# $Id: piradio,v 1.68 2016/11/13 11:47:56 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 5.0
+Version: 5.6
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 Email-Address : bob@bobrathbone.com
 
@@ -37,10 +37,15 @@ Files:  radiod.py /usr/share/radio/
 	rradio4.py /usr/share/radio/
 	rradiobp.py /usr/share/radio/
 	rradiobp4.py /usr/share/radio/
+	retro_radio.py /usr/share/radio/
+	radio8x2.py /usr/share/radio/
+	rradio8x2.py /usr/share/radio/
 	config_class.py /usr/share/radio/
 	radio_piface.py /usr/share/radio/
 	display_current.py /usr/share/radio/
 	display_config.py /usr/share/radio/
+	menu_switch_class.py /usr/share/radio/
+	status_led_class.py /usr/share/radio/
 	ada_lcd_class.py /usr/share/radio/
 	display_config.py /usr/share/radio/
 	log_class.py /usr/share/radio/
@@ -60,15 +65,17 @@ Files:  radiod.py /usr/share/radio/
 	lcd_class.py /usr/share/radio/
 	lcd_piface_class.py /usr/share/radio/
 	lcd_i2c_class.py /usr/share/radio/
-	lcd_i2c_pcf8475.py /usr/share/radio/
+	lcd_i2c_pcf8574.py /usr/share/radio/
 	radio_daemon.py /usr/share/radio/
 	test_lcd.py /usr/share/radio/
 	test_i2c_lcd.py /usr/share/radio/
 	test_switches.py /usr/share/radio/
 	select_daemon.sh /usr/share/radio/
+	select_audio.sh /usr/share/radio/
 	run_raspi-config.sh /usr/share/radio/
 	station.urls /usr/share/radio/
 	voice.dist /usr/share/radio/
+	asound.conf.dist /usr/share/radio/
 	setup_pifacecad_lirc.sh /usr/share/radio/
 	lircrc.dist  /usr/share/radio/
 	remote_control.py  /usr/share/radio/
@@ -78,19 +85,21 @@ Files:  radiod.py /usr/share/radio/
 	configs/mpdstream /usr/share/radio/
 	piradio_build.tar.gz /usr/share/radio/
 	README /usr/share/radio/
-	LICENSE /usr/share/radio/
 	install_streaming.sh /usr/share/radio/
 	logrotate.d/radiod /etc/
 	init.d/radiod /etc/
 	init.d/pifacercd /etc/
 	radiod.conf /usr/share/radio/
+	radiod.conf.40_pin /usr/share/radio/
 	contributors/README /usr/share/radio/
-	contributors/LCD4x40-PCF854/radio4x40.py /usr/share/radio/
-	contributors/LCD4x40-PCF854/lcd_class4x40.py /usr/share/radio/
-	contributors/LCD4x40-PCF854/README /usr/share/radio/
+	contributors/LCD4x40-PCF8574/radio4x40.py /usr/share/radio/
+	contributors/LCD4x40-PCF8574/lcd_class4x40.py /usr/share/radio/
+	contributors/LCD4x40-PCF8574/README /usr/share/radio/
 	contributors/Norwegian_characters/translate_class.py /usr/share/radio/
-	contributors/Norwegian_characters/lcd_i2c_pcf8475.py /usr/share/radio/
+	contributors/Norwegian_characters/lcd_i2c_pcf8574.py /usr/share/radio/
 	contributors/Norwegian_characters/README /usr/share/radio/
+	contributors/backpack_variants/README /usr/share/radio/
+	contributors/backpack_variants/radiodbp.py /usr/share/radio/
 	language/language.en /usr/share/radio/
 	language/language.hu /usr/share/radio/
 	language/language.nl /usr/share/radio/

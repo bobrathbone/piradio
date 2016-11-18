@@ -1,0 +1,21 @@
+Contributors software
+Directory: backpack_variants
+Contributor: Dave duTrizac, Canada
+Email: ddutrizac@ns.sympatico.ca
+Web site: Not available
+Supported: No
+Last tested with: Version 5.1 (Push buttons version ) 
+Description: Support for Push button version of the LCD I2C backpack 
+
+Contributors description
+========================
+I actually took your advice to modify your existing radiod.py source to support the I2C version of the LCD display of your Internet Radio. I hope you don't mind, but I took the liberty and was successfully able to merge the I2C LCD components of your rradiobp.py with the 5-button functionality of your radiod.py and I'm pleased to say it works PERFECTLY!
+
+==========
+The code in this sub-directory is provided "as is" and without any warranties.
+Neither can any guarantees be given that the software in this directory
+will be compatible with future releases of the main-stream software.
+As Bob Rathbone is unable to test these programs absolutely no support is provided
+so please don't ask for it as the answer will always be the same - no support available.
+
+
