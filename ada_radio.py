@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.62 2016/07/23 16:13:10 bob Exp $
+# $Id: ada_radio.py,v 1.65 2017/02/12 13:01:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -52,22 +52,22 @@ lcd = Adafruit_lcd()
 # Register exit routine
 def finish():
 	lcd.clear()
-	radio.execCommand("umount /media  > /dev/null 2>&1")
-	radio.execCommand("umount /share  > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media  > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share  > /dev/null 2>&1")
 	lcd.line1("Radio stopped.")
 
 # Signal SIGTERM handler
 def signalHandler(signal,frame):
-        global lcd
-        global log
-        #radio.execCommand("umount /media > /dev/null 2>&1")
-        #radio.execCommand("umount /share > /dev/null 2>&1")
-        pid = os.getpid()
-        log.message("Radio stopped (SIGTERM), PID " + str(pid), log.INFO)
-        lcd.line1("Radio stopped")
-        lcd.line2("")
-        GPIO.cleanup()
-        sys.exit(0)
+	global lcd
+	global log
+	#radio.execCommand("umount /media > /dev/null 2>&1")
+	#radio.execCommand("umount /share > /dev/null 2>&1")
+	pid = os.getpid()
+	log.message("Radio stopped (SIGTERM), PID " + str(pid), log.INFO)
+	lcd.line1("Radio stopped")
+	lcd.line2("")
+	GPIO.cleanup()
+	sys.exit(0)
 
 atexit.register(finish)
 
@@ -126,6 +126,12 @@ class MyDaemon(Daemon):
 		lcd.scroll2(mpd_version,no_interrupt)
 		time.sleep(1)
 		 	
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
+
+		# Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -633,11 +639,11 @@ def toggle_option(radio,lcd,direction):
 
 # Update music library
 def update_library(lcd,radio):
-        log.message("Updating library", log.INFO)
-        lcd.line1("Updating library")
-        lcd.line2("Please wait")
-        radio.updateLibrary()
-        return
+	log.message("Updating library", log.INFO)
+	lcd.line1("Updating library")
+	lcd.line2("Please wait")
+	radio.updateLibrary()
+	return
 
 # Reload if new source selected (RADIO or PLAYER)
 def reload(lcd,radio):

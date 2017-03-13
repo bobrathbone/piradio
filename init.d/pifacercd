@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Raspberry Pi Internet Radio Init script
-# $Id: pifacercd,v 1.4 2016/01/03 09:25:59 bob Exp $
+# $Id: pifacercd,v 1.6 2017/01/16 12:38:18 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -38,9 +38,20 @@ fi
 NAME=remote_control.py
 DESC="PiFice CAD remote control daemon"
 DAEMON=${DIR}/${NAME}
+LIRC=/etc/lirc/lircd.conf
+LIRCD=/usr/sbin/lircd
 
 # Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+if [ ! -x "$LIRCD" ];  then
+	echo "LIRC package not installed - exiting"
+	exit 1
+fi
+
+# Exit if the package is not installed
+if [ ! -f "$LIRC" ];  then
+	echo "${LIRC} not found - exiting"
+	exit 1
+fi
 
 case "$1" in
     start)

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Raspberry Pi Internet Radio Init script
-# $Id: radiod,v 1.6 2016/04/02 08:59:31 bob Exp $
+# $Id: radiod,v 1.7 2016/11/29 10:21:11 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -40,9 +40,10 @@ else
    DIR=/home/pi/radio
 fi
 
-NAME=radiod.py
+NAME=rradio4.py
 DESC="PI Radio Daemon"
 DAEMON=${DIR}/${NAME}
+PIDFILE=/var/run/radiod.pid
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -63,11 +64,24 @@ case "$1" in
     restart)
         ${DAEMON} restart
         ;;
+    info)
+	echo -n "${NAME} " 
+        ${DAEMON} version
+	if [ -f ${PIDFILE} ]; then
+		echo ${NAME} Running PID $(cat ${PIDFILE})
+	else
+		echo ${NAME} Not running
+	fi
+	mpd -V | grep Daemon
+	grep PRETTY_NAME /etc/os-release | sed -e s/PRETTY_NAME=// -e s/\"//g
+	uname -a
+	echo
+        ;;
     force-reload)
         ${DAEMON} restart
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|version}"
+        echo "Usage: $0 {start|stop|restart|status|info|version}"
         exit 2
         ;;
 esac

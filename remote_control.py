@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #       
 # Raspberry Pi remote control daemon (Non-Piface variants)
-# $Id: remote_control.py,v 1.17 2016/02/09 13:23:31 bob Exp $
+# $Id: remote_control.py,v 1.20 2017/01/28 15:38:07 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -157,7 +157,18 @@ def listener():
 	listener.register('KEY_LANGUAGE',handleIRevent)
 	listener.register('KEY_INFO',handleIRevent)
 	log.message("Activating IR Remote Control listener", log.DEBUG)
-	listener.activate()
+	try:
+		listener.activate()
+	except Exception as e:
+		log.message(str(e), log.ERROR)
+		print e
+		mesg = "Possible configuration error, check /etc/lircd.conf"
+		log.message(mesg, log.ERROR)
+		print mesg
+		mesg = "Activation IR Remote Control failed - Exiting"
+		log.message(mesg, log.ERROR)
+		print mesg
+		sys.exit(1)
 
 
 # Send button data to radio program

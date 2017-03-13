@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: config_class.py,v 1.38 2016/10/16 09:54:34 bob Exp $
+# $Id: config_class.py,v 1.40 2017/02/12 13:01:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -43,7 +43,8 @@ class Configuration:
 	volume_range = 100 		# Volume range 10 to 100
 	volume_increment = 1 		# Volume increment 1 to 10
 	display_playlist_number = False # Two line displays only, display station(n)
-	source = RADIO  # Source RADIO or Player
+	source = RADIO  		# Source RADIO or Player
+	auto_load = False 		# Auto load media if no Internet on startup
 	stationNamesSource = LIST # Station names from playlist names or STREAM
 	rotary_class = STANDARD		# Rotary class STANDARD or ALTERNATIVE 
 	lcd_width = 0		# Line width of LCD 0 = use program default
@@ -96,9 +97,10 @@ class Configuration:
 		     "right_switch": 15,
 		     "up_switch": 17,
 		     "down_switch": 18,
+		     "aux_switch": 0,
 		   }
 
-	# Values for the rotary switch on vintage radio (Not rotary switches)
+	# Values for the rotary switch on vintage radio (Not rotary encoders)
 	# Zero values disable usage 
 	menu_switches = {"menu_switch_value_1": 0,	# Normally 24
 			 "menu_switch_value_2": 0,	# Normally 8
@@ -196,6 +198,8 @@ class Configuration:
 				elif option == 'startup':
 					if parameter == 'MEDIA':
 						self.source =  self.PLAYER
+					elif parameter == 'AUTO': 
+						self.auto_load = True
 
 				elif option == 'station_names':
 					if parameter == 'stream':
@@ -365,6 +369,10 @@ class Configuration:
 	def getSource(self):
 		return self.source
 
+	# Get Auto load option 
+	def autoload(self):
+		return self.auto_load
+
 	# Get the startup source name RADIO MEDIA
 	def getSourceName(self):
 		source_name = "MEDIA"
@@ -529,6 +537,7 @@ if __name__ == '__main__':
 	print "Date format:", config.getDateFormat()
 	print "Display playlist number:", config.getDisplayPlaylistNumber()
 	print "Source:", config.getSource(), config.getSourceName()
+	print "Auto-load", config.autoload()
 	print "Background colour number:", config.getBackColor('bg_color')
 	print "Background colour:", config.getBackColorName(config.getBackColor('bg_color'))
 	print "Speech:", config.getSpeech()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id: log_class.py,v 1.7 2015/01/24 10:29:14 bob Exp $
+# $Id: log_class.py,v 1.8 2017/03/03 08:48:51 bob Exp $
 # Raspberry Pi Internet Radio
 # Logging class
 #
@@ -55,6 +55,7 @@ class Log:
 	def message(self,message,level):
 		# Set up logging, level 
 		if level != self.NONE:
+		   try:
 			logger = logging.getLogger('gipiod')
 			hdlr = logging.FileHandler('/var/log/' + self.module + '.log')
 			formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -76,6 +77,8 @@ class Log:
 
 			logger.removeHandler(hdlr)
 			hdlr.close()
+		   except Exception as e:
+			print e
 		return
 
 	# Temporary set log level

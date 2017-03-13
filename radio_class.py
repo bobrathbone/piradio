@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.249 2016/11/13 11:19:31 bob Exp $
+# $Id: radio_class.py,v 1.258 2017/02/13 13:01:08 bob Exp $
 # 
 #
 # Author : Bob Rathbone
@@ -49,6 +49,7 @@ TimerFile = RadioLibDir + "/timer"
 AlarmFile = RadioLibDir + "/alarm" 
 StreamFile = RadioLibDir + "/streaming"
 BoardRevisionFile = RadioLibDir + "/boardrevision"
+Icecast = "/usr/bin/icecast2"
 
 log = Log()
 translate = Translate()
@@ -170,7 +171,7 @@ class Radio:
 	search_index = 0	 # The current search index
 	loadnew = False	  # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "5.6"		# Version number
+	VERSION	= "5.9"		# Version number
 
 	ADAFRUIT = 1		# I2C backpack type AdaFruit
 	PCF8574  = 2 		# I2C backpack type PCF8574
@@ -374,13 +375,14 @@ class Radio:
 			except:
 				log.message("Failed to connect to MPD on port " + str(port), log.ERROR)
 				time.sleep(2.5)	# Wait for interrupt in the case of a shutdown
-				log.message("Restarting MPD",log.DEBUG)
-				if retry < 2:
-					self.execCommand("service mpd restart") 
-				else:
-					self.execCommand("service mpd start") 
-				time.sleep(2)	# Give MPD time to restart
-				retry -= 1
+				sys.exit(0)
+				#log.message("Restarting MPD",log.DEBUG)
+				#if retry < 2:
+				#	self.execCommand("service mpd restart") 
+				#else:
+				#	self.execCommand("service mpd start") 
+				#time.sleep(2)	# Give MPD time to restart
+				#retry -= 1
 
 		return connection
 
@@ -687,6 +689,11 @@ class Radio:
 			log.message("Error reading " + MpdPortFile, log.ERROR)
 
 		return port
+
+	# Get MPD version
+	def getMpdVersion(self):
+		sVersion = self.execCommand('mpd -V | grep Daemon')
+		return sVersion.split()[3]
 
 	# Get options (synchronise with external mpd clients)
 	def getOptions(self,stats):
@@ -1212,21 +1219,24 @@ class Radio:
 	# Switch on Icecast2 streaming
 	def streamingOn(self):
 		output_id = 2
-		self.streaming = True
-		self.execCommand("service icecast2 start")
-		self.execMpcCommand("enable " + str(output_id))
-		self.storeStreaming("on")
-		self.streamingStatus()
+		self.streaming = False
+		if os.path.isfile(Icecast):
+			self.execCommand("service icecast2 start")
+			self.execMpcCommand("enable " + str(output_id))
+			self.storeStreaming("on")
+			self.streaming = True
+			self.streamingStatus()
 		return self.streaming
 
 	# Switch off Icecast2 streaming
 	def streamingOff(self):
 		output_id = 2
 		self.streaming = False
-		self.execMpcCommand("disable " + str(output_id))
-		self.execCommand("service icecast2 stop")
-		self.storeStreaming("off")
-		self.streamingStatus()
+		if os.path.isfile(Icecast):
+			self.execMpcCommand("disable " + str(output_id))
+			self.execCommand("service icecast2 stop")
+			self.storeStreaming("off")
+			self.streamingStatus()
 		return self.streaming
 
 	# Display streaming status
@@ -2065,9 +2075,9 @@ class Radio:
 
 	# Unmount all drives
 	def unmountAll(self):
-		self.execCommand("/bin/umount /dev/sda1 2>&1 >/dev/null")  # Unmount USB stick
-		self.execCommand("/bin/umount /dev/sdb1 2>&1 >/dev/null")  # Unmount USB stick
-		self.execCommand("/bin/umount /share 2>&1 >/dev/null")  # Unmount network drive
+		self.execCommand("sudo /bin/umount /dev/sda1 2>&1 >/dev/null")  # Unmount USB stick
+		self.execCommand("sudo /bin/umount /dev/sdb1 2>&1 >/dev/null")  # Unmount USB stick
+		self.execCommand("sudo /bin/umount /share 2>&1 >/dev/null")  # Unmount network drive
 		return
 
 	# Speak a message
@@ -2128,6 +2138,10 @@ class Radio:
 	def getRotaryClass(self):
 		return config.getRotaryClass()
 
+	# Get auto load player if no Internet True or False
+	def autoload(self):
+		return config.autoload()
+
 	def dummy(self): 
 		log.message("dummy" , log.DEBUG)
 		return
@@ -2138,6 +2152,7 @@ class Radio:
 if __name__ == "__main__":
 	print "Test radio_class.py"
 	radio = Radio()
+	print "MPD version",radio.getMpdVersion() 
 	radio.mountUsb()
 	print  "Version",radio.getVersion()
 	print "Board revision", radio.getBoardRevision()

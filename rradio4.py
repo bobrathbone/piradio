@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character LCD version
 #
-# $Id: rradio4.py,v 1.84 2016/10/15 10:56:05 bob Exp $
+# $Id: rradio4.py,v 1.89 2017/02/13 18:44:44 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -61,8 +61,8 @@ rss = Rss()
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped")
@@ -128,12 +128,18 @@ class MyDaemon(Daemon):
 		log.message("MPD started", log.INFO)
 		time.sleep(0.5)
 
-		mpd_version = radio.execMpcCommand("version")
+		mpd_version = radio.getMpdVersion()
 		log.message(mpd_version, log.INFO)
-		lcd.line3(mpd_version)
+		lcd.line3("MPD version " + mpd_version)
 		lcd.line4("GPIO version " + str(GPIO.VERSION))
 		time.sleep(2.0)
 		 	
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
+
+		# Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -146,14 +152,14 @@ class MyDaemon(Daemon):
 		right_switch = radio.getSwitchGpio("right_switch")
 		menu_switch = radio.getSwitchGpio("menu_switch")
 		mute_switch = radio.getSwitchGpio("mute_switch")
+		aux_switch = radio.getSwitchGpio("aux_switch")
 
 		if radio.getRotaryClass() is radio.ROTARY_STANDARD:
 			volumeknob = RotaryEncoder(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-			tunerknob = RotaryEncoder(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoder(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 		elif radio.getRotaryClass() is radio.ROTARY_ALTERNATIVE:
 			volumeknob = RotaryEncoderAlternative(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-
-			tunerknob = RotaryEncoderAlternative(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoderAlternative(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 
 		log.message("Running" , log.INFO)
 
@@ -1011,7 +1017,7 @@ def displayShutdown(lcd):
 
 def displayInfo(lcd,ipaddr,mpd_version):
 	lcd.line2("Radio version " + radio.getVersion())
-	lcd.line3(mpd_version)
+	lcd.line3("MPD version " + mpd_version)
 	lcd.line4("GPIO version " + GPIO.VERSION)
 	if len(ipaddr) < 1: 
 		lcd.line3("No IP network")

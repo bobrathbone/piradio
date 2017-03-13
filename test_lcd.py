@@ -3,7 +3,7 @@
 # LCD test program using the lcd_class.py 
 # Use this program to test LCD wiring
 #
-# $Id: test_lcd.py,v 1.10 2016/10/15 10:56:05 bob Exp $
+# $Id: test_lcd.py,v 1.11 2016/12/13 18:50:02 bob Exp $
 # 
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -44,7 +44,12 @@ if answer == 'y':
 print "Use Ctl-C to exit"
 
 lcd.init(boardrevision)
-lcd.setWidth(16)
+width = lcd.getWidth()
+if width is 0:
+	print "Set the lcd_width parameter in /etc/radiod.conf"
+	sys.exit(1)
+
+lcd.setWidth(width)
 lcd.line1("Bob Rathbone")
 
 while True:
@@ -58,5 +63,4 @@ while True:
 		GPIO.cleanup()
 		sys.exit(0)
 
-
-
+# End of test program

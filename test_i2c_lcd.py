@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # LCD driver program using the lcd_i2c_class.py
-# $Id: test_i2c_lcd.py,v 1.7 2016/06/25 10:37:43 bob Exp $
+# $Id: test_i2c_lcd.py,v 1.8 2016/12/03 13:44:51 bob Exp $
 # Adapted from RpiLcdBackpack from Paul Knox-Kennedy
 # at Adafruit Industries
 #
@@ -40,6 +40,7 @@ if __name__ == '__main__':
 		print "Invalid selection!" 
 		sys.exit(1)
 
+
 	print "I2C address:", hex(i2c_address)
 
 	try:
@@ -51,7 +52,18 @@ if __name__ == '__main__':
 		print "Could not initialise LCD, check selection!" 
 		sys.exit(1)
 
-	lcd.setWidth(20)
+	# Set width
+	width = 16
+	print "\nSet LCD width"
+	print "1 = Width 16"
+	print "2 = Width 20"
+	response = raw_input("Select LCD width: ")
+	if int(response) is 2:
+		width = 20
+	print "Width", width
+
+	print "Starting test"
+	lcd.setWidth(width)
 	lcd.backlight(True)
 	lcd.blink(False)
 	lcd.cursor(False)

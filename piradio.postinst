@@ -1,6 +1,6 @@
 #!/bin/bash 
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.36 2016/10/22 11:48:56 bob Exp $
+# $Id: piradio.postinst,v 1.37 2017/02/15 08:35:21 bob Exp $
 
 # File locations
 DIR=/usr/share/radio
@@ -48,8 +48,8 @@ TYPE=$?	# Don't seperate from above
 
 # Disable serial interface (reboot required)
 if [[ ${TYPE} -eq ${LCD} || ${TYPE} -eq ${NODISPLAY} ]]; then
-	echo "Disabling serial interface in ${INITTAB}" 
-	if [[ ! -f   ${INITTAB}.orig ]]; then
+	if [[ ! -f   ${INITTAB}.orig && -f ${INITTAB} ]]; then
+		echo "Disabling serial interface in ${INITTAB}" 
 		sudo cp -f ${INITTAB} ${INITTAB}.orig
 		echo "# Original file stored as ${INITTAB}.orig" >> ${INITTAB} 
 	fi

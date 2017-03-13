@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_daemon.py,v 1.7 2015/10/31 15:40:05 bob Exp $
+# $Id: radio_daemon.py,v 1.8 2016/11/30 10:03:46 bob Exp $
 # Author : Sander Marechal
 # Website http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
 #
@@ -70,8 +70,10 @@ class Daemon:
 		os.dup2(si.fileno(), sys.stdin.fileno())
 		os.dup2(so.fileno(), sys.stdout.fileno())
 		os.dup2(se.fileno(), sys.stderr.fileno())
+		self.writepidfile()
 	
-		# write pidfile
+	# write pidfile
+	def writepidfile(self):
 		atexit.register(self.delpid)
 		pid = str(os.getpid())
 		file(self.pidfile,'w+').write("%s\n" % pid)
@@ -88,8 +90,9 @@ class Daemon:
 	def nodaemon(self):
 		"""
 		Start the program in foreground
-		Test purposes only
+		Test purposes only or using systemd startup
 		"""
+		self.writepidfile()
 		try:
 			self.begin(False)
 		except KeyboardInterrupt:
@@ -100,6 +103,7 @@ class Daemon:
 		Start the daemon
 		"""
 		# Check for a pidfile to see if the daemon already runs
+		cpid = None
 		try:
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
@@ -107,8 +111,8 @@ class Daemon:
 		except IOError:
 			pid = None
 	
-		if pid:
-			message = "pidfile %s already exist. Daemon already running?\n"
+		if cpid:
+			message = "pidfile %s already exists. Daemon already running?\n"
 			sys.stderr.write(message % self.pidfile)
 			sys.exit(1)
 		

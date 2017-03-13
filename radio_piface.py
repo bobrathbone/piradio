@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using a Piface backlit LCD plate for Raspberry Pi.
-# $Id: radio_piface.py,v 1.8 2016/07/23 16:13:10 bob Exp $
+# $Id: radio_piface.py,v 1.10 2017/02/12 13:01:02 bob Exp $
 #
 # Author : Patrick Zacharias 
 # based on Bob Rathbone's Adafruit code
@@ -56,8 +56,8 @@ lcd = Lcd()
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped")
@@ -99,7 +99,13 @@ class MyDaemon(Daemon):
 		lcd.line1("Radio ver "+ radio.getVersion())
 		lcd.scroll2(mpd_version,no_interrupt)
 		time.sleep(1)
-		 	
+
+                # Auto-load music library if no Internet
+                if len(ipaddr) < 1 and radio.autoload():
+                        log.message("Loading music library",log.INFO)
+                        radio.setSource(radio.PLAYER)
+
+                # Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)

@@ -1,5 +1,5 @@
 # Raspberry Pi Internet Radio Configuration File (40 Pin version)
-# $Id: radiod.conf.40_pin,v 1.1 2016/08/11 11:29:52 bob Exp $
+# $Id: radiod.conf.40_pin,v 1.3 2017/02/12 10:57:43 bob Exp $
 
 # Configuration file for version 5.4 onwards
 # 40 pin version to support IQ Audio and other sound cards
@@ -80,6 +80,9 @@ down_switch=14
 left_switch=23
 right_switch=24
 
+# Auxillary switch GPIO, 0 = not used
+aux_switch=0
+
 # LCD GPIO connections for 40 pin version of the radio 
 lcd_select=7
 lcd_enable=8
@@ -87,6 +90,9 @@ lcd_data4=5
 lcd_data5=6
 lcd_data6=12
 lcd_data7=13
+
+# LCD screen width, 0 use program default. Usual settings 16 or 20
+lcd_width=0
 
 # Some rotary switches do not work well with the standard rotary class
 # Rotary encoder driver. Set to "alternative" to use the alternative rotary encoder class

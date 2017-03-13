@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_m3u.py,v 1.8 2016/09/04 13:12:02 bob Exp $
+# $Id: create_m3u.py,v 1.10 2016/12/12 11:42:22 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import urllib2
+import socket
 from xml.dom.minidom import parseString
 
 # Output errors to STDERR
@@ -41,6 +42,7 @@ TempDir = '/tmp/radio_stream_files/'
 PlaylistsDir = RadioDir + 'playlists/'
 
 duplicateCount = 0
+TimeOut=15	# Socket time out
 
 # Execute system command
 def execCommand(cmd):
@@ -143,7 +145,7 @@ def parseAsx(title,url,data,filenumber):
 		dom = parseString(lcdata)
 	except Exception,e:
 		print "Error:",e
-		print "Error: Could not parse XML data from,", url + '\n'
+		print "ERROR: Could not parse XML data from,", url + '\n'
 		errorCount += 1
 		return
 
@@ -170,7 +172,7 @@ def parseAsx(title,url,data,filenumber):
 			output = createM3uOutput(title,url,filenumber)
 		except IndexError,e:
 			print "Error:",e
-			print "Error parsing", url
+			print "ERROR parsing", url
 			errorCount += 1
 			return "# DOM Error" 
 
@@ -246,7 +248,7 @@ def parsePls(title,url,lines,filenumber):
 	return output
 
 # Parse M3U file to PLS output
-def parseM3u(title,lines,filenumber):
+def parseM3u(title,url,lines,filenumber):
 	info = 'Unknown' 
 	output = []
 
@@ -406,7 +408,7 @@ for line in open(StationList,'r'):
 
 	# Check start of title defined
 	elif line[:1] != '[':
-		stderr("Error: Missing left bracket [ in line %s in %s\n" % (lineCount,StationList))
+		stderr("ERROR: Missing left bracket [ in line %s in %s\n" % (lineCount,StationList))
 		format()
 		errorCount += 1
 		continue
@@ -420,7 +422,7 @@ for line in open(StationList,'r'):
 
 	# Should be 2 parts (title and url)
 	if len(lineparts) != 2:
-		stderr("Error: Missing right bracket [ in line %s in %s\n" % (lineCount,StationList))
+		stderr("ERROR: Missing right bracket [ in line %s in %s\n" % (lineCount,StationList))
 		format()
 		errorCount += 1
 		continue
@@ -457,6 +459,7 @@ for line in open(StationList,'r'):
 
 	# Get the published URL to the stream file
 	try:
+		socket.setdefaulttimeout(TimeOut)
 		file = urllib2.urlopen(url)
 		data = file.read()
 		file.close()
@@ -464,7 +467,7 @@ for line in open(StationList,'r'):
 		lines = data.split('\n')
 		firstline = lines[0].rstrip()
 	except:
-		print "Error: Failed to retrieve ",title, url
+		print "ERROR: Failed to retrieve ",title, url
 		errorCount += 1
 		continue
 
@@ -473,7 +476,7 @@ for line in open(StationList,'r'):
 	if isPLS:
 		m3u_output += parsePls(title,url,lines,filenumber)
 	elif isM3U:
-		m3u_output += parseM3u(title,lines,filenumber)
+		m3u_output += parseM3u(title,url,lines,filenumber)
 	elif isASX:
 		if firstline.startswith('<ASX'):
 			m3u_output += parseAsx(title,url,lines,filenumber)

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_daemon.sh,v 1.16 2016/05/16 12:09:43 bob Exp $
+# $Id: select_daemon.sh,v 1.24 2017/03/09 13:46:08 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -20,13 +20,43 @@ DAEMON=radiod.py
 
 INIT=/etc/init.d/radiod
 RC_INIT=/etc/init.d/pifacercd
+SERVICE=/lib/systemd/system/radiod.service
+BINDIR="\/usr\/share\/radio\/"
+DIR=/usr/share/radio
+CONFIG=/etc/radiod.conf
 
 # Display types
 LCD=1	# LCD screen (direct)
 I2C=2	# Requires I2C libraries
 CAD=3	# PiFace Control and Display
 NODISPLAY=4	# Retro radio with no display
+BACKPACK=0	# Backpack selected 1=yes 0=no
 
+ans=0
+while [ $ans == 0 ]
+do
+	ans=$(whiptail --title "Select wiring version" --menu "Choose your option" 15 75 9 \
+	"1" "26 pin version wiring" \
+	"2" "40 pin version wiring" \
+	"3" "Do not change configuration" 3>&1 1>&2 2>&3) 
+
+	exitstatus=$?
+	if [[ $exitstatus != 0 ]]; then
+		exit 0
+	fi
+
+	if [[ ${ans} == '1' ]]; then
+		echo "26 pin version selected"
+		sudo cp -f ${DIR}/radiod.conf ${CONFIG}
+	elif [[ ${ans} == '2' ]]; then
+		echo "40 pin version selected"
+		sudo cp -f ${DIR}/radiod.conf.40_pin ${CONFIG}
+	else
+		echo "Wiring configuration in ${CONFIG} unchanged"	
+	fi
+done
+
+# Select the actual radio daemon to run at boot time
 selection=1 
 while [ $selection != 0 ]
 do
@@ -74,11 +104,13 @@ do
 	elif [[ ${ans} == '6' ]]; then
 		DAEMON=rradiobp.py
 		TYPE=${I2C}
+		BACKPACK=1
 		DESC="Two line LCD with I2C backpack"
 
 	elif [[ ${ans} == '7' ]]; then
 		DAEMON=rradiobp4.py
 		TYPE=${I2C}
+		BACKPACK=1
 		DESC="Four line LCD with I2C backpack"
 
 	elif [[ ${ans} == '8' ]]; then
@@ -101,6 +133,53 @@ echo "Daemon ${DAEMON} selected"
 
 # Update the System V init script
 sudo sed -i "s/^NAME=.*/NAME=${DAEMON}/g" ${INIT}
+
+# Update systemd script
+sudo sed -i "s/^ExecStart=.*/ExecStart=${BINDIR}${DAEMON} nodaemon/g" ${SERVICE}
+sudo sed -i "s/^ExecStop=.*/ExecStop=${BINDIR}${DAEMON} stop/g" ${SERVICE}
+
+# Update system startup 
+if [[ -x /bin/systemctl ]]; then
+	sudo systemctl daemon-reload
+	sudo systemctl enable radiod.service
+else
+	sudo update-rc.d radiod enable	
+fi
+
+# Select the backpack type
+if [[ ${BACKPACK} == 1 ]]; then
+	sleep 2
+	ans=0
+	BPTYPE=""
+	while [ $ans == 0 ]
+	do
+		ans=$(whiptail --title "Select backpack type" --menu "Choose I2C backpack" 15 75 9 \
+		"1" "ADAFRUIT I2C backpack" \
+		"2" "PCF8574 I2C backpack" \
+		"3" "Do not change configuration" 3>&1 1>&2 2>&3) 
+
+		exitstatus=$?
+		if [[ $exitstatus != 0 ]]; then
+			exit 0 
+		fi
+
+		if [[ ${ans} == '1' ]]; then
+			echo "ADAFRUIT I2C backpack selected"
+			BPTYPE="ADAFRUIT"
+		elif [[ ${ans} == '2' ]]; then
+			echo "PCF8574 I2C backpack selected"
+			BPTYPE="PCF8574"
+		else
+			echo "Backpack configuration in ${CONFIG} unchanged"	
+		fi
+		
+		if [[ ${BPTYPE} != "" ]]; then
+			sudo sed -i "s/^i2c_backpack=.*/i2c_backpack=${BPTYPE}/g" ${CONFIG}
+		fi
+	done
+
+fi
+
 echo
 
 # Pass selected daemon type to post install script

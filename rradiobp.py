@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display and Adafruit backpack
 # Rotary encoder version with I2C LCD interface
-# $Id: rradiobp.py,v 1.24 2016/11/15 09:01:35 bob Exp $
+# $Id: rradiobp.py,v 1.28 2017/02/13 18:44:44 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -64,8 +64,8 @@ tunerknob = None
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped ")
@@ -121,26 +121,32 @@ class MyDaemon(Daemon):
 		lcd.line1("Radio ver "+ radio.getVersion())
 		lcd.scroll2(mpd_version,no_interrupt)
 		time.sleep(1)
-		 	
+
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
+
+		# Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
 
 
-                # Get rotary switches configuration
-                up_switch = radio.getSwitchGpio("up_switch")
-                down_switch = radio.getSwitchGpio("down_switch")
-                left_switch = radio.getSwitchGpio("left_switch")
-                right_switch = radio.getSwitchGpio("right_switch")
-                menu_switch = radio.getSwitchGpio("menu_switch")
-                mute_switch = radio.getSwitchGpio("mute_switch")
+		# Get rotary switches configuration
+		up_switch = radio.getSwitchGpio("up_switch")
+		down_switch = radio.getSwitchGpio("down_switch")
+		left_switch = radio.getSwitchGpio("left_switch")
+		right_switch = radio.getSwitchGpio("right_switch")
+		menu_switch = radio.getSwitchGpio("menu_switch")
+		mute_switch = radio.getSwitchGpio("mute_switch")
 
 		if radio.getRotaryClass() is radio.ROTARY_STANDARD:
 			volumeknob = RotaryEncoder(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-			tunerknob = RotaryEncoder(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoder(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 		elif radio.getRotaryClass() is radio.ROTARY_ALTERNATIVE:
 			volumeknob = RotaryEncoderAlternative(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-			tunerknob = RotaryEncoderAlternative(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoderAlternative(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 
 		log.message("Running" , log.INFO)
 

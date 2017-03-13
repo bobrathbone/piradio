@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio4.py,v 1.113 2016/11/13 11:19:05 bob Exp $
+# $Id: radio4.py,v 1.116 2017/02/12 13:01:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -58,8 +58,8 @@ rss = Rss()
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped")
@@ -144,7 +144,16 @@ class MyDaemon(Daemon):
 		lcd.line3(mpd_version)
 		lcd.line4("GPIO version " + str(GPIO.VERSION))
 		time.sleep(2.0)
+
+		if len(ipaddr) < 1:
+			radio.setSource(radio.PLAYER)
 		 	
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
+
+		# Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -213,7 +222,7 @@ class MyDaemon(Daemon):
 				current_id = radio.getCurrentID()
 				if input_source == radio.RADIO:
 					station = radio.getRadioStation() 
-                                        lcd.line2(station)
+					lcd.line2(station)
 				else:
 					lcd.line2(radio.getCurrentArtist())
 				display_rss(lcd,rss)
@@ -333,8 +342,8 @@ def get_switch_states(lcd,radio,rss):
 				display_mode = display_mode + 1
 
 		if display_mode > radio.MODE_LAST:
-                        boardrevision = radio.getBoardRevision()
-                        lcd.init(boardrevision) # Recover corrupted dosplay
+			boardrevision = radio.getBoardRevision()
+			lcd.init(boardrevision) # Recover corrupted dosplay
 			display_mode = radio.MODE_TIME
 
 		radio.setDisplayMode(display_mode)

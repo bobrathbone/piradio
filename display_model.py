@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-$Id: display_model.py,v 1.7 2016/03/03 16:29:06 bob Exp $
+$Id: display_model.py,v 1.9 2017/03/08 18:30:14 bob Exp $
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
@@ -16,7 +16,7 @@ Disclaimer: Software is provided as is and absolutly no warranties are implied o
 
 This script detects a Raspberry Pi's model, manufacturer and mb ram, based
 on the cpu revision number. Data source:
-http://www.raspberrypi.org/phpBB3/viewtopic.php?f=63&t=32733
+http://elinux.org/RPi_HardwareHistory
 
 You can instantiate the ModelInfo class either with a parameter `rev_hex`
 (eg. `m = ModelInfo("000f")`), or without a parameter
@@ -36,6 +36,7 @@ You can instantiate the ModelInfo class either with a parameter `rev_hex`
 import re
 
 
+# From http://elinux.org/RPi_HardwareHistory
 model_data = {
     '2': ('B', '1.0', 256, 'Cambridge', ''),
     '3': ('B', '1.0', 256, 'Cambridge', 'Fuses mod and D14 removed'),
@@ -48,10 +49,27 @@ model_data = {
     'd': ('B', '2.0', 512, 'Egoman', ''),
     'e': ('B', '2.0', 512, 'Sony', ''),
     'f': ('B', '2.0', 512, 'Qisda', ''),
-    '10': ('B+', '2.0', 512, 'Unknown', ''),
-    'a01041': ('2B', '2.0', 512, 'Farnell and others', ''),
-    '900092': ('Pi Zero', '2.0', 1000, 'Element14', ''),
-    'a02082': ('3B', '2.0', 1000, 'Element14', ''),
+    '10': ('B+', '1.0', 512, 'Sony', ''),
+    '11': ('Compute Module 1', '1.0', 512, 'Sony', ''),
+    '12': ('A+', '1.1', 256, 'Sony', ''),
+    '13': ('B+', '1.2', 512, 'Unknown', ''),
+    '14': ('Compute Module 1', '1.0', 512, 'Embest', ''),
+    '15': ('A+', '1.0', 512, 'Embest', '256MB or 512MB'),
+    'a01040': ('2B', '1.0', 1024, 'Sony', ''),
+    'a01041': ('2B', '1.1', 1024, 'Embest', ''),
+    'a21041': ('2B', '1.1', 1024, 'Embest', ''),
+    'a22042': ('2B', '1.2', 1024, 'Embest', 'with BCM2837'),
+    'a02082': ('3B', '2.0', 1024, 'Sony', 'Quad Core 1.2MHz, Onboard WiFi and Bluetooth 4.1'),
+    'a22082': ('3B', '2.0', 1024, 'Embest', 'Quad Core 1.2MHz, Onboard WiFi and Bluetooth 4.1'),
+    'a02082': ('3B', '1.2', 1024, 'Sony', 'Quad Core 1.2MHz, Onboard WiFi and Bluetooth 4.1'),
+    'a020a0': ('Compute Module 3', '1.0', 1024, 'Sony', 'and CM3 Lite'),
+    'a22082': ('3B', '1.2', 1024, 'Embest', 'Quad Core 1.2MHz, Onboard WiFi and Bluetooth 4.1'),
+    'a32082': ('3B', '1.2', 1024, 'Sony (Japan)', 'Quad Core 1.2MHz, Onboard WiFi and Bluetooth 4.1'),
+    '900091': ('A+', '1.1', 512, 'Sony', ''),
+    '900092': ('Pi Zero', '1.2', 512, 'Sony', ''),
+    '900093': ('Pi Zero', '1.3', 512, 'Sony', ''),
+    '920093': ('Pi Zero', '1.3', 512, 'Embest', ''),
+    '9200c1': ('Pi Zero W', '1.1', 512, 'Sony', 'Onboard WiFi and Bluetooth 4.1'),
 }
 
 

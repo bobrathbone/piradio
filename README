@@ -9,15 +9,54 @@ See http://www.musicpd.org/
 Use "apt-get install mpd mpc python-mpd" to install the library
 Modified to use python-mpd library. See https://pypi.python.org/pypi/python-mpd/
 
+Version 5.9 release notes
+-------------------------
+15th March 2017
+1) Auto-load music library if no Internet available on startup
+2) Error switching on streaming corrected
+3) Reverse up_switch/down_switch GPIO settings corrected
+4) The select daemon program now allows selection of I2C backpack type 
+5) Cure logging class error if accessed by non root user
+6) Corrections/additions to the display_model.py program
+7) Adding new wiring.py to print wiring based upon configuration in /etc/radiod.conf 
+* This version requires that the up_switch and down_switch settings be reversed if upgrading
+
+Version 5.8 release notes
+-------------------------
+25th January 2017
+1) Support for JustBoom DAC added
+2) dtoverlay command added to select_audio.sh to enable
+   new sound card without the need to reboot 
+3) test_rotary_class allows selection of either 26 or 40 pin wiring
+4) test_switches allows selection of either 26 or 40 pin wiring
+5) Use update-rc.d in select_daemon.sh if systemctl not present (Wheezy)
+6) Check that LIRC package installed when starting pifacrcd service
+7) Check icecast2 is installed before attempting to stop or start
+
+Version 5.7 release notes
+-------------------------
+14th December 2016
+Version 5.7 sysvinit installation disabled 
+1) Installing sysvinit-core causes boot failures
+   Do not install sysvinit.core
+2) service radiod now includes an info command
+3) New /lib/systemd/system/radiod.service file created
+4) Support for 16x4 LCD for pcf8574 backpack
+5) Correct MPD version display
+6) Add wiring selection to select_daemon.sh
+7) Timeout added to create_m3u.py 
+8) New /lib/systemd/system/pifacercd.service file created
 
 Version 5.6 release notes
 -------------------------
+15th November 2016
 Version 5.6 has bug fix and support for 8x2 display
 1) Support for 8x2 LCD rradio8x2.py and radio8x2.py added
 2) radiod.py and radio8.py crashing in options cured
 
 Version 5.5 release notes
 -------------------------
+27th August 2016
 Version 5.5 has mainly configuration changes
 1) Support for IQAudio products for use with retro_radio.py
 2) Correct problem with pls files with ? at the end of the URL
@@ -30,6 +69,7 @@ Version 5.5 has mainly configuration changes
 
 Version 5.4 release notes
 -------------------------
+27th June 2016
 Version 5.4 has mainly configuration changes
 1) All switch GPIO settings are configurable in /etc/radiod.conf
 2) All LCD GPIO outputs are configurable in /etc/radiod.conf
@@ -39,6 +79,7 @@ Version 5.4 has mainly configuration changes
 
 Version 5.3 release notes
 -------------------------
+27th June 2016
 Version 5.3 has some minor improvements in particular to speech
 1) Speech message can be supressed by adding an exclamation mark ! to the beginning of the message
 2) Correct incorrect copy of voice file to /var/lib/radiod/language
@@ -53,6 +94,7 @@ Version 5.3 has some minor improvements in particular to speech
 
 Version 5.2 release notes
 -------------------------
+30th April 2016
 Version 5.2 has some minor improvements
 1) Degrees C and degrees F temporary handling in translate class (Not the final solution)
 2) Instructions added to the manual to prevent radio hanging on a reboot
@@ -63,6 +105,7 @@ Version 5.2 has some minor improvements
 
 Version 5.1 release notes
 -------------------------
+2nd April 2016
 Version 5.1 addresses issues found in 5.0 (Major release) and general improvements
 1) Resolved the radio crashing if a playlist created without a .m3u extension
 2) Resolved the radio crashing if invalid RSS file /var/lib/radiod/rss
@@ -75,6 +118,7 @@ Version 5.1 addresses issues found in 5.0 (Major release) and general improvemen
 
 Version 5.0 release notes
 -------------------------
+16th February 2016
 Version 5.0 is a major release of the radio software specifically for Raspian Jessie
 Backwards compatibility with Raspian Wheezy is not guaranteed.
 Version 4.7 is still available for Raspbian Wheezy but is no longer maintained.

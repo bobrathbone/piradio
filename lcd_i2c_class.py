@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # LCD test program for the lcd_i2c_class.py class
-# $Id: lcd_i2c_class.py,v 1.4 2016/08/08 10:48:01 bob Exp $
+# $Id: lcd_i2c_class.py,v 1.6 2016/12/07 09:35:30 bob Exp $
 # Use this program to test I2C Backpack LCD wiring
 # Adapted from RpiLcdBackpack from Paul Knox-Kennedy
 # at Adafruit Industries
@@ -19,6 +19,9 @@ import smbus,time
 from subprocess import * 
 from time import sleep, strftime
 from datetime import datetime
+from config_class import Configuration
+
+config = Configuration()
 
 class lcd_i2c:
 	# commands
@@ -74,6 +77,13 @@ class lcd_i2c:
 	LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
 	LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
 	LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
+
+	# Some LCDs use different addresses (16 x 4 line LCDs)
+	LCD_LINE_3a = 0x90 # LCD RAM address for the 3rd line (16 char display)
+	LCD_LINE_4a = 0xD0 # LCD RAM address for the 4th line (16 char display)
+
+	lcd_line3 = LCD_LINE_3
+	lcd_line4 = LCD_LINE_4
 
 	width = LCD_WIDTH
 	ScrollSpeed = 0.3       # Default scroll speed
@@ -143,12 +153,12 @@ class lcd_i2c:
 
 	# Display Line 3 on LCD
 	def line3(self,text):
-		self._writeLine(self.LCD_LINE_3,text)
+		self._writeLine(self.lcd_line3,text)
 		return
 
 	# Display Line 4 on LCD
 	def line4(self,text):
-		self._writeLine(self.LCD_LINE_4,text)
+		self._writeLine(self.lcd_line4,text)
 		return
 
 	# Write a single line to the LCD
@@ -171,12 +181,12 @@ class lcd_i2c:
 
 	# Scroll message on line 3
 	def scroll3(self,mytext,interrupt):
-		self._scroll(mytext,self.LCD_LINE_3,interrupt)
+		self._scroll(mytext,self.lcd_line3,interrupt)
 		return
 
 	# Scroll message on line 4
 	def scroll4(self,mytext,interrupt):
-		self._scroll(mytext,self.LCD_LINE_4,interrupt)
+		self._scroll(mytext,self.lcd_line4,interrupt)
 		return
 
 
@@ -254,9 +264,17 @@ class lcd_i2c:
 			else:
 				self.writeData(ord(char))
 
+	# Get LCD width 0 = use default for program
+	def getWidth(self):
+		return config.getWidth()
+
 	# Set the display width
 	def setWidth(self,width):
 		self.width = width
+		# Adjust line offsets if 16 char display
+		if width is 16:
+			self.lcd_line3 = self.LCD_LINE_3a
+			self.lcd_line4 = self.LCD_LINE_4a
 		return
 
 	# Set Scroll line speed - Best values are 0.2 and 0.3

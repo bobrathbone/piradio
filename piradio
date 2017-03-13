@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.68 2016/11/13 11:47:56 bob Exp $
+# $Id: piradio,v 1.74 2017/03/09 12:32:21 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 5.6
+Version: 5.9
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 Email-Address : bob@bobrathbone.com
 
@@ -70,6 +70,7 @@ Files:  radiod.py /usr/share/radio/
 	test_lcd.py /usr/share/radio/
 	test_i2c_lcd.py /usr/share/radio/
 	test_switches.py /usr/share/radio/
+	wiring.py /usr/share/radio/
 	select_daemon.sh /usr/share/radio/
 	select_audio.sh /usr/share/radio/
 	run_raspi-config.sh /usr/share/radio/
@@ -91,6 +92,8 @@ Files:  radiod.py /usr/share/radio/
 	init.d/pifacercd /etc/
 	radiod.conf /usr/share/radio/
 	radiod.conf.40_pin /usr/share/radio/
+	radiod.service /lib/systemd/system/
+	pifacercd.service /lib/systemd/system/
 	contributors/README /usr/share/radio/
 	contributors/LCD4x40-PCF8574/radio4x40.py /usr/share/radio/
 	contributors/LCD4x40-PCF8574/lcd_class4x40.py /usr/share/radio/

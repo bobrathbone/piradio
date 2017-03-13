@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # Rotary encoder version with no LCD display for Retro Radio conversion
-# $Id: retro_radio.py,v 1.19 2016/08/20 10:03:43 bob Exp $
+# $Id: retro_radio.py,v 1.22 2017/02/12 13:01:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -65,8 +65,8 @@ menu_switch_value = 0
 # Signal SIGTERM handler
 def signalHandler(signal,frame):
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	GPIO.cleanup()
@@ -74,23 +74,23 @@ def signalHandler(signal,frame):
 
 # Menu switch event handler
 def menu_swich_event(switch):
-                global menu_switch_value
-                global menu_switch
-                global log,radio
-                time.sleep(0.1)
-                value = menu_switch.get()
-                if value != menu_switch_value:
+		global menu_switch_value
+		global menu_switch
+		global log,radio
+		time.sleep(0.1)
+		value = menu_switch.get()
+		if value != menu_switch_value:
 			message = "Menu switch "  + str(switch) + " value " + str(value)
 			log.message(message , log.INFO)
-                        menu_switch_value = value
-                return
+			menu_switch_value = value
+		return
 
 # Daemon class
 class MyDaemon(Daemon):
 
 	def run(self):
 		global CurrentFile
-                global menu_switch_value
+		global menu_switch_value
 		global volumeknob,tunerknob,statusLed,menu_switch
 
 		menu_settle = 5 	# Allow menu switch to settle
@@ -146,6 +146,12 @@ class MyDaemon(Daemon):
 		log.message(mpd_version, log.INFO)
 		time.sleep(1)
 		 	
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
+
+		# Load radio
 		reload(radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -217,10 +223,10 @@ class MyDaemon(Daemon):
 
 			elif display_mode == radio.MODE_TIME:
 
-                                if radio.getReload():
-                                        log.message("Reload ", log.DEBUG)
-                                        reload(radio)
-                                        radio.setReload(False)
+				if radio.getReload():
+					log.message("Reload ", log.DEBUG)
+					reload(radio)
+					radio.setReload(False)
 
 			# Check state (pause or play)
 			checkState(radio)
@@ -534,24 +540,24 @@ def update_library(radio):
 
 # Reload if new source selected (RADIO or PLAYER)
 def reload(radio):
-        radio.unmountAll()
+	radio.unmountAll()
 
-        source = radio.getSource()
-        if source == radio.RADIO:
-                dirList=os.listdir(PlaylistsDirectory)
-                for fname in dirList:
-                        if os.path.isfile(fname):
-                                continue
-                        log.message("Loading " + fname, log.DEBUG)
-                        time.sleep(0.1)
-                radio.loadStations()
+	source = radio.getSource()
+	if source == radio.RADIO:
+		dirList=os.listdir(PlaylistsDirectory)
+		for fname in dirList:
+			if os.path.isfile(fname):
+				continue
+			log.message("Loading " + fname, log.DEBUG)
+			time.sleep(0.1)
+		radio.loadStations()
 
-        elif source == radio.PLAYER:
-                radio.loadMedia()
-                current = radio.execMpcCommand("current")
-                if len(current) < 1:
-                        update_library(radio)
-        return
+	elif source == radio.PLAYER:
+		radio.loadMedia()
+		current = radio.execMpcCommand("current")
+		if len(current) < 1:
+			update_library(radio)
+	return
 
 
 # Get currently playing station or track number from MPC

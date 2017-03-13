@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Rotary Test Encoder Class
-# $Id: test_rotary_class.py,v 1.6 2016/06/29 09:43:33 bob Exp $
+# $Id: test_rotary_class.py,v 1.9 2017/02/13 18:55:53 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -11,7 +11,7 @@
 # License: GNU V3, See https://www.gnu.org/copyleft/gpl.html
 #
 # Disclaimer: Software is provided as is and absolutly no warranties are implied or given.
-#             The authors shall not be liable for any loss or damage however caused.
+# The authors shall not be liable for any loss or damage however caused.
 #
 
 import sys
@@ -24,14 +24,23 @@ from rotary_class import RotaryEncoder
 stderr = sys.stderr.write;
 
 # Switch definitions
-MENU_SWITCH = 25
-LEFT_SWITCH = 14
-RIGHT_SWITCH = 15
-UP_SWITCH = 17
-DOWN_SWITCH = 18
-DOWN_SWITCH_IF_DAC = 10
-MUTE_SWITCH = 4 
+menu_switch = 25
+left_switch = 14
+right_switch = 15
+up_switch = 17
+down_switch = 18
+mute_switch = 4 
 
+# If using a DAC with 26 pin wiring the down switch is on GPIO10
+dac_down_switch = 10
+
+# Switch settings for 40 pin version (support for IQAudio)
+menu_switch_40 = 17
+mute_switch_40 = 4
+up_switch_40 = 15
+down_switch_40 = 14
+left_switch_40 = 23
+right_switch_40 = 24
 
 # Try to trap any exit errors 
 def exit_fn():
@@ -70,15 +79,30 @@ answer = raw_input("")
 if answer == 'y':
 	revision = 1
 
-# If using a HiFiBerry DAC+ use GPIO 10 (Pin 19) 
-down_switch = DOWN_SWITCH
-stderr("Are you using a HiFiBerry DAC+ y/n: ")
+# If using a Audio DAC use GPIO 10 (Pin 19) 
+down_switch = down_switch
+stderr("Which wiring version are you using\n")
+stderr("40 pin = 1, 26 pin = 2: ")
 answer = raw_input("")
-if answer == 'y':
-	down_switch = DOWN_SWITCH_IF_DAC
+if answer == '1':
+	menu_switch = menu_switch_40
+	left_switch = left_switch_40
+	right_switch = right_switch_40
+	up_switch = up_switch_40
+	down_switch = down_switch_40
+	mute_switch =  mute_switch_40
+	stderr("40 pin wiring version selected\n")
+else:
+	stderr("26 pin wiring version selected\n")
+	stderr("Are you using GPIO10 (pin 19) for the down switch y/n: ")
+	answer = raw_input("")
+	if answer == 'y':
+		down_switch = dac_down_switch
+		stderr("Down switch is set to GPIO" + str(dac_down_switch) + "\n")
 
-volumeknob = RotaryEncoder(LEFT_SWITCH,RIGHT_SWITCH,MUTE_SWITCH,volume_event,revision)
-tunerknob = RotaryEncoder(UP_SWITCH,down_switch,MENU_SWITCH,tuner_event,revision)
+# Set up rotary encoders
+volumeknob = RotaryEncoder(left_switch,right_switch,mute_switch,volume_event,revision)
+tunerknob = RotaryEncoder(down_switch,up_switch,menu_switch,tuner_event,revision)
 
 print "Use Ctl-C to exit"
 

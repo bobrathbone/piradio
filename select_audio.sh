@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_audio.sh,v 1.18 2016/10/22 11:48:56 bob Exp $
+# $Id: select_audio.sh,v 1.31 2017/01/16 14:02:37 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -19,6 +19,8 @@
 BOOTCONFIG=/boot/config.txt
 MPDCONFIG=/etc/mpd.conf
 ASOUNDCONF=/etc/asound.conf
+MODPROBE=/etc/modprobe.d/alsa-base.conf
+MODULES=/proc/asound/modules
 
 # Audio types
 JACK=1	# Audio Jack or Sound Cards
@@ -30,6 +32,7 @@ DTOVERLAY=""
 
 # Device and Name
 DEVICE="0,0"
+CARD=0
 NAME="Onboard jack"
 MIXER="hardware"
 NUMID=1
@@ -42,10 +45,15 @@ if [[ $? == 0 ]]; then 	# Don't seperate from above
 	exit 1
 fi
 
+# Stop the radio
+echo "Stopping the radio"
+sudo service radiod stop
+sudo service mpd stop
+
 selection=1 
 while [ $selection != 0 ]
 do
-	ans=$(whiptail --title "Select audio output" --menu "Choose your option" 18 75 10 \
+	ans=$(whiptail --title "Select audio output" --menu "Choose your option" 18 75 12 \
 	"1" "On-board audio output jack" \
 	"2" "HDMI output" \
 	"3" "USB DAC" \
@@ -55,7 +63,9 @@ do
 	"7" "HiFiBerry Amp" \
 	"8" "IQAudio DAC" \
 	"9" "IQAudio DAC plus and Digi/AMP " \
-	"10" "Manually configure" 3>&1 1>&2 2>&3)
+	"10" "JustBoom DAC/Zero/Amp" \
+	"11" "JustBoom Digi HAT/zero" \
+	"12" "Manually configure" 3>&1 1>&2 2>&3)
 
 	exitstatus=$?
 	if [[ $exitstatus != 0 ]]; then
@@ -74,6 +84,7 @@ do
 		DESC="USB DAC"
 		NAME=${DESC}
 		DEVICE="1,0"
+		CARD=1
 		MIXER="software"
 		NUMID=6
 
@@ -81,45 +92,52 @@ do
 		DESC="HiFiBerry DAC or Light"
 		NAME=${DESC}
 		DTOVERLAY="hifiberry-dac"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '5' ]]; then
 		DESC="HiFiBerry DAC Plus"
 		NAME=${DESC}
 		DTOVERLAY="hifiberry-dacplus"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '6' ]]; then
 		DESC="HiFiBerry Digi"
 		NAME=${DESC}
 		DTOVERLAY="hifiberry-digi"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '7' ]]; then
 		DESC="HiFiBerry Amp"
 		NAME=${DESC}
 		DTOVERLAY="hifiberry-amp"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '8' ]]; then
 		DESC="IQAudio DAC"
 		NAME=${DESC}
 		DTOVERLAY="iqaudio-dacplus,unmute_amp"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '9' ]]; then
 		DESC="IQAudio DAC plus or DigiAMP"
 		NAME="IQAudio DAC+"
 		DTOVERLAY="iqaudio-dacplus,unmute_amp"
-		DEVICE="1,0"
 		MIXER="software"
 
 	elif [[ ${ans} == '10' ]]; then
+		DESC="JustBoom DAC/Amp"
+		NAME="JustBoom DAC"
+		DTOVERLAY="justboom-dac"
+		MIXER="software"
+
+	elif [[ ${ans} == '11' ]]; then
+		DESC="JustBoom DAC/Amp"
+		NAME="JustBoom Digi HAT"
+		DTOVERLAY="justboom-digi"
+		#DEVICE="1,0"
+		MIXER="software"
+
+	elif [[ ${ans} == '12' ]]; then
 		DESC="Manual configuration"
 	fi
 
@@ -128,14 +146,6 @@ do
 done 
 
 echo "${DESC} selected"
-
-# Install sysvinit-init if not already installed
-PKG="sysvinit-core"
-dpkg-query --status ${PKG} 2>&1 >/dev/null
-if [[ $? != 0 ]]; then 	# Don't seperate from above
-	echo "Installing ${PKG} package"
-	sudo apt-get --yes install ${PKG}
-fi
 
 # Install alsa-utils if not already installed
 PKG="alsa-utils"
@@ -166,26 +176,18 @@ if [[ $? != 0 ]]; then 	# Don't seperate from above
 	echo "Failed to configure Alsa mixer"
 fi
 
-# Configure the Alsa sound mixer on second card for 100 volume
-aplay -l | grep "card 1"  2>&1 >/dev/null
-if [[ $? == 0 ]]; then 	# Don't seperate from above
-	amixer -c1 cset numid=${NUMID} 100% 2>&1 >/dev/null
-	if [[ $? != 0 ]]; then 	# Don't seperate from above
-		echo "Failed to configure second Alsa mixer"
-	fi
+# Set up asound configuration for espeak and aplay
+echo "Configuring card ${CARD} for aplay (${ASOUNDCONF})"
+if [[ ! -f ${ASOUNDCONF} ]]; then
+	sudo cp -f asound.conf.dist ${ASOUNDCONF}
 fi
 
-# Set up Alsa defaults to use second card if selected
-if [[ ${DEVICE} == "1,0" ]]; then
-	sudo cp -f asound.conf.dist ${ASOUNDCONF}
-	if [[ $? != 0 ]]; then 	# Don't seperate from above
-		echo "Failed to copy asound.conf.dist to ${ASOUNDCONF}"
-	fi
-else	
-	sudo rm -f ${ASOUNDCONF}
-	if [[ $? != 0 ]]; then 	# Don't seperate from above
-		echo "Failed to remove ${ASOUNDCONF}"
-	fi
+if [[ ${CARD} == 0 ]]; then
+        sudo sed -i -e "0,/card/s/1/0/" ${ASOUNDCONF}
+        sudo sed -i -e "0,/plughw/s/1,0/0,0/" ${ASOUNDCONF}
+else
+        sudo sed -i -e "0,/card/s/0/1/" ${ASOUNDCONF}
+        sudo sed -i -e "0,/plughw/s/0,0/1,0/" ${ASOUNDCONF}
 fi
 
 # Save original configuration 
@@ -211,6 +213,7 @@ sudo sed -i -e "0,/bind_to_address/{s/.*bind_to_address.*/bind_to_address\t\t\"a
 # Delete existing dtoverlays
 sudo sed -i '/dtoverlay=iqaudio/d' ${BOOTCONFIG}
 sudo sed -i '/dtoverlay=hifiberry/d' ${BOOTCONFIG}
+sudo sed -i '/dtoverlay=justboom/d' ${BOOTCONFIG}
 
 # Add dtoverlay for sound cards
 if [[ ${DTOVERLAY} != "" ]]; then
@@ -218,11 +221,29 @@ if [[ ${DTOVERLAY} != "" ]]; then
 	sudo awk -v s="dtoverlay=${DTOVERLAY}" '/^dtoverlay/{f=1;$0=s}7;END{if(!f)print s}' ${BOOTCONFIG} > ${TEMP}
 	sudo cp -f ${TEMP} ${BOOTCONFIG}
 	sudo rm -f ${TEMP}
+	dtcommand=$(echo ${DTOVERLAY} | sudo sed 's/\,/ /' )
+	sudo dtoverlay -v ${dtcommand}
+	sudo dtparam audio=off
+	sudo sed -i -e "/^dtparam=audio=/{s/on/off/}" ${BOOTCONFIG}
+else 	
+	sudo sed -i -e "/^dtparam=audio=/{s/off/on/}" ${BOOTCONFIG}
+	sudo dtparam audio=on
 fi
 
-# Remove redundant packages
-echo "Removing redundant packages"
-sudo apt-get -y autoremove 2>&1 >/dev/null
+# Configure the Alsa sound mixer on second card for 100 volume
+# This must be done after the dtoverlay command above
+aplay -l | grep "card 1"  2>&1 >/dev/null
+if [[ $? == 0 ]]; then 	# Don't seperate from above
+	amixer -c1 cset numid=${NUMID} 100% 2>&1 >/dev/null
+	if [[ $? != 0 ]]; then 	# Don't seperate from above
+		echo "Failed to configure second Alsa mixer"
+	fi
+else
+	amixer -c0 cset numid=${NUMID} 100% 2>&1 >/dev/null
+	if [[ $? != 0 ]]; then 	# Don't seperate from above
+		echo "Failed to configure first Alsa mixer"
+	fi
+fi
 
 echo "${DESC} configured"
 sleep 2

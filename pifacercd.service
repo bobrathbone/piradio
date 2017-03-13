@@ -1,0 +1,12 @@
+# Radio remote control systemd script
+# $Id: pifacercd.service,v 1.3 2016/12/17 11:36:23 bob Exp $
+[Unit]
+Description=Radio remote control daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/share/radio/remote_control.py nodaemon
+
+[Install]
+WantedBy=multi-user.target

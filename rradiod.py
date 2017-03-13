@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 # Rotary encoder version
-# $Id: rradiod.py,v 1.68 2016/08/13 13:01:13 bob Exp $
+# $Id: rradiod.py,v 1.72 2017/02/13 18:44:44 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -63,8 +63,8 @@ tunerknob = None
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("umount /media > /dev/null 2>&1")
-	radio.execCommand("umount /share > /dev/null 2>&1")
+	radio.execCommand("sudo umount /media > /dev/null 2>&1")
+	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped ")
@@ -126,6 +126,12 @@ class MyDaemon(Daemon):
 		lcd.scroll2(mpd_version,no_interrupt)
 		time.sleep(1)
 		 	
+		# Auto-load music library if no Internet
+                if len(ipaddr) < 1 and radio.autoload():
+                        log.message("Loading music library",log.INFO)
+                        radio.setSource(radio.PLAYER)
+
+                # Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -140,10 +146,10 @@ class MyDaemon(Daemon):
 
 		if radio.getRotaryClass() is radio.ROTARY_STANDARD:
 			volumeknob = RotaryEncoder(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-			tunerknob = RotaryEncoder(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoder(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 		elif radio.getRotaryClass() is radio.ROTARY_ALTERNATIVE:
 			volumeknob = RotaryEncoderAlternative(left_switch,right_switch,mute_switch,volume_event,boardrevision)
-			tunerknob = RotaryEncoderAlternative(up_switch,down_switch,menu_switch,tuner_event,boardrevision)
+			tunerknob = RotaryEncoderAlternative(down_switch,up_switch,menu_switch,tuner_event,boardrevision)
 
 		log.message("Running" , log.INFO)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # LCD test program for the lcd_i2c_class.py class
-# $Id: lcd_i2c_pcf8574.py,v 1.2 2016/06/25 10:37:43 bob Exp $
+# $Id: lcd_i2c_pcf8574.py,v 1.3 2016/12/01 14:17:31 bob Exp $
 # PCF8574 I2C LCD Backpack LCD class
 # Use this program to test I2C Backpack LCD wiring
 # Adapted from RpiLcdBackpack from Paul Knox-Kennedy by Lubos Ruckl and Bob Rathbone
@@ -20,6 +20,9 @@ import smbus, time
 from subprocess import * 
 from time import sleep, strftime
 from datetime import datetime
+from config_class import Configuration
+
+config = Configuration()
 
 class lcd_i2c_pcf8574:
     ADDRESS = 0x27 #for "Serial Interface IIC I2C TWI Adapter Module" (eBay)
@@ -80,9 +83,15 @@ class lcd_i2c_pcf8574:
     LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
     LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
 
+    # Some LCDs use different addresses (16 x 4 line LCDs)
+    LCD_LINE_3a = 0x90 # LCD RAM address for the 3rd line (16 char display)
+    LCD_LINE_4a = 0xD0 # LCD RAM address for the 4th line (16 char display)
+
+    lcd_line3 = LCD_LINE_3
+    lcd_line4 = LCD_LINE_4
+
     width = LCD_WIDTH
     ScrollSpeed = 0.3       # Default scroll speed
-
 
     def write_cmd(self, cmd):
         #self.__bus.write_byte(self.ADDRESS, cmd)	# Now configurable 
@@ -148,12 +157,12 @@ class lcd_i2c_pcf8574:
 
     # Display Line 3 on LCD
     def line3(self,text):
-        self._writeLine(self.LCD_LINE_3,text)
+        self._writeLine(self.lcd_line3,text)
         return
 
     # Display Line 4 on LCD
     def line4(self,text):
-        self._writeLine(self.LCD_LINE_4,text)
+        self._writeLine(self.lcd_line4,text)
         return
 
     # Write a single line to the LCD
@@ -176,12 +185,12 @@ class lcd_i2c_pcf8574:
 
     # Scroll message on line 3
     def scroll3(self,mytext,interrupt):
-        self._scroll(mytext,self.LCD_LINE_3,interrupt)
+        self._scroll(mytext,self.lcd_line3,interrupt)
         return
 
     # Scroll message on line 4
     def scroll4(self,mytext,interrupt):
-        self._scroll(mytext,self.LCD_LINE_4,interrupt)
+        self._scroll(mytext,self.lcd_line4,interrupt)
         return
 
 
@@ -262,6 +271,19 @@ class lcd_i2c_pcf8574:
     # Set the display width
     def setWidth(self,width):
         self.width = width
+        return
+
+    # Get LCD width 0 = use default for program
+    def getWidth(self):
+        return config.getWidth()
+
+    # Set the display width
+    def setWidth(self,width):
+        self.width = width
+        # Adjust line offsets if 16 char display
+        if width is 16:
+            self.lcd_line3 = self.LCD_LINE_3a
+            self.lcd_line4 = self.LCD_LINE_4a
         return
 
     # Set Scroll line speed - Best values are 0.2 and 0.3

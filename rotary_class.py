@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Raspberry Pi Rotary Encoder Class
-# $Id: rotary_class.py,v 1.6 2016/01/25 18:14:40 bob Exp $
+# $Id: rotary_class.py,v 1.7 2017/01/07 11:38:47 bob Exp $
 #
 # Copyright 2011 Ben Buxton. Licenced under the GNU GPL Version 3.
 # Contact: bb@cactii.net
@@ -158,7 +158,7 @@ class RotaryEncoder:
         GPIO.setwarnings(False)
         
         if revision == 1:
-            # For version 1 (old) boards comment out the above four lines
+            # For version 1 (old) boards 
             GPIO.setup(self.pinA, GPIO.IN)
             GPIO.setup(self.pinB, GPIO.IN)
             GPIO.setup(self.button, GPIO.IN)

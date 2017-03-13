@@ -1,7 +1,7 @@
 #!/bin/bash 
 set -e
 # Radio daemon pre-install script
-# $Id: piradio.preinst,v 1.6 2016/08/04 19:27:09 bob Exp $
+# $Id: piradio.preinst,v 1.7 2016/11/28 18:54:50 bob Exp $
 
 RADIOLIB=/var/lib/radiod
 MPDCONF=/etc/mpd.conf
@@ -24,12 +24,16 @@ if [[ -d ${RADIOLIB} ]]; then
 		echo "Saving current configuration"
 		echo "Copying ${MPDCONF} to ${MPDCONF}.orig"
 		sudo cp -fp ${MPDCONF} ${MPDCONF}.orig
-		echo "Copying ${INITTAB} to ${INITTAB}.orig"
-		sudo cp -fp ${INITTAB} ${INITTAB}.orig
 		echo "Copying ${BOOTCMD} to ${BOOTCMD}.orig"
 		sudo cp -fp ${BOOTCMD} ${BOOTCMD}.orig
 		echo "Copying ${MODULES} to ${MODULES}.orig"
 		sudo cp -fp ${MODULES} ${MODULES}.orig
+
+		# If inittab exists save a copy
+		if [[ ! -f  ${INITTAB}.orig ]]; then
+		    echo "Copying ${INITTAB} to ${INITTAB}.orig"
+		    sudo cp -fp ${INITTAB} ${INITTAB}.orig
+		fi
 	else
 		echo "Software only will be upgraded"
 		echo "Your existing configuration will not be changed"

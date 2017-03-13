@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: station.urls,v 1.21 2016/08/16 07:40:13 bob Exp $
+# $Id: station.urls,v 1.22 2016/12/03 12:54:37 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -64,8 +64,6 @@
 
 # Country music
 (Country music)
-[Digital Radio 108] http://digitalradionetworks.com:8002/listen.pls
-[977 MIX ASX] http://7639.live.streamtheworld.com:80/977_MIX_SC(stream)
 [Nashville FM] http://server-10.stream-server.nl:8300/listen.pls
 
 # Jazz
