@@ -9,6 +9,37 @@ See http://www.musicpd.org/
 Use "apt-get install mpd mpc python-mpd" to install the library
 Modified to use python-mpd library. See https://pypi.python.org/pypi/python-mpd/
 
+Version 5.11 release notes
+-------------------------
+28th August 2017
+Version 5.11 release notes
+1) Installation script changes for Raspian Stretch compatability
+2) Changes to to support Airplay source selection via the web interface
+3) Stop shairport-sync-metadata-reader when stopping Airplay
+4) Change "Advanced options" message in run_raspi-config.sh to "Interfacing options"
+5) Improved support for 4x16 LCD displays
+6) Improved error message if sound system fails
+7) Correct piface radio code to exit MPD correctly (Thanks to Mark Ward-Pointing)
+8) Correct 40 pin configuration in /etc/radiod.conf (left/right and up/down were reversed)
+   Note: If you keep your existing configuration there should not be a problem
+9) Improve mute function for rotary encoder verions
+10) Allow interrupt of URL error display (radio4.py and rradio4.py)
+
+-------------------------
+15th April 2017
+1) Airplay (shairport-sync) support added.
+2) Compatability issues with Pulse audio resolved
+3) Added mixer_volume parameter to /etc/radiod.conf to preset mixer volume
+4) Correct display_model.py Zero W ID
+5) Add wait for IP network to radio4.py etc (prevent blank IP display)
+6) Correct random setting error if in Radio mode
+7) Disable on-board audio if using USB sound dongle
+8) Improved timeouts for create_m3u.py program
+9) Revise translate class and complete re-test
+10) Display Audio Error! on LCD if sound system fails
+11) Enable the backlight on Chinese 1602 I2C LCDs (Adafruit RGB clones)
+12) Abort program startup if not sudo or root permissions
+
 Version 5.9 release notes
 -------------------------
 15th March 2017

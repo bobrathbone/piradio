@@ -1,6 +1,6 @@
 ### Commented entries have reasonable defaults.
 ### Uncomment to edit them.
-# $Id: piradio,v 1.74 2017/03/09 12:32:21 bob Exp $
+# $Id: piradio,v 1.84 2017/07/04 16:45:03 bob Exp $
 # Source: <source package name; defaults to package name>
 Section: misc
 Priority: optional
@@ -8,7 +8,7 @@ Homepage: http://www.bobrathbone.com
 Standards-Version: 3.9.2
 
 Package: radiod
-Version: 5.9
+Version: 5.11
 Maintainer: Bob Rathbone <bob@bobrathbone.com>
 Email-Address : bob@bobrathbone.com
 
@@ -41,6 +41,7 @@ Files:  radiod.py /usr/share/radio/
 	radio8x2.py /usr/share/radio/
 	rradio8x2.py /usr/share/radio/
 	config_class.py /usr/share/radio/
+	airplay_class.py /usr/share/radio/
 	radio_piface.py /usr/share/radio/
 	display_current.py /usr/share/radio/
 	display_config.py /usr/share/radio/
@@ -90,10 +91,12 @@ Files:  radiod.py /usr/share/radio/
 	logrotate.d/radiod /etc/
 	init.d/radiod /etc/
 	init.d/pifacercd /etc/
+	init.d/shairport-sync /etc/
 	radiod.conf /usr/share/radio/
 	radiod.conf.40_pin /usr/share/radio/
 	radiod.service /lib/systemd/system/
 	pifacercd.service /lib/systemd/system/
+	shairport-sync.service /lib/systemd/system/
 	contributors/README /usr/share/radio/
 	contributors/LCD4x40-PCF8574/radio4x40.py /usr/share/radio/
 	contributors/LCD4x40-PCF8574/lcd_class4x40.py /usr/share/radio/
@@ -107,6 +110,7 @@ Files:  radiod.py /usr/share/radio/
 	language/language.hu /usr/share/radio/
 	language/language.nl /usr/share/radio/
 	rss/rss /usr/share/radio/
+	shairport-sync.conf /etc
 
 postinst: piradio.postinst
 postrm: piradio.postrm

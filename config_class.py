@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: config_class.py,v 1.40 2017/02/12 13:01:02 bob Exp $
+# $Id: config_class.py,v 1.47 2017/05/14 10:45:35 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -21,6 +21,7 @@ from log_class import Log
 
 # System files
 ConfigFile = "/etc/radiod.conf"
+Airplay = "/usr/local/bin/shairport-sync"
 
 log = Log()
 config = ConfigParser.ConfigParser()
@@ -30,6 +31,7 @@ class Configuration:
 	# Input source
 	RADIO = 0
 	PLAYER = 1
+	AIRPLAY = 2
 	LIST = 0
 	STREAM = 1
 
@@ -48,6 +50,9 @@ class Configuration:
 	stationNamesSource = LIST # Station names from playlist names or STREAM
 	rotary_class = STANDARD		# Rotary class STANDARD or ALTERNATIVE 
 	lcd_width = 0		# Line width of LCD 0 = use program default
+	airplay = False		# Use airplay
+	mixerPreset = 0		# Mixer preset volume (0 disable setting as MPD controls it)
+	mixer_volume_id = 1	# Mixer volume id (Run 'amixer controls | grep -i volume')
 
 	# Remote control parameters 
 	remote_led = 0  # Remote Control activity LED 0 = No LED	
@@ -305,6 +310,52 @@ class Configuration:
 		except ConfigParser.NoSectionError:
 			msg = ConfigParser.NoSectionError(section),'in',ConfigFile
 			log.message(msg,log.ERROR)
+
+		# Read Airplay parameters
+		section = 'AIRPLAY'
+
+		# Get options
+		config.read(ConfigFile)
+		try:
+			options =  config.options(section)
+			for option in options:
+				option = option.lower()
+				parameter = config.get(section,option)
+				
+				self.configOptions[option] = parameter
+
+				if option == 'airplay':
+					if parameter == 'yes' and os.path.isfile(Airplay):
+						self.airplay = True
+
+				elif option == 'mixer_volume':
+					volume = 100
+					try:
+						volume = int(parameter)
+						if volume < 0:
+							volume = 0
+						if volume > 100:
+							volume = 100
+						self.mixerPreset = volume
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				elif option == 'mixer_volume_id':
+					try:
+						self.mixer_volume_id = int(parameter)
+					except:
+						self.invalidParameter(ConfigFile,option,parameter)
+
+				else:
+					msg = "Invalid option " + option + ' in section ' \
+						+ section + ' in ' + ConfigFile
+					log.message(msg,log.ERROR)
+
+
+		except ConfigParser.NoSectionError:
+			msg = ConfigParser.NoSectionError(section),'in',ConfigFile
+			log.message(msg,log.WARNING)
+
 		return
 
 
@@ -380,9 +431,6 @@ class Configuration:
 			source_name = "RADIO"
 		return source_name
 
-	# Get the background color (Integer)
-	def getBackColor(self,sColor):
-		color = 0x0
 	# Get the remote Port  default 5100
 	def getRemoteUdpPort(self):
 		return self.remote_control_port
@@ -522,6 +570,18 @@ class Configuration:
 	def getWidth(self):
 		return self.lcd_width
 
+	# Get airplay option
+	def getAirplay(self):
+		return self.airplay
+
+	# Get mixer volume preset
+	def getMixerPreset(self):
+		return self.mixerPreset
+
+	# Get mixer volume ID
+	def getMixerVolumeID(self):
+		return self.mixer_volume_id
+
 # End Configuration of class
 
 # Test Configuration class
@@ -568,6 +628,9 @@ if __name__ == '__main__':
 	print "Backpack type:", config.getBackPackType(), config.getBackPackName()
 	print "I2C address:", hex(config.getI2Caddress())
 	print "LCD width:", config.getWidth()
+	print "Airplay:", config.getAirplay()
+	print "Mixer Volume Preset:", config.getMixerPreset()
+	print "Mixer Volume ID:", config.getMixerVolumeID()
 
 # End of file
 

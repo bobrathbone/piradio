@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_piface_class.py,v 1.2 2015/01/21 19:44:18 bob Exp $
+# $Id: lcd_piface_class.py,v 1.3 2017/04/14 15:12:31 bob Exp $
 # Raspberry Pi Internet Radio
 # using a Piface backlit LCD plate
 #
@@ -215,6 +215,7 @@ class Lcd:
 	def buttonPressed(self, b):
 		button =  self.cad.switches[b].value
 		return button
+
 	# Clear the display
 	def clear(self):
 		self.cad.lcd.clear()
@@ -222,6 +223,10 @@ class Lcd:
 	# Sets cursor home
 	def home(self):
 		self.cad.lcd.home()
+		return
 
+	# Get LCD width
+	def getWidth(self):
+		return self.width
 
 # End of Lcd class

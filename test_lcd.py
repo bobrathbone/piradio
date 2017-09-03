@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: latin-1 -*-
 #
 # LCD test program using the lcd_class.py 
 # Use this program to test LCD wiring
 #
-# $Id: test_lcd.py,v 1.11 2016/12/13 18:50:02 bob Exp $
+# $Id: test_lcd.py,v 1.14 2017/04/25 10:20:21 bob Exp $
 # 
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -20,9 +21,12 @@ import atexit
 import traceback
 import RPi.GPIO as GPIO
 from lcd_class import Lcd
+from translate_class import Translate
+
 stderr = sys.stderr.write;
 
 lcd = Lcd()
+translate = Translate()
 
 # Try to trap any exit errors and cleanup GPIO
 def exit_fn():
@@ -50,13 +54,24 @@ if width is 0:
 	sys.exit(1)
 
 lcd.setWidth(width)
-lcd.line1("Bob Rathbone")
+
+if len(sys.argv) > 1:
+	text = translate.escape(sys.argv[1])
+else:
+	text = "Bob Rathbone"
+
+lcd.line3("Line 3")
+lcd.line4("Line 4")
 
 while True:
 	try:
-		lcd.line3("Line 3")
-		lcd.line4("Line 4")
+		if len(text) > width:
+			lcd.scroll1(text,interrupt)
+		else:
+			lcd.line1(text)
+
 		lcd.scroll2("Line 2: abcdefghijklmnopqrstuvwxyz 0123456789",interrupt) 
+
 	except KeyboardInterrupt:
 		print "\nExit"
 		GPIO.setwarnings(False)

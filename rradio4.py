@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character LCD version
 #
-# $Id: rradio4.py,v 1.89 2017/02/13 18:44:44 bob Exp $
+# $Id: rradio4.py,v 1.121 2017/08/10 08:01:00 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -61,16 +61,13 @@ rss = Rss()
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("sudo umount /media > /dev/null 2>&1")
-	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio stopped")
 	lcd.line2("")
 	lcd.line3("")
 	lcd.line4("")
-	GPIO.cleanup()
-	sys.exit(0)
+	radio.exit()
 
 # Daemon class
 class MyDaemon(Daemon):
@@ -78,12 +75,14 @@ class MyDaemon(Daemon):
 	def run(self):
 		global CurrentFile
 		global volumeknob,tunerknob
+		
 		log.init('radio')
 		signal.signal(signal.SIGTERM,signalHandler)
 
 		progcall = str(sys.argv)
 		log.message('Radio running pid ' + str(os.getpid()), log.INFO)
-		log.message("Radio " +  progcall + " daemon version " + radio.getVersion(), log.INFO)
+		log.message("Radio " +  progcall + " daemon version " 
+					+ radio.getVersion(), log.INFO)
 		log.message("GPIO version " + str(GPIO.VERSION), log.INFO)
 
 		boardrevision = radio.getBoardRevision()
@@ -96,8 +95,7 @@ class MyDaemon(Daemon):
 		else:
 			lcd.setWidth(20)
 
-		lcd.line1("Radio version " + radio.getVersion())
-		time.sleep(0.5)
+		lcd.scroll1("Radio version " + radio.getVersion(), nointerrupt)
 
 		hostname = exec_cmd('hostname -s')
 
@@ -110,7 +108,7 @@ class MyDaemon(Daemon):
 		waiting4network = True
 		count = 10
 		while waiting4network:
-			lcd.line4("Waiting for network")
+			lcd.scroll4("Waiting for network", nointerrupt)
 			ipaddr = exec_cmd('hostname -I')
 			time.sleep(1)
 			count -= 1
@@ -121,6 +119,7 @@ class MyDaemon(Daemon):
 			lcd.line4("No IP network")
 		else:
 			lcd.line4("IP " + ipaddr)
+			log.message("IP " + ipaddr, log.INFO)
 
 		lcd.line3("Starting MPD")
 		log.message("GPIO version " + str(GPIO.VERSION), log.INFO)
@@ -130,8 +129,8 @@ class MyDaemon(Daemon):
 
 		mpd_version = radio.getMpdVersion()
 		log.message(mpd_version, log.INFO)
-		lcd.line3("MPD version " + mpd_version)
-		lcd.line4("GPIO version " + str(GPIO.VERSION))
+		lcd.scroll3("MPD version " + mpd_version, nointerrupt)
+		lcd.scroll4("GPIO version " + str(GPIO.VERSION), nointerrupt)
 		time.sleep(2.0)
 		 	
 		# Auto-load music library if no Internet
@@ -168,6 +167,13 @@ class MyDaemon(Daemon):
 		toggleScrolling = True  # Toggle scrolling between Line 2 and 3
 		while True:
 
+			# Check for audio device error
+			if radio.audioError():
+				lcd.line1("Audio Error!")
+				lcd.line2("Aborting!")
+				time.sleep(5)
+				sys.exit(1)
+
 			# See if we have had an interrupt
 			switch = radio.getSwitch()
 			if switch > 0:
@@ -179,16 +185,17 @@ class MyDaemon(Daemon):
 			dateFormat = radio.getDateFormat()
 			todaysdate = strftime(dateFormat)
 
-			ipaddr = exec_cmd('hostname -I')
 
 			# Shutdown command issued
 			if display_mode == radio.MODE_SHUTDOWN:
 				log.message("Shutting down", log.DEBUG)
-				displayShutdown(lcd)
+				displayShutdown(lcd,radio)
 				while True:
 					time.sleep(1)
 
-			if len(ipaddr) < 1 and radio.getSource() != radio.PLAYER: 
+			ipaddr = exec_cmd('hostname -I')
+			source = radio.getSource()
+			if len(ipaddr) < 1 and source != radio.PLAYER: 
 				lcd.line3("No IP network")
 
 			elif display_mode == radio.MODE_TIME:
@@ -201,7 +208,10 @@ class MyDaemon(Daemon):
 				if radio.getStreaming():
 					msg = msg + ' *'  
 				lcd.line1(msg)
-				display_current(lcd,radio,toggleScrolling)
+				if source == radio.AIRPLAY:
+					displayAirplay(lcd,radio)
+				else:
+					display_current(lcd,radio,toggleScrolling)
 
 			elif display_mode == radio.MODE_SEARCH:
 				display_search(lcd,radio)
@@ -221,10 +231,11 @@ class MyDaemon(Daemon):
 				current_id = radio.getCurrentID()
 				if input_source == radio.RADIO:
 					lcd.line2(radio.getRadioStation())
-				else:
+				elif input_source == radio.PLAYER:
 					lcd.line2("Current track:" + str(current_id))
+				else:
+					displayVolume(lcd,radio)
 				display_rss(lcd,rss)
-				displayVolume(lcd,radio)
 
 			elif display_mode == radio.MODE_SLEEP:
 				lcd.line1(todaysdate)
@@ -273,6 +284,11 @@ class MyDaemon(Daemon):
 
 # End of class overrides
 
+# No interrupt for LCD routines
+def nointerrupt():
+	return False
+
+# Interrupt for LCD routines
 def interrupt():
 	global lcd
 	global radio
@@ -298,7 +314,9 @@ def interrupt():
 		interrupt = checkTimer(radio)
 
 	if not interrupt:
-		interrupt = checkState(radio) or radio.getInterrupt()
+		interrupt = radio.getInterrupt()
+		if  radio.getSource() != radio.AIRPLAY:
+			interrupt = checkState(radio)
 
 	return interrupt
 
@@ -396,6 +414,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				display_mode = radio.MODE_SHUTDOWN
 
 		if radio.muted():
+			log.message("* DEBUG A", log.DEBUG)
 			unmuteRadio(lcd,radio)
 		
 		display_mode = display_mode + 1
@@ -406,6 +425,10 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				lcd.line3("Getting RSS feed")
 			else:
 				display_mode = display_mode + 1
+
+		# Skip search if Airplay running
+		if display_mode == radio.MODE_SEARCH and input_source == radio.AIRPLAY:
+			display_mode = display_mode + 1
 
 		if display_mode > radio.MODE_LAST:
 			boardrevision = radio.getBoardRevision()
@@ -452,11 +475,11 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 		log.message("UP switch display_mode " + str(display_mode), log.DEBUG)
 
 		if  display_mode != radio.MODE_SLEEP:
-			if radio.muted():
+			if radio.muted() and input_source != radio.AIRPLAY:
 				unmuteRadio(lcd,radio)
 
 			if display_mode == radio.MODE_SOURCE:
-				radio.toggleSource()
+				radio.cycleSource(UP)
 				radio.setReload(True)
 				time.sleep(0.2)
 				radio.getEvents()       # Clear any event
@@ -468,7 +491,8 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				cycle_options(radio,UP)
 
 			else:
-				radio.channelUp()
+				if input_source != radio.AIRPLAY:
+					radio.channelUp()
 
 			interrupt = True
 		else:
@@ -477,11 +501,11 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 	elif switch == down_switch:
 		log.message("DOWN switch display_mode " + str(display_mode), log.DEBUG)
 		if  display_mode != radio.MODE_SLEEP:
-			if radio.muted():
+			if radio.muted() and input_source != radio.AIRPLAY:
 				unmuteRadio(lcd,radio)
 
 			if display_mode == radio.MODE_SOURCE:
-				radio.toggleSource()
+				radio.cycleSource(DOWN)
 				radio.setReload(True)
 				time.sleep(0.2)
 				radio.getEvents()       # Clear any event
@@ -493,7 +517,8 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				cycle_options(radio,DOWN)
 
 			else:
-				radio.channelDown()
+				if input_source != radio.AIRPLAY:
+					radio.channelDown()
 			interrupt = True
 		else:
 			DisplayExitMessage(lcd)
@@ -516,6 +541,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					volAdjust = events/2
 				else:
 					volAdjust = events
+
 				if radio.muted():
 					radio.unmute()
 				volume = radio.getVolume()
@@ -523,9 +549,15 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					volume -= 1
 					if volume <  0:
 						volume = 0
-					radio.setVolume(volume)
+					if input_source == radio.AIRPLAY:
+						radio.decreaseMixerVolume()
+					else:
+						radio.setVolume(volume)
 					displayVolume(lcd,radio)
 					volAdjust -= 1
+
+				if input_source == radio.AIRPLAY:
+					time.sleep(0.3)
 
 		else:
 			DisplayExitMessage(lcd)
@@ -550,6 +582,7 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 				
 				if radio.muted():
 					radio.unmute()
+
 				volume = radio.getVolume()
 				range = radio.getVolumeRange()
 
@@ -557,13 +590,19 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					volume += 1
 					if volume > range:
 						volume = range
-					radio.setVolume(volume)
+					if input_source == radio.AIRPLAY:
+						radio.increaseMixerVolume()
+					else:
+						radio.setVolume(volume)
+
 					displayVolume(lcd,radio)
 					volAdjust -= 1
 
+				if input_source == radio.AIRPLAY:
+					time.sleep(0.3)
+
 	elif switch == mute_switch:
 		log.message("MUTE switch" ,log.DEBUG)
-		log.message("muted " + str(radio.muted()) ,log.DEBUG)
 
 		if display_mode != radio.MODE_SLEEP:
 
@@ -591,6 +630,9 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 					radio.unmute()
 				else:
 					radio.mute()
+					displayVolume(lcd,radio)
+					time.sleep(1)
+					radio.resetEvents()
 				interrupt = True
 
 		else:
@@ -631,7 +673,7 @@ def cycle_options(radio,direction):
 			else:
 				option = option-1
 
-	if option == radio.STREAMING:
+	elif option == radio.STREAMING:
 		if not radio.streamingAvailable():
 			if direction == UP:
 				option = option+1
@@ -725,9 +767,11 @@ def update_library(lcd,radio):
 
 # Reload if new source selected (RADIO or PLAYER)
 def reload(lcd,radio):
-	lcd.line1("Loading:")
-
 	source = radio.getSource()
+
+	if source != radio.AIRPLAY:
+		lcd.line1("Loading:")
+
 	if source == radio.RADIO:
 		lcd.line2("Radio Stations")
 		dirList=os.listdir(PlaylistsDirectory)
@@ -745,6 +789,10 @@ def reload(lcd,radio):
 		current = radio.execMpcCommand("current")
 		if len(current) < 1:
 			update_library(lcd,radio)
+
+	elif source == radio.AIRPLAY:
+		lcd.line2("Airplay receiver")
+		radio.startAirplay()
 	return
 
 # Display the RSS feed
@@ -786,7 +834,8 @@ def display_current(lcd,radio,toggleScrolling):
 				lcd.scroll2(station, interrupt)
 			else:
 				lcd.line2(station)
-	else:
+
+	elif source == radio.PLAYER:
 		index = radio.getSearchIndex()
 		playlist = radio.getPlayList()
 		current_artist = radio.getCurrentArtist()
@@ -797,6 +846,7 @@ def display_current(lcd,radio,toggleScrolling):
 		errorStr = radio.getErrorString()
 		lcd.scroll3(errorStr,interrupt)
 		radio.clearError()
+
 	else:
 		leng = len(title)
 		if leng > 20:
@@ -807,6 +857,31 @@ def display_current(lcd,radio,toggleScrolling):
 		else:
 			lcd.line3(title)
 
+	return
+
+# Display Airplay info
+def displayAirplay(lcd,radio):
+	scroll = radio.scrollAirplay()
+	info = radio.getAirplayInfo()
+	artist = info[0]
+	title = info[1]
+	album = info[2]
+
+	if radio.muted():
+		album = "Sound muted"
+
+	if scroll == 0:
+		lcd.line3(title)
+		lcd.line4(album)
+		lcd.scroll2(artist,interrupt)
+	elif scroll == 1:
+		lcd.line2(artist)
+		lcd.line4(album)
+		lcd.scroll3(title,interrupt)
+	elif scroll == 2:
+		lcd.line2(artist)
+		lcd.line3(title)
+		lcd.scroll4(album,interrupt)
 	return
 
 # Display if in sleep
@@ -849,10 +924,16 @@ def display_source_select(lcd,radio):
 
 	lcd.line1("Input Source:")
 	source = radio.getSource()
+
 	if source == radio.RADIO:
 		lcd.line2("Internet Radio")
+
 	elif source == radio.PLAYER:
 		lcd.line2("Music library")
+
+	elif source == radio.AIRPLAY:
+		lcd.line2("Airplay receiver")
+
 	progress = radio.getProgress()
 
 	if radio.muted():
@@ -860,7 +941,7 @@ def display_source_select(lcd,radio):
 	else:
 		# Is the radio actually playing ?
 		if progress.find('/0:00') > 0:
-			lcd.line4("Volume " + str(radio.getVolume()))
+			displayVolume(lcd,radio)
 		else:
 			lcd.line4(radio.getProgress())
 
@@ -883,9 +964,15 @@ def display_search(lcd,radio):
 			lcd.line2(current_artist) 
 			lcd.line3(radio.getTrackNameByIndex(index)) 
 		lcd.line4(radio.getProgress())
-	else:
+	
+	elif source == radio.RADIO:
 		current_station = radio.getStationName(index)
-		lcd.line3("Current station:" + str(radio.getCurrentID()))
+		width = lcd.getWidth()
+		if width <= 16:
+			msg = "Current:"
+		else:
+			msg = "Current station:"
+		lcd.line3(msg + str(radio.getCurrentID()))
 		
 		# Speed searches up by not scrolling
 		if radio.getEvents() == 0:
@@ -893,13 +980,14 @@ def display_search(lcd,radio):
 		else:
 			lcd.line2(current_station) 
 		displayVolume(lcd,radio)
+	
 	return
 
 
 def unmuteRadio(lcd,radio):
 	radio.unmute()
 	volume = radio.getVolume()
-	lcd.line4("Volume " + str(volume))
+	displayVolume(lcd,radio)
 	#pdb.set_trace()
 	return
 
@@ -978,10 +1066,16 @@ def display_options(lcd,radio):
 
 # Display volume and timer
 def displayVolume(lcd,radio):
+	
+	if  radio.getSource() == radio.AIRPLAY:
+		volume =  radio.getMixerVolume()
+	else:
+		volume =  radio.getVolume()
+
 	if radio.muted():
 		msg = "Sound muted"
 	else:
-		msg = "Volume " + str(radio.getVolume())
+		msg = "Volume " + str(volume)
 	if radio.getTimer():
 		msg = msg + " " + radio.getTimerString()
 	if radio.alarmActive():
@@ -1003,9 +1097,11 @@ def displayWakeUpMessage(lcd):
 	time.sleep(3)
 	return
 
-def displayShutdown(lcd):
+def displayShutdown(lcd,radio):
 	lcd.line1("Stopping radio")
 	radio.execCommand("service mpd stop")
+	if radio.getSource() == radio.AIRPLAY:
+		radio.stopAirplay()
 	lcd.line3(" ")
 	lcd.line4(" ")
 	radio.execCommand("shutdown -h now")
@@ -1016,13 +1112,21 @@ def displayShutdown(lcd):
 	return
 
 def displayInfo(lcd,ipaddr,mpd_version):
-	lcd.line2("Radio version " + radio.getVersion())
-	lcd.line3("MPD version " + mpd_version)
-	lcd.line4("GPIO version " + GPIO.VERSION)
-	if len(ipaddr) < 1: 
-		lcd.line3("No IP network")
+	ver = "version "
+	if lcd.getWidth() < 20:
+		ver = "ver "
+	if len(ipaddr) < 1:
+		ipmsg = "No IP network"
 	else:
-		lcd.scroll1("IP "+ ipaddr,interrupt)
+		ipmsg = "IP "+ ipaddr
+	radioVersion = "Radio " + ver + radio.getVersion()
+	mpdVersion = "MPD " + ver  + mpd_version
+	gpioVersion = "GPIO " + ver + GPIO.VERSION
+
+	lcd.line2(radioVersion)
+	lcd.line3(mpdVersion)
+	lcd.line4(gpioVersion)
+	lcd.scroll1(ipmsg, interrupt)
 	return
 
 # Check Timer fired

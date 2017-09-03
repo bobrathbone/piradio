@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
-# $Id: radio8x2.py,v 1.5 2017/02/12 13:01:02 bob Exp $
+# $Id: radio8x2.py,v 1.7 2017/07/31 07:44:26 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -57,16 +57,11 @@ rss = Rss()
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("sudo umount /media > /dev/null 2>&1")
-	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Stopped")
 	lcd.line2("")
-	lcd.line3("")
-	lcd.line4("")
-	GPIO.cleanup()
-	sys.exit(0)
+	radio.exit()
 
 # Signal SIGTERM handler
 def signalSIGUSR1(signal,frame):

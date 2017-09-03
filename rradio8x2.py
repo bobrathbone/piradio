@@ -3,7 +3,7 @@
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 # Rotary encoder version
-# $Id: rradio8x2.py,v 1.8 2017/02/13 18:44:44 bob Exp $
+# $Id: rradio8x2.py,v 1.10 2017/08/09 09:27:29 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -63,14 +63,11 @@ tunerknob = None
 def signalHandler(signal,frame):
 	global lcd
 	global log
-	radio.execCommand("sudo umount /media > /dev/null 2>&1")
-	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
 	lcd.line1("Radio")
 	lcd.line2("stopped")
-	GPIO.cleanup()
-	sys.exit(0)
+	radio.exit()
 
 # Daemon class
 class MyDaemon(Daemon):
@@ -128,12 +125,12 @@ class MyDaemon(Daemon):
 		lcd.scroll2(mpd_version,no_interrupt)
 		time.sleep(1)
 		 	
-                # Auto-load music library if no Internet
-                if len(ipaddr) < 1 and radio.autoload():
-                        log.message("Loading music library",log.INFO)
-                        radio.setSource(radio.PLAYER)
+		# Auto-load music library if no Internet
+		if len(ipaddr) < 1 and radio.autoload():
+			log.message("Loading music library",log.INFO)
+			radio.setSource(radio.PLAYER)
 
-                # Load radio
+		# Load radio
 		reload(lcd,radio)
 		radio.play(get_stored_id(CurrentFile))
 		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
@@ -179,10 +176,10 @@ class MyDaemon(Daemon):
 	
 			elif display_mode == radio.MODE_TIME:
 
-                                if radio.getReload():
-                                        log.message("Reload ", log.DEBUG)
-                                        reload(lcd,radio)
-                                        radio.setReload(False)
+				if radio.getReload():
+					log.message("Reload ", log.DEBUG)
+					reload(lcd,radio)
+					radio.setReload(False)
 
 				displayTime(lcd,radio)
 				if radio.muted():
@@ -566,6 +563,8 @@ def get_switch_states(lcd,radio,rss,volumeknob,tunerknob):
 						MuteSwitch = 1
 						radio.mute()
 						displayVolume(lcd,radio)
+						time.sleep(1)
+						radio.resetEvents()
 						interrupt = True
 				if not radio.muted():
 					radio.speakInformation()
@@ -714,28 +713,28 @@ def update_library(lcd,radio):
 
 # Reload if new source selected (RADIO or PLAYER)
 def reload(lcd,radio):
-        lcd.line1("Loading:")
-        radio.unmountAll()
+	lcd.line1("Loading:")
+	radio.unmountAll()
 
-        source = radio.getSource()
-        if source == radio.RADIO:
-                lcd.line2("Radio Stations")
-                dirList=os.listdir(PlaylistsDirectory)
-                for fname in dirList:
-                        if os.path.isfile(fname):
-                                continue
-                        log.message("Loading " + fname, log.DEBUG)
-                        lcd.line2(fname)
-                        time.sleep(0.1)
-                radio.loadStations()
+	source = radio.getSource()
+	if source == radio.RADIO:
+		lcd.line2("Radio Stations")
+		dirList=os.listdir(PlaylistsDirectory)
+		for fname in dirList:
+			if os.path.isfile(fname):
+				continue
+			log.message("Loading " + fname, log.DEBUG)
+			lcd.line2(fname)
+			time.sleep(0.1)
+		radio.loadStations()
 
-        elif source == radio.PLAYER:
+	elif source == radio.PLAYER:
 		lcd.line2("Media library")
-                radio.loadMedia()
-                current = radio.execMpcCommand("current")
-                if len(current) < 1:
-                        update_library(lcd,radio)
-        return
+		radio.loadMedia()
+		current = radio.execMpcCommand("current")
+		if len(current) < 1:
+			update_library(lcd,radio)
+	return
 
 
 # Display the RSS feed

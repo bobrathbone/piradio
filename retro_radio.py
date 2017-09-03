@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # Rotary encoder version with no LCD display for Retro Radio conversion
-# $Id: retro_radio.py,v 1.22 2017/02/12 13:01:02 bob Exp $
+# $Id: retro_radio.py,v 1.28 2017/08/08 10:55:49 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -65,12 +65,9 @@ menu_switch_value = 0
 # Signal SIGTERM handler
 def signalHandler(signal,frame):
 	global log
-	radio.execCommand("sudo umount /media > /dev/null 2>&1")
-	radio.execCommand("sudo umount /share > /dev/null 2>&1")
 	pid = os.getpid()
 	log.message("Radio stopped, PID " + str(pid), log.INFO)
-	GPIO.cleanup()
-	sys.exit(0)
+	radio.exit()
 
 # Menu switch event handler
 def menu_swich_event(switch):
@@ -331,20 +328,29 @@ def get_switch_states(radio,volumeknob,tunerknob):
 
 	if switch == menu_switch:
 		log.message("MENU switch mode=" + str(display_mode), log.DEBUG)
-		radio.unmute()
-		display_mode = display_mode + 1
+
+		# Exit Airplay if menu button pressed
+		if input_source == radio.AIRPLAY and not radio.getReload():
+			log.message("Exiting Airplay", log.DEBUG)
+			radio.setSource(radio.RADIO)
+			display_mode = radio.MODE_TIME
+			radio.setReload(True)
+			radio.getEvents()	# Clear any events
+		else:
+			radio.unmute()
+			display_mode = display_mode + 1
 
 		# This radio version doesn't use RSS or IP information display
 		if display_mode >= radio.MODE_RSS:
 			display_mode = radio.MODE_TIME
 
+		# Set the new mode
 		radio.setDisplayMode(display_mode)
 		log.message("New mode " + radio.getDisplayModeString()+
 					"(" + str(display_mode) + ")", log.DEBUG)
 
 		# Shutdown if menu button held for > 3 seconds
 		MenuSwitch = tunerknob.getSwitchState(menu_switch)
-		log.message("switch state=" + str(MenuSwitch), log.DEBUG)
 		count = 15
 		while MenuSwitch == 0:
 			time.sleep(0.2)
@@ -362,7 +368,6 @@ def get_switch_states(radio,volumeknob,tunerknob):
 
 		elif radio.getReload(): 
 			source = radio.getSource()
-			log.message("Reload " + str(source), log.INFO)
 			reload(radio)
 			radio.setReload(False)
 			radio.setDisplayMode(radio.MODE_TIME)
@@ -392,7 +397,7 @@ def get_switch_states(radio,volumeknob,tunerknob):
 				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
-				radio.toggleSource()
+				radio.cycleSource(UP)
 				radio.setReload(True)
 				time.sleep(0.2)
 				radio.getEvents()	# Clear any events
@@ -418,7 +423,7 @@ def get_switch_states(radio,volumeknob,tunerknob):
 				radio.unmute()
 
 			if display_mode == radio.MODE_SOURCE:
-				radio.toggleSource()
+				radio.cycleSource(DOWN)
 				radio.setReload(True)
 				time.sleep(0.2)
 				radio.getEvents()	# Clear any events
@@ -463,7 +468,10 @@ def get_switch_states(radio,volumeknob,tunerknob):
 					volume -=  1
 					if volume < 0:
 						volume = 0
-					radio.setVolume(volume)
+					if input_source == radio.AIRPLAY:
+						radio.decreaseMixerVolume()
+                                        else:
+						radio.setVolume(volume)
 					volAdjust -= 1
 				statusLed.set(StatusLed.NORMAL)
 
@@ -494,7 +502,10 @@ def get_switch_states(radio,volumeknob,tunerknob):
 					volume += 1
 					if volume > range:
 						volume = range
-					radio.setVolume(volume)
+					if input_source == radio.AIRPLAY:
+						radio.increaseMixerVolume()
+					else:
+						radio.setVolume(volume)
 					volAdjust -= 1
 				statusLed.set(StatusLed.NORMAL)
 
@@ -522,10 +533,10 @@ def get_switch_states(radio,volumeknob,tunerknob):
 
 				if radio.muted():
 					radio.unmute()
-					time.sleep(1)
 				else:
 					radio.mute()
 					time.sleep(2)
+					radio.getEvents()	# Clear any events
 
 	# Reset all rotary encoder events to zero
 	radio.resetEvents()
@@ -541,8 +552,9 @@ def update_library(radio):
 # Reload if new source selected (RADIO or PLAYER)
 def reload(radio):
 	radio.unmountAll()
-
 	source = radio.getSource()
+	log.message("Reload " + str(source), log.DEBUG)
+
 	if source == radio.RADIO:
 		dirList=os.listdir(PlaylistsDirectory)
 		for fname in dirList:
@@ -557,6 +569,9 @@ def reload(radio):
 		current = radio.execMpcCommand("current")
 		if len(current) < 1:
 			update_library(radio)
+
+        elif source == radio.AIRPLAY:
+                radio.startAirplay()
 	return
 
 
@@ -641,6 +656,12 @@ def setMenu(radio,value):
 		radio.setSource(radio.PLAYER)
 		statusLed.set(StatusLed.BUSY)
 		update_library(radio)
+		statusLed.set(StatusLed.NORMAL)
+
+	elif value == 6:
+		radio.setSource(radio.AIRPLAY)
+		statusLed.set(StatusLed.BUSY)
+		radio.startAirplay()
 		statusLed.set(StatusLed.NORMAL)
 
 	menu_switch_value = 0

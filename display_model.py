@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-$Id: display_model.py,v 1.9 2017/03/08 18:30:14 bob Exp $
+$Id: display_model.py,v 1.10 2017/03/28 14:17:23 bob Exp $
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
@@ -69,7 +69,7 @@ model_data = {
     '900092': ('Pi Zero', '1.2', 512, 'Sony', ''),
     '900093': ('Pi Zero', '1.3', 512, 'Sony', ''),
     '920093': ('Pi Zero', '1.3', 512, 'Embest', ''),
-    '9200c1': ('Pi Zero W', '1.1', 512, 'Sony', 'Onboard WiFi and Bluetooth 4.1'),
+    '9000c1': ('Pi Zero W', '1.1', 512, 'Sony', 'Onboard WiFi and Bluetooth 4.1'),
 }
 
 

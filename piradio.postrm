@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e
 # Radio daemon post remove script
-# $Id: piradio.postrm,v 1.8 2016/07/18 13:19:53 bob Exp $
+# $Id: piradio.postrm,v 1.14 2017/05/16 14:03:18 bob Exp $
 
 BOOTCMD=/boot/cmdline.txt
 INITTAB=/etc/inittab
 DIR=/usr/share/radio
+LIB=/var/lib/radiod
 
 # Check if the script is being run as root
 if [[ $EUID -ne 0 ]]
@@ -14,12 +15,9 @@ then
     exit 1
 fi
 
-rm -f ${DIR}/*.pyc
 echo "Executing post remove script ${0}"
-update-rc.d radiod remove
-update-rc.d pifacercd remove
-rm -f /etc/logrotate.d/radiod
-rm -f /etc/cron.hourly/podcast
+rm -f ${DIR}/*.pyc
+sudo rm -f /etc/logrotate.d/radiod
 
 # Restore serial interface
 if [[ -f  ${INITTAB}.orig ]]; then
@@ -31,6 +29,9 @@ if [[ -f  ${BOOTCMD}.orig ]]; then
 	sudo mv -f ${BOOTCMD}.orig ${BOOTCMD}
 fi
 
+update-rc.d -f radiod disable
+update-rc.d -f pifacercd disable
+update-rc.d -f shairport-sync disable
 exit 0
 # End of postrm script
 

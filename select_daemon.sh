@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_daemon.sh,v 1.24 2017/03/09 13:46:08 bob Exp $
+# $Id: select_daemon.sh,v 1.27 2017/04/15 09:01:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -19,11 +19,11 @@
 DAEMON=radiod.py
 
 INIT=/etc/init.d/radiod
-RC_INIT=/etc/init.d/pifacercd
 SERVICE=/lib/systemd/system/radiod.service
 BINDIR="\/usr\/share\/radio\/"
 DIR=/usr/share/radio
 CONFIG=/etc/radiod.conf
+PIRADIO_TYPE=/var/lib/radiod/piradio_type
 
 # Display types
 LCD=1	# LCD screen (direct)
@@ -183,7 +183,8 @@ fi
 echo
 
 # Pass selected daemon type to post install script
-exit ${TYPE}
+echo  ${TYPE} > ${PIRADIO_TYPE}
+exit 0
 
 # End of script
 

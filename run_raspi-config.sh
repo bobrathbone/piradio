@@ -1,6 +1,6 @@
 #!/bin/bash
 # Radio daemon post install script 2
-# $Id: run_raspi-config.sh,v 1.3 2015/01/31 15:42:20 bob Exp $
+# $Id: run_raspi-config.sh,v 1.4 2017/07/14 08:03:42 bob Exp $
 
 TYPE=$1 # No instructions before this line
 
@@ -8,7 +8,7 @@ I2C=4   # Uses I2C libraries
 CAD=5   # PiFace control and display
 
 echo "The installation will now run the raspi-config cofiguration program!"
-echo "When it runs select Advanced options"
+echo "When it runs select Interfacing options"
 
 if [[ ${TYPE} -eq ${CAD} ]]; then
 	echo "and enable automatic loading of the SPI kernel module"

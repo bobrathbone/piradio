@@ -1,5 +1,5 @@
 # Raspberry Pi Internet Radio Configuration File (40 Pin version)
-# $Id: radiod.conf.40_pin,v 1.9 2017/08/03 09:13:45 bob Exp $
+# $Id: radiod.conf.retro,v 1.2 2017/05/19 10:34:21 bob Exp $
 
 # Configuration file for version 5.4 onwards
 # 40 pin version to support IQ Audio and other sound cards
@@ -7,7 +7,7 @@
 [RADIOD]
 
 # loglevel is CRITICAL,ERROR,WARNING,INFO,DEBUG or NONE
-loglevel=INFO
+loglevel=DEBUG
 
 # Startup option either RADIO or MEDIA (USB stick)
 startup=RADIO
@@ -16,7 +16,7 @@ startup=RADIO
 dateformat=%H:%M %d/%m/%Y
 
 # Volume range 10, 20, 25, 50 or 100 
-volume_range=20
+volume_range=50
 
 # MPD port number (Do not change unless MPD reconfigured)
 mpdport=6600
@@ -61,7 +61,7 @@ i2c_address=0x00
 
 # Speech for visually impaired or blind listeners, yes or no
 # Needs espeak package - sudo apt-get install espeak
-speech=no
+speech=yes
 # Speech volume as a percentage of the normal MPD volume
 speech_volume=60
 # Verbose - yes = each station change is spoken
@@ -73,10 +73,10 @@ verbose=no
 use_playlist_extensions=no
 
 # Switch settings for 40 pin version (support for IQAudio)
-menu_switch=17
+menu_switch=25
 mute_switch=4
-up_switch=24
-down_switch=23
+up_switch=17
+down_switch=10
 left_switch=14
 right_switch=15
 
@@ -84,12 +84,12 @@ right_switch=15
 aux_switch=0
 
 # LCD GPIO connections for 40 pin version of the radio 
-lcd_select=7
-lcd_enable=8
-lcd_data4=5
-lcd_data5=6
-lcd_data6=12
-lcd_data7=13
+#lcd_select=7
+#lcd_enable=8
+#lcd_data4=5
+#lcd_data5=6
+#lcd_data6=12
+#lcd_data7=13
 
 # LCD screen width, 0 use program default. Usual settings 16 or 20
 lcd_width=0
@@ -102,25 +102,25 @@ rotary_class=standard
 # The following settings are only used by the retro_radio.py program
 # Uncomment to use - change GPIO assignments as required
 # RGB Status LED GPIO settings
-#rgb_green=27
-#rgb_red=23
-#rgb_blue=22
+rgb_red=23
+rgb_green=27
+rgb_blue=22
 
 # Menu rotary switch GPIO settings (retro_radio.py only)
 # Uncomment to use - change GPIO assignments as required
-#menu_switch_value_1=24
-#menu_switch_value_2=8
-#menu_switch_value_4=7
+menu_switch_value_1=24
+menu_switch_value_2=8
+menu_switch_value_4=7
 
 [AIRPLAY]
 
 # Airplay activation yes or no
-airplay=no
+airplay=yes
 
 # Mixer preset volume for radio and media player if using sound card
 # Set to 0 if using onboard audio or USB sound dongle.
 # If using a sound card set to 100% initially and adjust as neccessary
-mixer_volume=0
+mixer_volume=90
 
 # Mixer volume ID (Airplay) Use command 'amixer controls | grep -i volume'
 #                           to identify mixer volume control ID

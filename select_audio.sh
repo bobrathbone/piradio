@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_audio.sh,v 1.31 2017/01/16 14:02:37 bob Exp $
+# $Id: select_audio.sh,v 1.37 2017/05/10 12:26:55 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -21,6 +21,7 @@ MPDCONFIG=/etc/mpd.conf
 ASOUNDCONF=/etc/asound.conf
 MODPROBE=/etc/modprobe.d/alsa-base.conf
 MODULES=/proc/asound/modules
+DIR=/usr/share/radio
 
 # Audio types
 JACK=1	# Audio Jack or Sound Cards
@@ -34,7 +35,7 @@ DTOVERLAY=""
 DEVICE="0,0"
 CARD=0
 NAME="Onboard jack"
-MIXER="hardware"
+MIXER="software"
 NUMID=1
 
 # Wheezy not supported
@@ -157,9 +158,9 @@ fi
 
 # Remove pulseaudio package
 PKG="pulseaudio"
-if [[ -x /usr/bin/${PKG} ]]; then 	# Don't seperate from above
+if [[ ! -x /usr/bin/${PKG} ]]; then 
 	echo "Removing ${PKG} package"
-	sudo apt-get --yes remove ${PKG} 2>&1 >/dev/null
+	sudo apt-get --yes purge ${PKG}
 fi
 
 # Select HDMI or audio jack/DACs Alsa output
@@ -171,7 +172,7 @@ else
 fi
 
 # Configure the Alsa sound mixer for maximum volume
-amixer cset numid=1 100% 2>&1 >/dev/null
+sudo amixer cset numid=1 100% 2>&1 >/dev/null
 if [[ $? != 0 ]]; then 	# Don't seperate from above
 	echo "Failed to configure Alsa mixer"
 fi
@@ -179,7 +180,7 @@ fi
 # Set up asound configuration for espeak and aplay
 echo "Configuring card ${CARD} for aplay (${ASOUNDCONF})"
 if [[ ! -f ${ASOUNDCONF} ]]; then
-	sudo cp -f asound.conf.dist ${ASOUNDCONF}
+	sudo cp -f ${DIR}/asound.conf.dist ${ASOUNDCONF}
 fi
 
 if [[ ${CARD} == 0 ]]; then
@@ -226,20 +227,25 @@ if [[ ${DTOVERLAY} != "" ]]; then
 	sudo dtparam audio=off
 	sudo sed -i -e "/^dtparam=audio=/{s/on/off/}" ${BOOTCONFIG}
 else 	
-	sudo sed -i -e "/^dtparam=audio=/{s/off/on/}" ${BOOTCONFIG}
-	sudo dtparam audio=on
+	if [[ ${NAME} == "USB DAC" ]]; then
+		sudo sed -i -e "/^dtparam=audio=/{s/on/off/}" ${BOOTCONFIG}
+		sudo dtparam audio=off
+	else
+		sudo sed -i -e "/^dtparam=audio=/{s/off/on/}" ${BOOTCONFIG}
+		sudo dtparam audio=on
+	fi
 fi
 
 # Configure the Alsa sound mixer on second card for 100 volume
 # This must be done after the dtoverlay command above
 aplay -l | grep "card 1"  2>&1 >/dev/null
 if [[ $? == 0 ]]; then 	# Don't seperate from above
-	amixer -c1 cset numid=${NUMID} 100% 2>&1 >/dev/null
+	sudo amixer -c1 cset numid=${NUMID} 100% 2>&1 >/dev/null
 	if [[ $? != 0 ]]; then 	# Don't seperate from above
 		echo "Failed to configure second Alsa mixer"
 	fi
 else
-	amixer -c0 cset numid=${NUMID} 100% 2>&1 >/dev/null
+	sudo amixer -c0 cset numid=${NUMID} 100% 2>&1 >/dev/null
 	if [[ $? != 0 ]]; then 	# Don't seperate from above
 		echo "Failed to configure first Alsa mixer"
 	fi

@@ -1,0 +1,16 @@
+# Shairport (Airplay) service definition
+# $Id: shairport.service,v 1.3 2017/04/29 10:02:37 bob Exp $
+[Unit]
+Description=Shairplay daemon
+#Requires=pulseaudio.service
+Wants=avahi-daemon.service
+After=avahi-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/shairport -M /tmp/shairport -a %H
+Restart=never
+
+[Install]
+WantedBy=multi-user.target
+

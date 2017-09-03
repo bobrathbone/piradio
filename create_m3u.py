@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Raspberry Pi Internet Radio playlist utility
-# $Id: create_m3u.py,v 1.10 2016/12/12 11:42:22 bob Exp $
+# $Id: create_m3u.py,v 1.11 2017/04/19 12:09:33 bob Exp $
 #
 # Create playlist files from the following url formats
 #       iPhone stream files (.asx)
@@ -27,6 +27,7 @@ import re
 import sys
 import urllib2
 import socket
+import signal
 from xml.dom.minidom import parseString
 
 # Output errors to STDERR
@@ -295,7 +296,12 @@ def format():
 	stderr ("or start a new playlist definition.\n\n")
 	return
 
+# Timeout alarm
+def handler(signum, frame):
+    raise IOError("The page is taking too long to read")
+
 # Start of MAIN script
+signal.signal(signal.SIGALRM, handler)
 
 if os.getuid() != 0:
 	print "This program can only be run as root user or using sudo"
@@ -459,8 +465,9 @@ for line in open(StationList,'r'):
 
 	# Get the published URL to the stream file
 	try:
+		signal.alarm(TimeOut)
 		socket.setdefaulttimeout(TimeOut)
-		file = urllib2.urlopen(url)
+		file = urllib2.urlopen(url,timeout=15)
 		data = file.read()
 		file.close()
 		# Creat list from data

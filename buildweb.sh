@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Id: buildweb.sh,v 1.4 2016/01/30 14:22:29 bob Exp $
+# $Id: buildweb.sh,v 1.5 2017/07/01 17:08:33 bob Exp $
 # Build script for the Raspberry PI radio
 # Run this script as user pi and not root
 
@@ -12,7 +12,7 @@ DEBPKG=${PKG}_${VERSION}_${ARCH}.deb
 
 WEBPAGES="/var/www/html/*  /usr/lib/cgi-bin/select_source.cgi"
 BUILDFILES="radiodweb radioweb.postinst"
-WEBTAR=piradio_web.tar.gz
+WEBTAR=pi_radio_web.tar.gz
 
 # Create Web pages tar file
 tar -cvzf ${WEBTAR} ${WEBPAGES} > /dev/null 2>&1

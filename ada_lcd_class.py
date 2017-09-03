@@ -3,11 +3,13 @@
 
 # LCD class for  Adafruit RGB-backlit LCD plate for Raspberry Pi.
 # Adapted by Bob Rathbone from code by Adafruit Industries.  MIT license.
-# $Id: ada_lcd_class.py,v 1.5 2014/09/24 07:52:59 bob Exp $
+# $Id: ada_lcd_class.py,v 1.7 2017/05/04 13:30:02 bob Exp $
 
 # Original code based on code from lrvick and LiquidCrystal.
 # lrvic - https://github.com/lrvick/raspi-hd44780/blob/master/hd44780.py
 # LiquidCrystal - https://github.com/arduino/Arduino/blob/master/libraries/LiquidCrystal/LiquidCrystal.cpp
+# Modified by Tomas Gonzalez, Spain to enable GPA5 as an output on the IO extender
+# to enable the backlight on Chinese 1602 I2C LCDs
 
 from i2c_class import i2c
 from time import sleep
@@ -116,9 +118,11 @@ class Adafruit_lcd(i2c):
 		# sets up all the input pins, pull-ups, etc. for the Pi Plate.
 		self.i2c.bus.write_i2c_block_data(
 		  self.i2c.address, 0, 
-		  [ 0b00111111,   # IODIRA	R+G LEDs=outputs, buttons=inputs
+		  #[ 0b00111111,   # IODIRA	R+G LEDs=outputs, buttons=inputs
+		  [ 0b00011111,   # IODIRA	R+G LEDs=outputs, buttons=inputs, GPA5 as output
 			self.ddrb ,   # IODIRB	LCD D7=input, Blue LED=output
-			0b00111111,   # IPOLA	 Invert polarity on button inputs
+			#0b00111111,   # IPOLA	 Invert polarity on button inputs
+			0b00011111,   # IPOLA	 Invert polarity on button inputs, GPA5 as output
 			0b00000000,   # IPOLB
 			0b00000000,   # GPINTENA  Disable interrupt-on-change
 			0b00000000,   # GPINTENB
@@ -128,7 +132,8 @@ class Adafruit_lcd(i2c):
 			0b00000000,   # INTCONB
 			0b00000000,   # IOCON
 			0b00000000,   # IOCON
-			0b00111111,   # GPPUA	 Enable pull-ups on buttons
+			#0b00111111,   # GPPUA	 Enable pull-ups on buttons
+			0b00011111,   # GPPUA	 Enable pull-ups on buttons, GPA5 as output 
 			0b00000000,   # GPPUB
 			0b00000000,   # INTFA
 			0b00000000,   # INTFB
@@ -417,6 +422,9 @@ class Adafruit_lcd(i2c):
 		self.ScrollSpeed = speed
 		return
 
+	# Get the LCD width in characters
+	def getWidth(self):
+		return self.width
 
 	def backlight(self, color):
 		c = ~color

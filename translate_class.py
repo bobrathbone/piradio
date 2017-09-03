@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
 # Raspberry Pi Radio Character translation class
 # Escaped characters, html and unicode translation to ascii
 #
-# $Id: translate_class.py,v 1.24 2016/04/14 06:37:56 bob Exp $
+# $Id: translate_class.py,v 1.37 2017/05/16 11:48:02 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -17,10 +17,10 @@
 # Useful Links on character encodings
 #  	http://www.zytrax.com/tech/web/entities.html
 #	http://www.utf8-chartable.de/
-#
-
-
-import os
+#	http://www.codetable.net/
+#	http://www.ascii-code.com/
+	
+import os,sys
 import time
 import unicodedata
 from log_class import Log
@@ -35,11 +35,16 @@ class Translate:
 	codes = {
 		'//' : '/', 	   # Double /
 		'  ' : ' ',        # Double spaces
-		'\\xa0' : ' ',     # Line feed  to space
-		'\\' : "'",	   # Double backslash to apostrophe
 		'\\n' : ' ',       # Line feed  to space
 
+		# German UTF8 codes
+		'\\xef\\xbf\\xbd' : chr(246),
+	
+		# Currencies
+		'\\xe2\\x82\\xac' : ' Euro ',
+
 		# Special characters
+		'\\x80\\x99' : "'",        # Single quote 
 		'\\xc2\\xa1' : '!',        # Inverted exclamation
 		'\\xc2\\xa2' : 'c',        # Cent sign
 		'\\xc2\\xa3' : '#',        # Pound sign
@@ -82,21 +87,22 @@ class Translate:
 		'\\xc3\\x96' : chr(214),   # O umlaut
 		'\\xc3\\x9c' : chr(220),   # U umlaut
 
-		# Norwegian unicode escape sequences
-		'\\xc3\\x98' : 'O',   # Oslash
-		'\\xc3\\xb8' : 'o',   # Oslash
-		'\\xc3\\x85' : 'A',   # Aring
+		# Scandanavian unicode escape sequences
+		'\\xc2\\x88' : 'A',   # aelig
+		'\\xc2\\xb4' : 'A',   # aelig
+		'\\xc3\\x85' : 'Aa',  # Aring
 		'\\xc3\\x93' : 'O',   # O grave
+		'\\xc3\\xa4' : 'a',   # a with double dot
 		'\\xc3\\xa5' : 'a',   # aring
 		'\\xc3\\x86' : 'AE',  # AElig
-		'\\xc3\\x98' : 'O',   # O crossed
+		'\\xc3\\x98' : '0',   # O crossed
 		'\\xc3\\x99' : 'U',   # U grave
 		'\\xc3\\xa6' : 'ae',  # aelig
 		'\\xc3\\xb0' : 'o',   # o umlaut
-		'\\xc3\\xb3' : 'o',   # o tilde
+		'\\xc3\\xb2' : 'o',   # o tilde
+		'\\xc3\\xb3' : 'o',   # o reverse tilde
+		'\\xc3\\xb4' : 'o',   # Capital O circumflex
 		'\\xc3\\xb8' : 'o',   # oslash
-		'\\xc2\\x88' : 'A',   # aelig
-		'\\xc2\\xb4' : 'A',   # aelig
 
 		# French (Latin) unicode escape sequences
 		'\\xc3\\x80' : 'A',        # A grave
@@ -106,22 +112,26 @@ class Translate:
 		'\\xc3\\x88' : 'E',        # E grave
 		'\\xc3\\x89' : 'E',        # E acute
 		'\\xc3\\x8a' : 'E',        # E circumflex
-		'\\xc3\\xa0' : chr(224),   # a grave
-		'\\xc3\\xa1' : chr(225),   # a acute
-		'\\xc3\\xa2' : chr(226),   # a circumflex
-		'\\xc3\\xa8' : chr(232),   # e grave
-		'\\xc3\\xa9' : chr(233),   # e acute
-		'\\xc3\\xaa' : chr(234),   # e circumflex
-		'\\xc3\\xb6' : "'",        # Hyphon
+		'\\xc3\\xa0' : 'a',   	   # a grave
+		'\\xc3\\xa1' : 'a',   	   # a acute
+		'\\xc3\\xa2' : 'a',   	   # a circumflex
+		'\\xc3\\xa7' : 'c',        # c cedilla
+		'\\xc3\\xa8' : 'e',        # e grave
+		'\\xc3\\xa9' : 'e',   	   # e acute
+		'\\xc3\\xaa' : 'e',        # e circumflex
+		'\\xc3\\xab' : 'e',        # e diaeresis
+		'\\xc3\\xae' : 'i',        # i circumflex
+		'\\xc3\\xaf' : 'i',        # i diaeresis
 		'\\xc3\\xb7' : "/",        # Division sign
+		'\\xc5\\x93' : 'oe',       # oe joined
 
 		# Hungarian lower case
-		'\\xc3\\xb3' : chr(243),   #  
-		'\\xc3\\xad' : chr(237),   # 
-		'\\xc3\\xb5' : chr(245),   # 
-		'\\xc5\\x91' : chr(245),   # 
+		'\\xc3\\xb3' : 'o',        # o circumflex 
+		'\\xc3\\xad' : 'i',   	   # i accent
+		'\\xc3\\xb5' : 'o',        # o tilde
+		'\\xc5\\x91' : 'o',   	   #  o 
 		'\\xc5\\xb1' : chr(252),   # 
-		'\\xc3\\xba' : chr(250),   # Ã
+		'\\xc3\\xba' : 'u',        # u acute
 
 		# Polish unicode escape sequences
 		'\\xc4\\x84' : 'A',        # A,
@@ -193,58 +203,116 @@ class Translate:
 		'\\xce\\xc8' : 'ps',       # Psi
 		'\\xce\\xc9' : 'o',        # Omega
 
-		# Currency other special character
-		'\\xa3' : chr(156),  # UK pound sign
-		'\\xa9' : chr(169),  # Copyright
+		# Icelandic 
+		'\\xc3\\xbe' : 'p',        # Like a p with up stroke
+		'\\xc3\\xbd' : 'y',        # y diaeresis
 
-		# German short hex representation
-		'\\xdf' : chr(223),        # Sharp s es-zett
-		'\\xe4' : chr(228),        # a umlaut
-		'\\xf6' : chr(246),        # o umlaut
-		'\\xfc' : chr(252),        # u umlaut
-		'\\xc4' : chr(196),        # A umlaut
-		'\\xd6' : chr(214),        # O umlaut
-		'\\xdc' : chr(220),        # U umlaut
+		# Italian characters
+		'\\xc3\\xac' : 'i',        # i reverse circumflex
+		'\\xc3\\xb9' : 'u',        # u reverse circumflex
 
-		# Spanish and French
-		'\\xe0' : chr(224),    # Small a reverse acute
-		'\\xe1' : chr(225),    # Small a acute
-		'\\xe2' : chr(226),    # Small audo bashcircumflex
-		'\\xe7' : chr(231),    # Small c Cedilla
-		'\\xe8' : chr(232),    # Small e grave
-		'\\xe9' : chr(233),    # Small e acute
-		'\\xea' : chr(234),    # Small e circumflex
-		'\\xeb' : chr(235),    # Small e diarisis
-		'\\xed' : chr(237),    # Small i acute
-		'\\xee' : chr(238),    # Small i circumflex
-		'\\xf1' : chr(241),    # Small n tilde
-		'\\xf3' : chr(243),    # Small o acute
-		'\\xf4' : chr(244),    # Small o circumflex
-		'\\xf9' : chr(249),    # Small u circumflex
-		'\\xfa' : chr(250),    # Small u acute
-		'\\xfb' : chr(251),    # u circumflex
+		# Polish (not previously covered)
+		'\\xc3\\xa3' : 'a',        # a tilde
 
-		'\\xc0' : chr(192),    # Small A grave
-		'\\xc1' : chr(193),    # Capital A acute
+		# Romanian
+		'\\xc4\\x83' : 'a',        # a circumflex variant
+		'\\xc3\\xa2' : 'a',        # a circumflex 
+		'\\xc3\\xae' : 'i',        # i circumflex 
+		'\\xc5\\x9f' : 's',        # s cedilla ?
+		'\\xc5\\xa3' : 's',        # t cedilla ?
+		'\\xc8\\x99' : 's',        # s with down stroke
+		'\\xc8\\x9b' : 't',        # t with down stroke
 
-		'\\xc7' : chr(199),    # Capital C Cedilla
-		'\\xc9' : chr(201),    # Capital E acute
-		'\\xcd' : chr(205),    # Capital I acute
-		'\\xd3' : chr(211),    # Capital O acute
-		'\\xda' : chr(218),    # Capital U acute
+		# Spanish not covered above
+		'\\xc3\\xb1' : 'n',        # n tilde
 
-		'\\xbf' : chr(191),    # Spanish Punctuation
-
-		'xb0'  : 'o',	       # Degrees symbol
+		# Turkish not covered above
+		'\\xc3\\xbb' : 'u',        # u circumflex
+		'\\xc4\\x9f' : 'g',        # g tilde
+		'\\xc4\\xb1' : 'i',        # Looks like an i
+		'\\xc4\\xb0' : 'I',        # Looks like an I
 	}
 
+	# UTF8 codes (Must be checked after above codes checked)
+	short_codes = {
+		'\\xa0' : ' ',     # Line feed to space
+
+		'\\xb4' : "'",    # Apostrophe 
+		'\\xc0' : 'A',    # A 
+		'\\xc1' : 'A',    # A 
+		'\\xc2' : 'A',    # A 
+		'\\xc3' : 'A',    # A 
+		'\\xc4' : 'A',    # A 
+		'\\xc5' : 'A',    # A 
+		'\\xc6' : 'Ae',   # AE
+		'\\xc7' : 'C',    # C 
+		'\\xc8' : 'E',    # E 
+		'\\xc9' : 'E',    # E 
+		'\\xca' : 'E',    # E 
+		'\\xcb' : 'E',    # E 
+		'\\xcc' : 'I',    # I 
+		'\\xcd' : 'I',    # I 
+		'\\xce' : 'I',    # I 
+		'\\xcf' : 'I',    # I 
+		'\\xd0' : 'D',    # D
+		'\\xd1' : 'N',    # N 
+		'\\xd2' : 'O',    # O 
+		'\\xd3' : 'O',    # O 
+		'\\xd4' : 'O',    # O 
+		'\\xd5' : 'O',    # O 
+		'\\xd6' : 'O',    # O 
+		'\\xd7' : 'x',    # Multiply
+		'\\xd8' : '0',    # O crossed 
+		'\\xd9' : 'U',    # U 
+		'\\xda' : 'U',    # U 
+		'\\xdb' : 'U',    # U 
+		'\\xdc' : 'U',    # U umlaut
+		'\\xdd' : 'Y',    # Y
+		'\\xdf' : 'S',    # Sharp s es-zett
+		'\\xe0' : 'e',    # Small a reverse acute
+		'\\xe1' : 'a',    # Small a acute
+		'\\xe2' : 'a',    # Small a circumflex
+		'\\xe3' : 'a',    # Small a tilde
+		'\\xe4' : 'a',    # Small a diaeresis
+		'\\xe5' : 'aa',   # Small a ring above
+		'\\xe6' : 'ae',   # Joined ae
+		'\\xe7' : 'c',    # Small c Cedilla
+		'\\xe8' : 'e',    # Small e grave
+		'\\xe9' : 'e',    # Small e acute
+		'\\xea' : 'e',    # Small e circumflex
+		'\\xeb' : 'e',    # Small e diarisis
+		'\\xed' : 'i',    # Small i acute
+		'\\xee' : 'i',    # Small i circumflex
+		'\\xf1' : 'n',    # Small n tilde
+		'\\xf3' : 'o',    # Small o acute
+		'\\xf4' : 'o',    # Small o circumflex
+		'\\xf6' : 'o',    # o umlaut
+		'\\xf7' : '/',    # Division sign
+		'\\xf8' : 'oe',   # Small o strike through 
+		'\\xf9' : 'u',    # Small u circumflex
+		'\\xfa' : 'u',    # Small u acute
+		'\\xfb' : 'u',    # u circumflex
+		'\\xc0' : 'A',    # Small A grave
+		'\\xc1' : 'A',    # Capital A acute
+		'\\xc7' : 'C',    # Capital C Cedilla
+		'\\xc9' : 'E',    # Capital E acute
+		'\\xcd' : 'I',    # Capital I acute
+		'\\xd3' : 'O',    # Capital O acute
+		'\\xda' : 'U',    # Capital U acute
+		'\\xfc' : 'u',    # u umlaut
+		'\\xbf' : '?',    # Spanish Punctuation
+
+		'\\xb0'  : 'o',	       # Degrees symbol
+	}
+
+	# HTML codes (RSS feeds)
 	HtmlCodes = {
 		# Currency
 		chr(156) : '#',       # Pound by hash
 		chr(169) : '(c)',     # Copyright
 
 		# Norwegian
-		chr(216) : 'O',       # Oslash
+		chr(216) : '0',       # Oslash
 
 		# Spanish french
 		chr(241) : 'n',       # Small tilde n
@@ -277,7 +345,8 @@ class Translate:
 		chr(196) : "Ae",      # A umlaut
 		chr(214) : "Oe",      # O umlaut
 		chr(220) : "Ue",      # U umlaut
-		}
+	}
+
 
 	unicodes = {
 		'\\u201e' : '"',       # ORF feed
@@ -287,14 +356,15 @@ class Translate:
 		'\\u0153' : "oe",      # French oe
 		'\\u2009' : ' ',       # Short space to space
 		'\\u2013' : '-',       # Long dash to minus sign
-		'\\u2019' : "'",       # French apostrophe
+		'\\u2018' : "'",       # Left single quote
+		'\\u2019' : "'",       # Right single quote
 		}
 
 	def __init__(self):
 		log.init('radio')
 		return    
 
-	# Translate all 
+	# Translate all  (Called by rss class)
 	def all(self,text):
 		s = self._convert2escape(text)
 		s = self._escape(s)
@@ -306,21 +376,29 @@ class Translate:
 	def _convert2escape(self,text):
 		s = repr(text)
 		if s.__len__() > 2: 
-			s= s[1:-1]      # Strip ' characters
-			s = s.lstrip("'")
+			#s= s[1:-1]      # Strip ' characters
+			s = s.lstrip('\'')
+			s = s.rstrip('\'')
 		return s
 
 	# Convert escaped characters (umlauts) to normal characters
 	def escape(self,text):
 		s = self._convert2escape(text)
 		s = self._escape(s)
+		s = s.lstrip('"')
+		s = s.rstrip('"')
 		return s
 
 	# Convert escaped characters (umlauts etc.) to normal characters
 	def _escape(self,text):
 		s = text
+
 		for code in self.codes:
 			s = s.replace(code, self.codes[code])
+
+		for code in self.short_codes:
+			s = s.replace(code, self.short_codes[code])
+
 		s = s.replace("'oC",'oC')   # Degrees C fudge
 		s = s.replace("'oF",'oF')   # Degrees C fudge
 		return s
@@ -397,3 +475,22 @@ class Translate:
 		return s
 
 # End of class
+
+# Test translate class
+if __name__ == '__main__':
+
+        translate = Translate()
+
+	if len(sys.argv) > 1:
+		text = sys.argv[1]
+	else:
+		text = 'æ Æ ø Ø å Å'
+        print text
+	s = translate._convert2escape(text)
+        print s
+
+	# Complete text
+	print translate.all(text)
+	print
+	sys.exit(0)
+# End of file

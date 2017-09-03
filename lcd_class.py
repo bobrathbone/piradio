@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# $Id: lcd_class.py,v 1.30 2016/10/15 10:56:05 bob Exp $
+# $Id: lcd_class.py,v 1.32 2017/07/24 07:35:41 bob Exp $
 # Raspberry Pi Internet Radio
 # using an HD44780 LCD display
 #
@@ -50,7 +50,7 @@ from config_class import Configuration
 # 16: LCD Backlight GND
 
 # Define LCD device constants
-LCD_WIDTH = 16    # Default characters per line
+#LCD_WIDTH = 16    # Default characters per line
 LCD_CHR = True
 LCD_CMD = False
 
@@ -87,7 +87,7 @@ class Lcd:
 	lcd_line3 = LCD_LINE_3
 	lcd_line4 = LCD_LINE_4
 
-	width = LCD_WIDTH
+	width = 0
 	# If display can support umlauts set to True else False
         RawMode = False         # Test only
         ScrollSpeed = 0.3       # Default scroll speed
@@ -197,10 +197,15 @@ class Lcd:
 
 	# Get LCD width 0 = use default for program
 	def getWidth(self):
-		return config.getWidth()
+		if self.width == 0:
+			self.width = config.getWidth()
+		return self.width
 
 	# Send string to display
 	def _string(self,message):
+		# prevent 0 width 
+		if self.width == 0:
+			self.width = 16
 		s = message.ljust(self.width," ")
 		if not self.RawMode:
 			s = translate.toLCD(s)

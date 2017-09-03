@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 #
-# $Id: rss_class.py,v 1.23 2016/06/28 06:40:51 bob Exp $
+# $Id: rss_class.py,v 1.25 2017/04/26 08:18:25 bob Exp $
 # Raspberry Pi RSS feed class
 #
 # Author : Bob Rathbone
@@ -63,9 +63,13 @@ class Rss:
 			self.feed_available = True
 			line = self.rss.pop()
 			self.length -= 1
+			
+			line = line.lstrip('<')
 			feed = translate.all(line)
+			feed = feed.lstrip('u"')
+			feed = feed.lstrip("u'")
 			feed = feed.lstrip('"')
-			feed = feed.lstrip('<')
+			feed = feed.rstrip('"')
 			if not self.rss_error:
 				log.message(feed,log.DEBUG)
 		return feed

@@ -1,7 +1,8 @@
 #!/bin/bash
-# $Id: build.sh,v 1.12 2016/07/24 11:08:19 bob Exp $
+# $Id: build.sh,v 1.14 2017/04/14 15:21:44 bob Exp $
 # Build script for the Raspberry PI radio
 # Run this script as user pi and not root
+# sudo vi /usr/share/equivs/template/debian/compat (Replace 7 with 9)
 
 PKGDEF=piradio
 PKG=radiod
@@ -22,13 +23,12 @@ sudo chmod +x *.py
 sudo chown pi:pi *.sh
 sudo chmod +x *.sh
 sudo chmod -x language/* voice.dist
-./create_tar.sh > /dev/null &2>1 
+
+# Create tar (optional)
+#./create_tar.sh > /dev/null &2>1 
 
 # Build the package
 equivs-build ${PKGDEF} | tee -a ${BUILDLOG}
-if [[ $? -ne 0 ]]; then # Don't seperate from above line
-	exit 1
-fi
 
 echo -n "Check using Lintian y/n: "
 read ans

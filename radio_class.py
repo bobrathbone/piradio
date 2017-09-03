@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.258 2017/02/13 13:01:08 bob Exp $
+# $Id: radio_class.py,v 1.306 2017/07/24 06:27:17 bob Exp $
 # 
 #
 # Author : Bob Rathbone
@@ -19,11 +19,10 @@
 #
 
 import os
-import sys
+import sys,pwd
 import string
 import time,datetime
 import re
-import ConfigParser
 import SocketServer
 from time import strftime
 import pdb
@@ -33,6 +32,7 @@ from udp_server_class import RequestHandler
 from log_class import Log
 from translate_class import Translate
 from config_class import Configuration
+from airplay_class import AirplayReceiver
 from language_class import Language
 from mpd import MPDClient
 
@@ -54,6 +54,7 @@ Icecast = "/usr/bin/icecast2"
 log = Log()
 translate = Translate()
 config = Configuration()
+airplay = AirplayReceiver()
 language = None
 server = None
 
@@ -65,6 +66,7 @@ class Radio:
 	# Input source
 	RADIO = 0
 	PLAYER = 1
+	AIRPLAY = 2
 
 	# Rotary class
 	ROTARY_STANDARD = config.STANDARD
@@ -111,6 +113,7 @@ class Radio:
 	ONEDAYSECS = 86400	# Day in seconds
 	ONEDAYMINS = 1440	# Day in minutes
 
+	audio_error = False 	# No sound device
 	boardrevision = 2 # Raspberry board version type
 	udphost = 'localhost'  # Remote IR listener UDP Host
 	udpport = 5100  # Remote IR listener UDP port number
@@ -123,6 +126,7 @@ class Radio:
 	source = RADIO	# Source RADIO or Player
 	reload = False	# Reload radio stations or player playlists
 	artist = ""	# Artist (Search routines)
+	airplay = False # Airplay (shairport-sync) installed
 	error = False 	# Stream error handling
 	errorStr = ""   # Error string
 	switch = 0	# Switch just pressed
@@ -137,7 +141,6 @@ class Radio:
 	StationNamesSource = config.LIST # Use own names from playlist
 	use_playlist_extensions = False # MPD 0.16 requires playlist.<ext>
 	rotary_class = config.STANDARD  # Rotary class standard all alternate
-
 	mode_last = MODE_IP	 	# Last mode a user can select
 	option_last = OPTION_LAST	# Last available option
 	display_mode = MODE_TIME	# Display mode
@@ -171,7 +174,7 @@ class Radio:
 	search_index = 0	 # The current search index
 	loadnew = False	  # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "5.9"		# Version number
+	VERSION	= "5.11"		# Version number
 
 	ADAFRUIT = 1		# I2C backpack type AdaFruit
 	PCF8574  = 2 		# I2C backpack type PCF8574
@@ -193,6 +196,10 @@ class Radio:
 
 	# Initialisation routine
 	def __init__(self):
+		if pwd.getpwuid(os.geteuid()).pw_uid > 0:
+			print "This program must be run with sudo or root permissions!"
+			sys.exit(1)
+
 		log.init('radio')
 		self.setupConfiguration()
 		return
@@ -214,14 +221,19 @@ class Radio:
 			self.execCommand("mkdir -p /media")
 			if not os.path.ismount("/media"):
 				self.execCommand("chown pi:pi /media")
-			self.execCommand("ln -f -s /media /var/lib/mpd/music")
+			self.execCommand("sudo ln -f -s /media /var/lib/mpd/music")
 
 		# Create mount point for networked music library (NAS)
 		if not os.path.isfile("/share"):
 			self.execCommand("mkdir -p /share")
 			if not os.path.ismount("/share"):
 				self.execCommand("chown pi:pi /share")
-			self.execCommand("ln -f -s /share /var/lib/mpd/music")
+			self.execCommand("sudo ln -f -s /share /var/lib/mpd/music")
+
+		# Is Airplay installed (shairport-sync)
+		self.airplay = config.getAirplay()
+		if self.airplay:
+			self.stopAirplay()
 
 		self.execCommand("chown -R pi:pi " + RadioLibDir)
 		self.execCommand("chmod -R 764 " + RadioLibDir)
@@ -279,6 +291,10 @@ class Radio:
 
 		elif key == 'RADIO':
 			self.loadStations()
+			self.setInterrupt()
+
+		elif key == 'AIRPLAY':
+			self.startAirplay()
 			self.setInterrupt()
 
 		elif key == 'INTERRUPT':
@@ -375,14 +391,8 @@ class Radio:
 			except:
 				log.message("Failed to connect to MPD on port " + str(port), log.ERROR)
 				time.sleep(2.5)	# Wait for interrupt in the case of a shutdown
-				sys.exit(0)
-				#log.message("Restarting MPD",log.DEBUG)
-				#if retry < 2:
-				#	self.execCommand("service mpd restart") 
-				#else:
-				#	self.execCommand("service mpd start") 
-				#time.sleep(2)	# Give MPD time to restart
-				#retry -= 1
+				time.sleep(0.2)	# Give MPD time 
+				retry -= 1
 
 		return connection
 
@@ -626,8 +636,10 @@ class Radio:
 
 	# Handle toggling of source
 	def handle_source(self,key):
-		if key == 'KEY_UP' or key == 'KEY_DOWN':	
-			self.toggleSource()
+		if key == 'KEY_UP':
+			self.cycleSource(self.UP)
+		elif key == 'KEY_DOWN':	
+			self.cycleSource(self.DOWN)
 		return
 
 	# Input Source RADIO, NETWORK or PLAYER
@@ -747,19 +759,18 @@ class Radio:
 		if volume != self.volume:
 			if not error:
 				self.device_error_cnt = 0
-				log.message("radio._getVolume external client changed volume " 
-								+ str(volume),log.DEBUG)
-				self._setVolume(volume)
-				self.volumeChange = True
+				if self.source != self.AIRPLAY:
+					self.volume = volume
 			else:
 				self.device_error_cnt += 1
-				log.message("radio._getVolume audio device error " + str(volume), log.ERROR)
+				log.message("radio._getVolume audio device error " 
+						+ str(volume), log.ERROR)
 
 				if self.device_error_cnt > 10:	
-					msg =  "Sound device error - exiting"
+					msg =  "Sound device error - Run select_audio.sh"
 					log.message("radio._getVolume " + msg , log.ERROR)
 					print msg
-					sys.exit(1)
+					self.audio_error = True	
 
 		return self.volume
 
@@ -809,7 +820,6 @@ class Radio:
 
 		return self.volume
 
-
 	# Increase volume 
 	def increaseVolume(self):
 		increment = config.getVolumeIncrement()
@@ -826,14 +836,15 @@ class Radio:
 		volume = self._setVolume(volume)
 		return volume/increment
 
-	# Mute sound functions (Also stops MPD if not streaming)
 	def mute(self):
 		log.message("radio.mute streaming=" + str(self.streaming),log.DEBUG)
 		try:
 			if self.source == self.RADIO:
 				client.stop() # Disconnect from stream
-			else:
+			elif self.source == self.PLAYER:
 				client.pause(1) # Pause playing track
+			elif self.source == self.AIRPLAY:
+				airplay.muteMixer()
 			self.isMuted = True
 		except:
 			log.message("radio.mute error",log.DEBUG)
@@ -841,19 +852,42 @@ class Radio:
 
 	# Unmute sound fuction, get stored volume
 	def unmute(self):
-		if self.muted(): 
-			self.volume = self.getStoredVolume()
-			log.message("radio.unmute volume=" + str(self.volume),log.DEBUG)
+		volume = 0
+		if self.muted():
 			try:
-				client.play()
-				client.setvol(self.volume)
+				if  self.source == self.AIRPLAY: 
+					log.message("radio.unmute Airplay",log.DEBUG)
+					airplay.unmuteMixer()
+					volume = self.getMixerVolume()
+				else:
+					log.message("radio.unmute MPD",log.DEBUG)
+					self.volume = self.getStoredVolume()
+					log.message("radio.unmute volume=" 
+						+ str(self.volume),log.DEBUG)
+					client.play()
+					client.setvol(self.volume)
+					volume = self.volume
+
+				# Unmute succesvol
 				self.isMuted = False
 			except:
 				log.message("radio.unmute error",log.ERROR)
-		return self.volume
+		return volume
 
 	def muted(self):
 		return self.isMuted
+
+	# Get mixer volume
+	def getMixerVolume(self):
+		return airplay.getMixerVolume()
+		
+	# Increase mixer volume
+	def increaseMixerVolume(self):
+		return airplay.increaseMixerVolume()
+
+	# Decrease mixer volume
+	def decreaseMixerVolume(self):
+		return airplay.decreaseMixerVolume()
 
 	# Start MPD (Alarm mode)
 	def startMPD(self):
@@ -870,6 +904,17 @@ class Radio:
 		except:
 			log.message("radio.stopMPD error",log.ERROR)
 		return
+
+	# Stop the radio and exit
+	def exit(self):
+		log.message("Stopping MPD",log.INFO)
+		self.execCommand("sudo service mpd stop")
+		if self.getSource() == self.AIRPLAY:
+			self.stopAirplay()	
+		radio.execCommand("sudo umount /media > /dev/null 2>&1")
+		radio.execCommand("sudo umount /share > /dev/null 2>&1")
+		log.message("Exiting radio",log.INFO)
+		sys.exit(0)
 
 	# Get the stored volume
 	def getStoredVolume(self):
@@ -889,30 +934,37 @@ class Radio:
 		self.execCommand ("echo " + str(volume) + " > " + VolumeFile)
 		return
 
+	# Store mixer volume 
+	def storeMixerVolume(self,volume):
+		self.execCommand ("echo " + str(volume) + " > " + MixerVolumeFile)
+		return
+
 	# Random setting
 	def getRandom(self):
-		if self.source == self.PLAYER:
-			self.random = self.getStoredRandomSetting()
+		self.random = self.getStoredRandomSetting()
 		return self.random
 
 	def randomOn(self):
 		try:
-			client.random(1)
 			self.random = True
+			self.execCommand ("echo " + str(1) + " > " + RandomSettingFile)
 			if self.source == self.PLAYER:
-				self.execCommand ("echo " + str(1) + " > " + RandomSettingFile)
+				client.random(1)
+			else:
+				client.random(0) # Off for radio
 		except:
 			log.message("radio.randomOn error",log.ERROR)
+		log.message("radio.randomOn " + str(self.random),log.DEBUG)
 		return self.random
 
 	def randomOff(self):
 		try:
 			client.random(0)
 			self.random = False
-			if self.source == self.PLAYER:
-				self.execCommand ("echo " + str(0) + " > " + RandomSettingFile)
+			self.execCommand ("echo " + str(0) + " > " + RandomSettingFile)
 		except:
 			log.message("radio.randomOff error",log.ERROR)
+		log.message("radio.randomOn " + str(self.random),log.DEBUG)
 		return self.random
 
 	# Get the stored random setting 0=off 1=on
@@ -1457,8 +1509,6 @@ class Radio:
 			self.errorStr = str(status.get("error"))
 			if  self.errorStr != "None":
 				if not self.error:
-					self.errorStr = (self.errorStr 
-						+ " (Station " + str(self.current_id) + ")")
 					log.message(self.errorStr, log.DEBUG)
 				self.error = True
 			else:
@@ -1530,6 +1580,10 @@ class Radio:
 			self.isMuted = True
 		else:
 			self.isMuted = False
+
+		if self.source == self.AIRPLAY:
+			self.isMuted = airplay.mixerIsMuted()
+
 		self.state = state 
 		return state
 
@@ -1633,7 +1687,7 @@ class Radio:
 		self.checkStatus()
 		return currentPlaying
 
-	# Get the name of the current artist mpd (Music librarry only)
+	# Get the name of the current artist mpd (Music library only)
 	def getCurrentArtist(self):
 		try:
 			currentsong = self.getCurrentSong()
@@ -1718,15 +1772,42 @@ class Radio:
 		self.channelChanged = True
 		return new_id
 
-	# Toggle the input source (Reload is done when Reload requested)
+	# Toggle source retained for compatibiility
 	def toggleSource(self):
+		return self.cycleSource(self.UP)
+
+	# Toggle the input source (Reload is done when Reload requested)
+	def cycleSource(self, direction):
+		airplay = config.getAirplay()
+
+		if direction == self.UP:
+			self.source += 1	
+		elif direction == self.DOWN:
+			self.source -= 1	
+
+		if self.source < self.RADIO:
+			if airplay:
+				self.source = self.AIRPLAY
+			else:
+				self.source = self.PLAYER
+
+		elif self.source > self.AIRPLAY:
+				self.source = self.RADIO
+
+		elif self.source > self.PLAYER and not airplay:
+				self.source = self.RADIO
+
 		if self.source == self.RADIO:
-			self.source = self.PLAYER
-			sSource = language.getText('source_media')
-		else:
-			self.source = self.RADIO
 			sSource = language.getText('source_radio')
+
+		elif self.source == self.PLAYER:
+			sSource = language.getText('source_media')
+
+		elif self.source == self.AIRPLAY:
+			sSource = language.getText('source_airplay')
+
 		self.setReload(True)	
+		log.message("Selected source " + sSource, log.DEBUG)
 
 		if self.speech: 
 			self.speak(sSource)
@@ -1736,6 +1817,12 @@ class Radio:
 	# Load radio stations
 	def loadStations(self):
 		log.message("radio.loadStations", log.DEBUG)
+
+		# Restore default volume and mixer settings
+		airplay.setMixerPreset()
+		self.volume = self.getStoredVolume()
+		self._setVolume(self.volume)
+
 		if self.speech: 
 			self.speak(language.getText('loading_radio'))
 		try:
@@ -1766,6 +1853,9 @@ class Radio:
 			except:
 				log.message("radio.loadStations failed " + fname, log.ERROR)
 
+		if airplay.isRunning():
+			self.stopAirplay()
+
 		self.randomOff()
 		self.consumeOff()
 		self.repeatOff()
@@ -1774,12 +1864,18 @@ class Radio:
 		self.current_id = self.getStoredID(self.current_file)
 		self.play(self.current_id)
 		self.search_index = self.current_id - 1
-		self.source = self.RADIO
+		self.setSource(self.RADIO)
 		return
 
 	# Load music library 
 	def loadMusic(self):
 		log.message("radio.loadMusic", log.DEBUG)
+		
+		# Restore default volume and mixer settings
+		airplay.setMixerPreset()
+		self.volume = self.getStoredVolume()
+		self._setVolume(self.volume)
+		
 		if self.speech: 
 			self.speak(language.getText('loading_media'))
 		self.execMpcCommand("stop")
@@ -2024,18 +2120,48 @@ class Radio:
 
 	# See if interrupt received from IR remote control
 	def getInterrupt(self):
-		interrupt = self.interrupt
+		interrupt = self.interrupt or airplay.getInterrupt()
 		self.interrupt =  False
 		return interrupt
 
 	# Load media
 	def loadMedia(self):
+		log.message("radio.loadMedia", log.DEBUG)
 		self.unmountAll()
 		self.mountUsb()
 		self.mountShare()
+		if airplay.isRunning():
+			self.stopAirplay()
 		self.loadMusic()
 		self.random = self.getStoredRandomSetting()
+		self.setSource(self.PLAYER)
 		return
+
+	# Start Airlpay
+	def startAirplay(self):
+		self.execMpcCommand("stop")
+		started = airplay.start()
+		log.message("radio.startAirplay " + str(started), log.DEBUG)
+		if started:
+			self.setSource(self.AIRPLAY)
+		else:
+			log.message("radio.startAirplay FAILED" , log.ERROR)
+			self.execMpcCommand("play")
+		return
+
+	# Stop Airlpay
+	def stopAirplay(self):
+		airplay.stop()
+		return
+
+	# Airplay information scrolling - decides which line to control
+	def scrollAirplay(self):
+		return airplay.scroll()
+
+	# Get Airplay information
+	def getAirplayInfo(self):
+		return airplay.info()
+
 
 	# Mount the USB stick
 	def mountUsb(self):
@@ -2080,18 +2206,19 @@ class Radio:
 		self.execCommand("sudo /bin/umount /share 2>&1 >/dev/null")  # Unmount network drive
 		return
 
-	# Speak a message
+	# Speak a message (Disabled if Airplay running - not compatible)
 	def speak(self, msg):	
-		msg = msg.lstrip()
-		if self.speech and len(msg) > 1:
-			if msg[0] != '!':
-				speech_volume = config.getSpeechVolume()
-				volume = self.volume * speech_volume/100
-				if volume < 5:
-					volume = 5
-				self.mute()
-				language.speak(msg,volume)
-				self.unmute()
+		if not airplay.isRunning():
+			msg = msg.lstrip()
+			if self.speech and len(msg) > 1:
+				if msg[0] != '!':
+					speech_volume = config.getSpeechVolume()
+					volume = self.volume * speech_volume/100
+					if volume < 5:
+						volume = 5
+					client.pause()
+					language.speak(msg,volume)
+					client.play()
 		return
 
 	# Speak a message
@@ -2145,6 +2272,10 @@ class Radio:
 	def dummy(self): 
 		log.message("dummy" , log.DEBUG)
 		return
+
+	# Detect audio error
+	def audioError(self):
+		return self.audio_error
 
 # End of Radio Class
 
@@ -2204,11 +2335,11 @@ if __name__ == "__main__":
 	radio.loadMusic()
 
 	# Check state
-	print "Paused  " +  str(radio.paused())
+	print "State  " +  radio.getState()
 
 	# Check timer
 	print "Set Timer 1 minute"
-	radio.timerValue = 1
+	radio.storeTimer(1)
 	radio.timerOn()
 
 	while not radio.fireTimer():
@@ -2216,6 +2347,7 @@ if __name__ == "__main__":
 	print "Timer fired"
 
 	# Exit 
+	print "Exit test"
 	sys.exit(0)
 	
 # End of __main__ routine

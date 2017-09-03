@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: language_class.py,v 1.18 2016/05/24 15:03:19 bob Exp $
+# $Id: language_class.py,v 1.20 2017/03/22 13:53:51 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -48,6 +48,7 @@ class Language:
 		'search': 'Search',
 		'source_radio': 'Internet Radio',
 		'source_media': 'Music library',
+		'source_airplay': 'Airplay receiver',
 		'stopping_radio': 'Stopping radio',
 		'sleep': 'sleep',
 		'on': 'on',
