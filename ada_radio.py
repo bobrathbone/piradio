@@ -2,7 +2,7 @@
 #
 # Raspberry Pi Internet Radio
 # using an Adafruit RGB-backlit LCD plate for Raspberry Pi.
-# $Id: ada_radio.py,v 1.72 2017/07/31 07:44:26 bob Exp $
+# $Id: ada_radio.py,v 1.73 2017/11/02 08:06:51 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -1015,6 +1015,7 @@ def checkState(radio):
 
 ### Main routine ###
 if __name__ == "__main__":
+	myradio = Radio()
 	daemon = MyDaemon('/var/run/radiod.pid')
 	if len(sys.argv) == 2:
 		if 'start' == sys.argv[1]:
@@ -1029,7 +1030,7 @@ if __name__ == "__main__":
 		elif 'status' == sys.argv[1]:
 			daemon.status()
 		elif 'version' == sys.argv[1]:
-			print "Version " + radio.getVersion()
+			print "Version " + myradio.getVersion()
 		else:
 			print "Unknown command: " + sys.argv[1]
 			sys.exit(2)

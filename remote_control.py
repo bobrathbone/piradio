@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #       
 # Raspberry Pi remote control daemon (Non-Piface variants)
-# $Id: remote_control.py,v 1.20 2017/01/28 15:38:07 bob Exp $
+# $Id: remote_control.py,v 1.21 2017/10/24 13:08:46 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -43,7 +43,7 @@ udpport = 5100		# IR Listener UDP port number default 5100
 
 config = Configuration()
 
-pidfile = '/var/run/radiod.pid'
+pidfile = '/var/run/pifacercd.pid'
 
 # Signal SIGTERM handler
 def signalHandler(signal,frame):

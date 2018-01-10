@@ -11,3 +11,5 @@ Directory	     Description
 =========	     ===========
 LCD4x40-PCF854	     Version supporting a 4 line 40 character display from Christian Heise 
 Norwegian_characters Custom Norwegian characters from Anders Herbjoren
+backpack_variants    Push button version of radio with I2C backpack from Dave duTruzac, Canada
+HD44780_driver	     Alternative LCD driver 

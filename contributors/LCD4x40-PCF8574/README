@@ -1,0 +1,26 @@
+Contributors software
+Directory LCD4x40-PCF854
+Contributor: Christian Heise, Germany
+Email: pythy@nexgo.de
+Web site: Not available
+Supported: No
+Last tested with: Version 3.7 (With push buttons only - no rotary switches version available) 
+Description: Support for a 4 x 40 LCD using a PCF8574 I/O expander
+Photo: http://www.bobrathbone.com/photogallery/raspberry_pi/constructors/LCD4x40-PCF8574.jpg
+
+Contributors description
+========================
+I have build a prototype with modified sources of your PI Radio Project for a 4x40 display. This display has two controllers. I use a PCF 8574 Port Expander to manage the two Controllers of the display. The backlight function must be managed from one of the GPIO ports on the Raspberry. But that not so difficult.
+
+For the PCF 8574 I used a modified backpack from the german dealer "Pollin Elektroink". The P7 from the Pollin backpack I have connected directly (that was for the Backlight function) to manage the "E2" Pin from the display.
+
+
+Disclaimer
+==========
+The code in this sub-directory is provided "as is" and without any warranties.
+Neither can any guarantees be given that the software in this directory
+will be compatible with future releases of the main-stream software.
+As Bob Rathbone is unable to test these programs absolutely no support is provided
+so please don't ask for it as the answer will always be the same - no support available.
+
+

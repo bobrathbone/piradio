@@ -1,0 +1,132 @@
+* {
+	margin: 0px;
+	padding: 0px;
+}
+
+body, input {
+	color: #333;
+	font: 10px "Lucida Grande", "Lucida Sans Unicode", verdana, geneva, sans-serif;
+}
+
+a img { 
+	border: 0px;
+}
+
+.playlist a {
+	color: #333;
+	text-decoration: none;
+	padding: 2px;
+	display: block;
+}
+
+.playlist a:hover {
+	background: #CCC;
+}
+
+.songLine:hover .removeid {
+	display: block;
+}
+
+.volinput {
+	width: 40px;
+	text-align: center;
+	line-height: 10px;
+}
+
+.playlist a.removeid {
+	width: 30px;
+	float: right;
+	border: 0px;
+	background: transparent;
+	display: none;
+	text-align: center;
+	color: #999;
+}
+
+
+.current {
+	background: #EEE;
+}
+
+.playlist {
+	height: 220px;
+	overflow: hidden;
+	overflow-y: scroll;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.playlist p {
+	clear: both;
+}
+
+.container {
+	position: absolute;
+	width: 600px;
+	border: 1px solid lightgray;
+	padding: 10px;
+	left: 50%;
+	top: 50%;
+	margin-top: -130px;
+	margin-left: -305px;
+	-moz-border-radius: 5px;
+	-webkit-botder-radius: 5px;
+}
+
+.meta {
+	padding-left: 5px;
+	padding-right: 5px;
+	position: absolute;
+	top: -18px;
+	right: 10px;
+	border: 1px solid lightgray;
+	border-bottom: 1px solid #FFF;
+	height: 16px;
+}
+
+.navi {
+	position: absolute;
+	top: 5px;
+	right: 11px;
+}
+
+.navi ul {
+	list-style-type: none;
+}
+
+.navi li {
+	display: inline;
+}
+
+.label {
+	color: #AAA;
+}
+
+.marker {
+	padding: 2px; 
+	float: left; 
+	display: block; 
+	width: 1px; 
+	background: #B3D9FF; 
+	margin-right:10px;
+}
+
+.bottombar a {
+	color: #333;
+	text-decoration: none;
+}
+
+.bottombar a:hover {
+	text-decoration: underline;
+}
+
+input {
+	border: 1px solid lightgray;
+	color: #999;
+	padding: 2px;
+}
+
+.ajaxOutput * {
+	margin-right: 30px;
+	display: none;
+}

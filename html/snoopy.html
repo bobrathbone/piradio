@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="description" content="Your description goes here" />
+	<meta name="keywords" content="your,keywords,goes,here" />
+	<meta name="author" content="Your Name / Original design by andreasviklund.com" />
+	<link rel="stylesheet" type="text/css" href="basic-noise.css" title="Basic Noise" media="all" />
+	<title>Snoopy</title>
+	<script language="JavaScript">
+<!--
+function FP_preloadImgs() {//v1.0
+ var d=document,a=arguments; if(!d.FP_imgs) d.FP_imgs=new Array();
+ for(var i=0; i<a.length; i++) { d.FP_imgs[i]=new Image; d.FP_imgs[i].src=a[i]; }
+}
+
+function FP_swapImg() {//v1.0
+ var doc=document,args=arguments,elm,n; doc.$imgSwaps=new Array(); for(n=2; n<args.length;
+ n+=2) { elm=FP_getObjectByID(args[n]); if(elm) { doc.$imgSwaps[doc.$imgSwaps.length]=elm;
+ elm.$src=elm.src; elm.src=args[n+1]; } }
+}
+
+function FP_getObjectByID(id,o) {//v1.0
+ var c,el,els,f,m,n; if(!o)o=document; if(o.getElementById) el=o.getElementById(id);
+ else if(o.layers) c=o.layers; else if(o.all) el=o.all[id]; if(el) return el;
+ if(o.id==id || o.name==id) return o; if(o.childNodes) c=o.childNodes; if(c)
+ for(n=0; n<c.length; n++) { el=FP_getObjectByID(id,c[n]); if(el) return el; }
+ f=o.forms; if(f) for(n=0; n<f.length; n++) { els=f[n].elements;
+ for(m=0; m<els.length; m++){ el=FP_getObjectByID(id,els[n]); if(el) return el; } }
+ return null;
+}
+// -->
+</script>
+</head>
+
+<body onload="FP_preloadImgs(/*url*/'buttonB.jpg',/*url*/'buttonC.jpg',/*url*/'buttonE.jpg',/*url*/'buttonF.jpg')">
+<div id="container980">
+	<div id="header">
+		<h1><a href="index.html">Bob Rathbone - Internet Radio</a></h1>
+		<h2>Pushing the boundaries...</h2>
+	</div>
+	<div id="menu"> 
+		<ul>     
+			<li><a href="index.html">Introduction</a></li>
+			<li><a class="current" href="snoopy.html">Web interface</a></li>
+			<li><a href="project2.html">Project 2</a></li>
+			<li><a href="project3.html">Project 3</a></li>
+			<li><a href="project4.html">Project 4</a></li>
+		</ul>
+	</div>
+	
+	<div id="feature">
+		&nbsp;<table border="0" width="67%">
+			<tr>
+				<td width="300">
+				&nbsp; <iframe src="snoopy/index.php" height="375" width=670>
+            Alternative text for browsers that do not understand IFrames.
+        </iframe>
+</td>
+				<td>&nbsp;</td>
+			</tr>
+		</table>
+	</div>
+
+	<div id="main">
+		<div id="content">
+			<h2>Internet Radio Web Interface</h2>
+			<p>Select the required radio station or track from the above window.&nbsp; 
+			You can also control the volume in the top right of the above window</p>
+			<table border="0" width="100%">
+				<tr>
+					<td width="190"><h3>Source Selection</h3></td>
+					<td width="123">&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<td width="190"><a href="/cgi-bin/select_source.cgi?source=radio">
+					<img border="0" id="img1" src="buttonA.jpg" height="20" width="100" alt="Radio" onmouseover="FP_swapImg(1,0,/*id*/'img1',/*url*/'buttonB.jpg')" onmouseout="FP_swapImg(0,0,/*id*/'img1',/*url*/'buttonA.jpg')" onmousedown="FP_swapImg(1,0,/*id*/'img1',/*url*/'buttonC.jpg')" onmouseup="FP_swapImg(0,0,/*id*/'img1',/*url*/'buttonB.jpg')" fp-style="fp-btn: Embossed Rectangle 7" fp-title="Radio"></a></td>
+					<td width="123"><a href="cgi-bin/select_source.cgi?source=media">
+					<img border="0" id="img2" src="buttonD.jpg" height="20" width="100" alt="Media" onmouseover="FP_swapImg(1,0,/*id*/'img2',/*url*/'buttonE.jpg')" onmouseout="FP_swapImg(0,0,/*id*/'img2',/*url*/'buttonD.jpg')" onmousedown="FP_swapImg(1,0,/*id*/'img2',/*url*/'buttonF.jpg')" onmouseup="FP_swapImg(0,0,/*id*/'img2',/*url*/'buttonE.jpg')" fp-style="fp-btn: Embossed Rectangle 7" fp-title="Media"></a></td>
+					<td>&nbsp;</td>
+				</tr>
+			</table>
+
+			<div class="left">			
+				<p>&nbsp;</p>
+				<p>For my main site go to 
+				<a target="_blank" href="http://www.bobrathbone.com">www.bobrathbone.com</a></p>
+			</div>
+
+			<div class="right">
+				<h3>Technology Overview</h3>
+                <p>The Rasberry Pi is accessed through these pages running
+				<a href="#">Apache Web Server</a>. The low level interface of the Raspberry 
+				Pi is accessed using CGI scripts written in Python. </p>
+			</div>
+			<div class="clear">&nbsp;</div>
+		</div>
+	</div>
+
+	<div id="credits">
+		<p>&copy; November 2012 Bob Rathbone<br />
+		&nbsp;</p>
+	</div>
+</div>
+</body>
+</html>

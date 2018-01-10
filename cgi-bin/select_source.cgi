@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# $Id: select_source.cgi,v 1.3 2016/01/30 13:01:45 bob Exp $
+# $Id: select_source.cgi,v 1.4 2017/11/13 18:06:57 bob Exp $
 import shutil;
 import sys;
 import os;
@@ -77,7 +77,7 @@ def exec_cmd(cmd):
 	result = p.readline().rstrip('\n')
 	return result
 
-# Reload if new source selected
+# Load if new source selected
 def load_media():
 	udpSend("MEDIA")
 	print "<h1>Loading media library</h1>"
@@ -86,21 +86,20 @@ def load_media():
 		print "<h3>",fname,"</h3>"
 	return
 
-# Reload radio
+# Load radio
 def load_radio():
 	udpSend("RADIO")
 	print "<h1>Loading radio stations</h1>"
 	dirList=os.listdir("/var/lib/mpd/playlists")
 	for fname in dirList:
 		print "<h3>",fname,"</h3>"
-		fname,ext = fname.split('.')
-		cmd = "load \"" + fname + "\""
-		exec_mpc_cmd(cmd)
 	return
 
-def exec_mpc_cmd(cmd):
-	cmd = "/usr/bin/mpc " + cmd 
-	return exec_cmd(cmd)
+# Load Airplay
+def load_airplay():
+	udpSend("AIRPLAY")
+	print "<h1>Loading Airplay</h1>"
+	return
 
 # Get the last ID stored in /var/lib/radiod
 def get_stored_id():
@@ -127,6 +126,8 @@ if source == "radio":
 	load_radio()
 elif source == "media":
 	load_media()
+elif source == "airplay":
+	load_airplay()
 else:
 	log ("Invalid source:" + source )
 

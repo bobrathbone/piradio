@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Raspberry Pi Internet Radio Class
-# $Id: radio_class.py,v 1.306 2017/07/24 06:27:17 bob Exp $
+# $Id: radio_class.py,v 1.311 2017/11/06 14:57:30 bob Exp $
 # 
 #
 # Author : Bob Rathbone
@@ -174,7 +174,7 @@ class Radio:
 	search_index = 0	 # The current search index
 	loadnew = False	  # Load new track from search
 	streaming = False	# Streaming (Icecast) disabled
-	VERSION	= "5.11"		# Version number
+	VERSION	= "5.12"		# Version number
 
 	ADAFRUIT = 1		# I2C backpack type AdaFruit
 	PCF8574  = 2 		# I2C backpack type PCF8574
@@ -911,8 +911,8 @@ class Radio:
 		self.execCommand("sudo service mpd stop")
 		if self.getSource() == self.AIRPLAY:
 			self.stopAirplay()	
-		radio.execCommand("sudo umount /media > /dev/null 2>&1")
-		radio.execCommand("sudo umount /share > /dev/null 2>&1")
+		self.execCommand("sudo umount /media > /dev/null 2>&1")
+		self.execCommand("sudo umount /share > /dev/null 2>&1")
 		log.message("Exiting radio",log.INFO)
 		sys.exit(0)
 
@@ -1521,16 +1521,50 @@ class Radio:
 
 	# Get the progress of the currently playing track
 	def getProgress(self):
-		line = self.execMpcCommand("status | grep \"\[playing\]\" ")
-		lineParts = line.split('/',1)
-		if len(lineParts) >= 2:
-			line = lineParts[1]
-			while line.find('  ') > 0:
-				line = line.replace('  ', ' ')
-			lineParts = line.split(' ')
-			progress = lineParts[1] + ' ' + lineParts[2]	
-		else:
-			progress =  ''
+		elapsedTime = None
+		durationTime = None
+		elapsed = None
+		duration = None
+		percentage = None
+		try:
+			status = client.status()
+			playtime = status.get("time")
+
+			if playtime != None:
+				elapsed,duration = playtime.split(':')
+				elapsed = int(elapsed)
+				duration = int(duration)
+			else:
+                                elapsed = 0
+                                duration = 0
+
+                        if elapsed > 0:
+                                elapsedMins = elapsed/60
+                                elapsedSecs = elapsed % 60
+                        else:
+                                elapsedMins = 0
+                                elapsedSecs = 0
+
+                        elapsedTime ="%d:%02d" % (elapsedMins,elapsedSecs)
+
+                        if duration > 0:
+                                durationMins = duration/60
+                                durationSecs = duration % 60
+                        else:
+                                durationMins = 0
+                                durationSecs = 0
+
+			durationTime ="%d:%02d" % (durationMins,durationSecs)
+			percent = 0
+			if elapsed > 0:
+				percent = 100 * elapsed/duration
+			percentage = "%d" % (percent)
+		except Exception as e:
+			log.message("radio.getProgress " + str(e), log.ERROR)
+			self.connect(self.mpdport)
+
+		progress = str(elapsedTime) + ' ' +  str(durationTime) \
+				+ ' (' + str(percentage) + '%)'
 		return progress
 		
 	# Set the new ID  of the currently playing track or station (Also set search index)

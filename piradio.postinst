@@ -1,6 +1,8 @@
 #!/bin/bash 
+set -e
 # Radio daemon post install script
-# $Id: piradio.postinst,v 1.37 2017/02/15 08:35:21 bob Exp $
+# $Id: piradio.postinst,v 1.57 2017/08/27 08:16:34 bob Exp $
+# Support for Pulseaudio added
 
 # File locations
 DIR=/usr/share/radio
@@ -15,6 +17,9 @@ RSSFILE=rss/rss
 CONFIGFILE=/etc/radiod.conf
 DEFAULTRCS=/etc/default/rcS
 
+# The following is set up in the select_daemon.sh program
+PIRADIO_TYPE=${RADIOLIB}/piradio_type
+
 # Display types
 LCD=1   # LCD screen (direct)
 I2C=2   # Uses I2C libraries
@@ -28,9 +33,14 @@ then
     exit 1
 fi
 
+# Set up a default radio variant
+sudo mkdir -p ${RADIOLIB}
+sudo echo 1 > ${PIRADIO_TYPE}
+
 # Set daemon startup defaults
-update-rc.d -f radiod defaults
+update-rc.d radiod defaults
 update-rc.d -f pifacercd defaults
+update-rc.d -f shairport-sync defaults
 
 # Ensure owner is pi
 sudo chown -R pi:pi ${DIR}
@@ -42,20 +52,26 @@ if [[ ! -f   ${CONFIGFILE} ]]; then
 	sudo cp -f ${DIR}/radiod.conf ${CONFIGFILE}
 fi
 
-# Set up daemon
+# Set up radio daemon
 ${DIR}/select_daemon.sh
-TYPE=$?	# Don't seperate from above
+if [[ $? != 0 ]]; then
+	echo "${DIR}/select_daemon.sh script failed"
+	exit 1
+fi
+
+TYPE=$(cat ${PIRADIO_TYPE})
+rm -f ${PIRADIO_TYPE}
 
 # Disable serial interface (reboot required)
 if [[ ${TYPE} -eq ${LCD} || ${TYPE} -eq ${NODISPLAY} ]]; then
-	if [[ ! -f   ${INITTAB}.orig && -f ${INITTAB} ]]; then
+	if [[ ! -f   ${INITTAB}.orig  && -f ${INITTAB} ]]; then
 		echo "Disabling serial interface in ${INITTAB}" 
 		sudo cp -f ${INITTAB} ${INITTAB}.orig
+		OLDENTRY="T0\:23\:respawn\:\/sbin\/getty -L ttyAMA0"
+		NEWENTRY="\#T0\:23:respawn\:\/sbin\/getty -L ttyAMA0 115200 vt100"
+		sudo sed -i "s/^${OLDENTRY}.*/${NEWENTRY}/g" ${INITTAB}
 		echo "# Original file stored as ${INITTAB}.orig" >> ${INITTAB} 
 	fi
-	OLDENTRY="T0\:23\:respawn\:\/sbin\/getty -L ttyAMA0"
-	NEWENTRY="\#T0\:23:respawn\:\/sbin\/getty -L ttyAMA0 115200 vt100"
-	sudo sed -i "s/^${OLDENTRY}.*/${NEWENTRY}/g" ${INITTAB}
 
 	echo "Disabling serial interface in ${BOOTCMD}" 
 	if [[ ! -f   ${BOOTCMD}.orig ]]; then
@@ -90,17 +106,23 @@ fi
 if [[ ! -f   ${MPDCONF}.orig ]]; then
 	echo "Modifying ${MPDCONF}"
 	sudo cp -fp ${MPDCONF} ${MPDCONF}.orig
+
+	# Bind to any address
 	OLDENTRY="bind_to_address"
 	NEWENTRY="bind_to_address \"any\""  
 	sudo sed -i "s/^${OLDENTRY}.*/${NEWENTRY}/g" ${MPDCONF}
+
+	# Disable zeroconf
 	OLDENTRY="\#zeroconf_enabled.*"
 	NEWENTRY="zeroconf_enabled \"no\""
+
+	# Add note to the end of file
 	sudo sed -i "s/^${OLDENTRY}.*/${NEWENTRY}/g" ${MPDCONF}
 	echo "# Original file stored as ${MPDCONF}.orig" >> ${MPDCONF} 
 fi
 
 # Disable mpd on startup
-sudo update-rc.d mpd disable
+sudo update-rc.d -f mpd disable
 
 # Go to radio directory
 cd ${DIR}
@@ -172,10 +194,14 @@ elif [[ ${TYPE} -eq ${CAD} ]]; then
 fi
 
 # Force file checks on reboot
-if [[ ! -f ${DEFAULTRCS}.orig ]]; then
+if [[ ! -f ${DEFAULTRCS}.orig && -f ${DEFAULTRCS}.orig ]]; then
         sudo cp -f -p ${DEFAULTRCS} ${DEFAULTRCS}.orig
         sudo sed -i -e 's/\#FSCKFIX=no/FSCKFIX=yes/' ${DEFAULTRCS}
 fi
+
+# Install shairport-sync and metadata reader
+#sudo install bin/shairport-sync /usr/local/bin
+#sudo install bin/shairport-sync-metadata-reader /usr/local/bin
 
 # Move old radio directory
 if [[ -d /home/pi/radio ]]; then

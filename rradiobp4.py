@@ -4,7 +4,7 @@
 # using an HD44780 LCD display
 # Rotary encoder version 4 x 20 character I2C LCD interface
 #
-# $Id: rradiobp4.py,v 1.44 2017/08/09 09:27:29 bob Exp $
+# $Id: rradiobp4.py,v 1.45 2017/11/05 11:04:23 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -1092,7 +1092,7 @@ def displayInfo(lcd,ipaddr,mpd_version):
 	lcd.line2(radioVersion)
 	lcd.line3(mpdVersion)
 	lcd.line4(gpioVersion)
-	lcd.scroll1(ipmsg,interrrupt)
+	lcd.scroll1(ipmsg,interrupt)
 	return
 
 # Check Timer fired

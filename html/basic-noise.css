@@ -1,0 +1,50 @@
+/*
+Original design: Basic Noise (v1.0 - April 29, 2011) - A free xhtml/css website template by Andreas Viklund.
+For more information, see http://andreasviklund.com/templates/basic-noise/
+*/
+
+*{margin:0;padding:0;}
+body{background:#1a1a1a url(background.jpg);color:#333;font:76% Georgia,Times New Roman,serif;}
+p{line-height:1.6em;margin-bottom:18px;}
+a{color:#d84580;}
+a:hover{color:#333;}
+h1{color:#d84580;font-family:Georgia,serif;font-size:2.4em;}
+h2{color:#d84580;font-family:Georgia,serif;font-size:2.2em;font-weight:400;margin:0 0 10px 0;}
+h3{color:#d84580;font-family:Georgia,serif;font-size:1.6em;font-weight:400;margin:0 0 8px;}
+ul,ol,dl{margin:0 0 20px 20px; padding:0;}
+li{padding-bottom:5px;}
+
+#containerfull,#container980,#container760,#container600{margin:0 auto;padding:0;overflow:hidden;}
+#containerfull{width:100%;border:0;}
+#container980{width:980px;}
+#container760{width:760px;}
+#container600{width:600px;}
+
+#header{margin:0 auto;padding:10px 25px;}
+#header h1{text-align:center;margin:0;padding:20px 0 0;}
+#header h1 a{color:#d84580; font-family:Georgia,serif;font-size:1.8em;font-weight:400;text-decoration:none;}
+#header h2{text-align:center;color:#d84580;padding:0 0 20px 0;margin:0;font-family:Georgia,serif;font-size:1.6em;font-weight:400;}
+
+#menu{height:40px;}
+#menu ul{height:40px;list-style:none;margin:0;padding:0 25px 0 0;}
+#menu ul li{background-color:#333;display:block;float:left;margin:0 5px 0 0;padding:0;}
+#menu ul li a{background-color:#333;color:#ddd;display:block;font-size:1.4em;padding:10px 12px;text-decoration:none;}
+#menu ul li a:hover{color:#fff;}
+#menu ul li a.current{background-color:#eee;color:#333;border-bottom:1px solid #eee;}
+
+#feature{background-color:#eee;color:#555;padding:25px 25px 5px;border-top:1px solid #ccc;border-bottom:1px solid #ccc;}
+#feature h2{color:#d84580;font-size:2em;line-height:1em;}
+#feature p{font-size:1.3em;margin:0 0 15px 0; line-height:1.5em;}
+#feature img{display:block;margin:0 auto;}
+
+#main{clear:both;margin:0;background-color:#fff;padding:25px 25px 5px;}
+#content{width:100%;}
+
+#credits{color:#aaa;padding:15px 25px;}
+#credits p{text-align:left;font-size:1.2em;margin:0;padding:0;line-height:1.4em;}
+#credits a{color:#aaa;font-weight:400;}
+
+.left{float:left;width:49%;}
+.right{float:right;width:48%;}
+.clear{clear:both;visibility:hidden;}
+.small{font-size:0.8em;}

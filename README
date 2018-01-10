@@ -9,6 +9,14 @@ See http://www.musicpd.org/
 Use "apt-get install mpd mpc python-mpd" to install the library
 Modified to use python-mpd library. See https://pypi.python.org/pypi/python-mpd/
 
+Version 5.12 release notes
+-------------------------
+5th November 2017
+1) Correct faulty unmount commands in radio shutdown routines
+2) PiFace remote control writing to incorrect PID file
+3) Re-write media play progress re-written to prevent continuous writes to mpd.log
+4) Cured crash in rradiobp4.py (i2c backpack) when displaying information menu  
+
 Version 5.11 release notes
 -------------------------
 28th August 2017

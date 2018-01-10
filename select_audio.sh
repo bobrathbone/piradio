@@ -1,6 +1,6 @@
 #!/bin/bash
 # Raspberry Pi Internet Radio
-# $Id: select_audio.sh,v 1.37 2017/05/10 12:26:55 bob Exp $
+# $Id: select_audio.sh,v 1.38 2017/10/12 08:42:20 bob Exp $
 #
 # Author : Bob Rathbone
 # Site   : http://www.bobrathbone.com
@@ -15,6 +15,9 @@
 #
 # This program uses whiptail. Set putty terminal to use UTF-8 charachter set
 # for best results
+
+# Set -s flag to skip package addition or removal (dpkg error otherwise)
+SKIP_PKG_CHANGE=$1
 
 BOOTCONFIG=/boot/config.txt
 MPDCONFIG=/etc/mpd.conf
@@ -151,14 +154,14 @@ echo "${DESC} selected"
 # Install alsa-utils if not already installed
 PKG="alsa-utils"
 dpkg-query --status ${PKG} 2>&1 >/dev/null
-if [[ $? != 0 ]]; then 	# Don't seperate from above
+if [[ $? != 0  && ${SKIP_PKG_CHANGE} != "-s" ]]; then 	# Don't seperate from above
 	echo "Installing ${PKG} package"
 	sudo apt-get --yes install ${PKG}
 fi
 
 # Remove pulseaudio package
 PKG="pulseaudio"
-if [[ ! -x /usr/bin/${PKG} ]]; then 
+if [[ ! -x /usr/bin/${PKG} && ${SKIP_PKG_CHANGE} != "-s" ]]; then 
 	echo "Removing ${PKG} package"
 	sudo apt-get --yes purge ${PKG}
 fi

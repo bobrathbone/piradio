@@ -1,0 +1,30 @@
+#EXTM3U
+#EXTINF:-1,BBC Radio 1
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1_mf_p?s#BBC Radio 1
+#EXTM3U
+#EXTINF:-1,BBC Radio 2
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio2_mf_p?s#BBC Radio 2
+#EXTM3U
+#EXTINF:-1,BBC Radio 3
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio3_mf_p?s#BBC Radio 3
+#EXTM3U
+#EXTINF:-1,BBC Radio 5 Live
+http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/http-icy-mp3-a-stream/proto/http/vpid/bbc_radio_five_live#BBC Radio 5 Live
+#EXTM3U
+#EXTINF:-1,BBC Radio 6
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_6music_mf_p?s#BBC Radio 6
+#EXTM3U
+#EXTINF:-1,BBC Radio 5 Live sports
+<html><head><script type#BBC Radio 5 Live sports
+#EXTM3U
+#EXTINF:-1,BBC Radio 1 extra
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1xtra_mf_p?s#BBC Radio 1 extra
+#EXTM3U
+#EXTINF:-1,BBC Radio Bristol
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_lrbris_mf_p?s#BBC Radio Bristol
+#EXTM3U
+#EXTINF:-1,BBC Radio 4 extra
+http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio4extra_mf_q?s#BBC Radio 4 extra
+#EXTM3U
+#EXTINF:-1,BBC World service
+http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-eieuk#BBC World service

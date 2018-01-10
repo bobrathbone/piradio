@@ -1,6 +1,6 @@
 # Station list - Source list for radio stations streams
 # File: /var/lib/radiod/stationlist (Don't use station.urls - distribution only)
-# $Id: station.urls,v 1.22 2016/12/03 12:54:37 bob Exp $
+# $Id: station.urls,v 1.23 2017/09/08 09:38:20 bob Exp $
 # To use this file add the URL that points to either an asx or pls file
 # The format is:
 #   (<playlist>)
@@ -41,8 +41,8 @@
 [Radio 1 Nederland] http://icecast.omroep.nl/radio1-bb-aac.m3u
 [Radio 2 Nederland] http://icecast.omroep.nl/radio2-bb-aac.m3u
 [Radio 6 Blues Nederland] http://icecast.omroep.nl/radio6-blues-bb-aac.m3u
-[Stream Power MP3] http://mp3.streampower.be/radio1-high.mp3
 [Candlelight] http://candlelight.live-streams.nl/candlelight.m3u
+[Arrow Rock] http://www.arrow.nl/streams/Rock128kmp3.pls
 
 # Germany
 (German Stations)
@@ -60,7 +60,6 @@
 (France)
 [RTL] http://streaming.radio.rtl.fr/rtl-1-44-128.m3u
 [RTL2] http://streaming.radio.rtl.fr/rtl2-1-44-128.m3u
-[Music Box] http://www.musicboxtv.com:8000/live.m3u
 
 # Country music
 (Country music)
