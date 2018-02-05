@@ -4,6 +4,11 @@ Author : Bob Rathbone
 Site   : http://www.bobrathbone.com
 Email  : bob@bobrathbone.com
 
+NOTE: 	This program has been replaced with a completly new version called radio6
+	Version 5.x is no longer maintaind but is still available to support
+	PiFaceCAD hardware. For all other hardware use version 6.x   
+	See https://github.com/bobrathbone/piradio6
+
 This program uses  Music Player Daemon 'mpd', its client 'mpc' and the python-mpd library
 See http://www.musicpd.org/
 Use "apt-get install mpd mpc python-mpd" to install the library
